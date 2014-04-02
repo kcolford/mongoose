@@ -1,0 +1,13 @@
+.deps
+
+compiler
+
+ast.c
+ast.h
+
+parse.c
+parse.h
+
+lex.c
+
+*.o
