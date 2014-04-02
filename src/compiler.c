@@ -181,7 +181,7 @@ int main (int argc, char *argv[])
   argp_parse (&args, argc, argv, 0, NULL, NULL);
 
   if (infile_name == NULL)
-    error (1, 0, "No input file given.");
+    error (1, 0, "No input file given");
 
   name = infile_name;
   atexit (del_name);

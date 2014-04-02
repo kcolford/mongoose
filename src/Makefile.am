@@ -1,3 +1,4 @@
+AM_CPPFLAGS = -I$(top_srcdir)/lib
 AM_YFLAGS = -d
 EXTRA_DIST = ast.def ast.tpl
 
@@ -22,7 +23,7 @@ optimizer.c					\
 parse.y						\
 semantic.c
 
-compiler_LDADD = $(top_builddir)/lib/libgnu.la
+compiler_LDADD = $(top_builddir)/lib/libcompiler.la
 
 ast.c: ast.def ast.tpl
 	$(AM_V_GEN)$(AUTOGEN) ast.def

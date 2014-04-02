@@ -1,12 +1,14 @@
 #include "config.h"
 
 #include "compiler.h"
+#include "xalloc.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+
 #include <unistd.h>
 #include <sys/wait.h>
 
@@ -44,33 +46,10 @@ my_printf (const char *fmt, ...)
   return out;
 }
 
-void *
-xmalloc (size_t s)
-{
-  void *out = malloc (s);
-  NOT_NULL (out);
-  return out;
-}
-
 void
 xfree (void *s)
 {
-  if (s != NULL)
-    free (s);
-}
-
-void *
-xmemdup (const void *d, size_t s)
-{
-  void *out = xmalloc (s);
-  memcpy (out, d, s);
-  return out;
-}
-
-char *
-xstrdup (const char *s)
-{
-  return xmemdup (s, strlen (s) + 1);
+  free (s);
 }
 
 char *
