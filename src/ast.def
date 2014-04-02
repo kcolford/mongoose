@@ -1,0 +1,194 @@
+autogen definitions ast; /* -*- mode: perl -*- */
+
+types = {
+    name = block;
+    cont = { 
+	type = "struct ast *";
+	call = val; 
+    };
+    cont = { 
+	type = "struct ast *";
+	call = next; 
+    };
+};
+
+types = { 
+    name = function;
+    cont = { 
+	type = "char *";
+	call = type; 
+    };
+    cont = {
+	type = "char *";
+	call = name;
+    };
+    cont = {
+	type = "struct ast *";
+	call = args;
+    };
+    cont = {
+	type = "struct ast *";
+	call = body;
+    };
+};
+
+types = {
+    name = ret;
+    cont = {
+	type = "struct ast *";
+
+	call = val;
+    };
+};
+
+types = {
+    name = cond;
+    cont = {
+	type = "struct ast *";
+	call = cond;
+    };
+    cont = {
+	type = "struct ast *";
+	call = body;
+    };
+};
+
+types = {
+    name = label;
+    cont = {
+	type = "char *";
+	call = name;
+    };
+    cont = {
+	type = "struct ast *";
+	call = stuff;
+    };
+};
+
+types = {
+    name = jump;
+    cont = {
+	type = "char *";
+	call = name;
+    };
+};
+
+types = {
+    name = integer;
+    cont = {
+	type = "long long";
+	call = i;
+    };
+};
+
+types = {
+    name = string;
+    cont = {
+	type = "char *";
+	call = val;
+    };
+};
+
+types = {
+    name = variable;
+    cont = {
+	type = "char *";
+	call = type;
+    };
+    cont = {
+	type = "char *";
+	call = name;
+    };
+};
+
+types = {
+    name = array;
+    cont = {
+	type = "char *";
+	call = type;
+    };
+    cont = {
+	type = "char *";
+	call = name;
+    };
+    cont = {
+	type = "long long";
+	call = len;
+    };
+};
+
+types = {
+    name = binary;
+    cont = {
+	type = int;
+	call = op;
+    };
+    cont = {
+	type = "struct ast *";
+	call = left;
+    };
+    cont = {
+	type = "struct ast *";
+	call = right;
+    };
+};
+
+types = {
+    name = unary;
+    cont = {
+	type = int;
+	call = op;
+    };
+    cont = {
+	type = "struct ast *";
+	call = arg;
+    };
+};
+
+types = {
+    name = function_call;
+    cont = {
+	type = "struct ast *";
+	call = name;
+    };
+    cont = {
+	type = "struct ast *";
+	call = args;
+    };
+};
+
+types = {
+    name = statement;
+    cont = {
+	type = "struct ast *";
+	call = val;
+    };
+};
+
+types = {
+    name = move;
+    cont = {
+	type = "char *";
+	call = from;
+    };
+    cont = {
+	type = "char *";
+	call = to;
+    };
+};
+
+types = {
+    name = crement;
+    cont = {
+	type = int;
+	call = isprefix;
+    };
+    cont = {
+	type = int;
+	call = isincrease;
+    };
+    cont = {
+	type = "struct ast *";
+	call = val;
+    };
+};

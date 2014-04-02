@@ -1,0 +1,14 @@
+#!/bin/sh
+
+gnulib-tool					\
+    --import					\
+    --lgpl					\
+    --libtool					\
+    argp					\
+    error					\
+    maintainer-makefile				\
+    vasprintf
+
+autoreconf -i
+
+./configure -C --enable-silent-rules
