@@ -104,7 +104,7 @@ const char *doc =
   "The current subset supports the following: all arithmetic operators, "
   "goto-statements and labels, if-statements, the comparison operators "
   "(<, >, <=, >=, ==, !=) can be used in the test for an if-statement, "
-  "the bitwise operators (|, &, ^) are available, as well as pointers "
+  "the bit wise operators (|, &, ^) are available, as well as pointers "
   "(but there is no pointer data type), and more...";
 
 struct argp_option opts[] = {
