@@ -1,9 +1,13 @@
 SUBDIRS = lib src man tests
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = m4/gnulib-cache.m4 $(top_srcdir)/.version
-BUILT_SOURCES = $(top_srcdir)/.version
+EXTRA_DIST = m4/gnulib-cache.m4 .version
+BUILT_SOURCES = .version
 
-$(top_srcdir)/.version:
-	echo $(VERSION) > $@-t && mv $@-t $@
-dist-hook:
-	echo $(VERSION) > $(distdir)/.tarball-version
+.version:
+	$(AM_V_GEN)echo $(VERSION) > $@-t && mv $@-t $@
+
+gen-tarball-version:
+	$(AM_V_GEN)echo $(VERSION) > $(distdir)/.tarball-version
+.PHONY: gen-tarball-version	
+
+dist-hook: gen-tarball-version
