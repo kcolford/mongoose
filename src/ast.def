@@ -36,7 +36,6 @@ types = {
     name = ret;
     cont = {
 	type = "struct ast *";
-
 	call = val;
     };
 };
