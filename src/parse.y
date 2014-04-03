@@ -31,6 +31,16 @@ void yyerror (const char *);
 %token AND "&&"
 %token INC "++"
 %token DEC "--"
+%token MUT_ADD "+="
+%token MUT_SUB "-="
+%token MUT_MUL "*="
+%token MUT_DIV "/="
+%token MUT_MOD "%="
+%token MUT_RS ">>="
+%token MUT_LS "<<="
+%token MUT_AND "&="
+%token MUT_OR "|="
+%token MUT_XOR "^="
 
 %union { long long i; }
 %token <i> INT
@@ -39,7 +49,7 @@ void yyerror (const char *);
 %token <str> STR STRING
 %type <str> str
 
-%right '='
+%right '=' MUT_ADD MUT_SUB MUT_MUL MUT_DIV MUT_MOD MUT_RS MUT_LS MUT_AND MUT_OR MUT_XOR
 %left OR
 %left AND
 %left '|'

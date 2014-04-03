@@ -23,7 +23,7 @@ optimizer.c					\
 parse.y						\
 semantic.c
 
-compiler_LDADD = $(top_builddir)/lib/libcompiler.la $(LIB_ACL)
+compiler_LDADD = $(top_builddir)/lib/lib$(PACKAGE).la $(LIB_ACL)
 
 ast.c: ast.def ast.tpl
 	$(AM_V_GEN)$(AUTOGEN) ast.def

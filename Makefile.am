@@ -4,7 +4,7 @@ EXTRA_DIST = m4/gnulib-cache.m4 .version
 BUILT_SOURCES = .version
 
 .version:
-	$(AM_V_GEN)echo $(VERSION) > $@-t && mv $@-t $@
+	$(AM_V_GEN)echo $(VERSION) > $@
 
 gen-tarball-version:
 	$(AM_V_GEN)echo $(VERSION) > $(distdir)/.tarball-version
