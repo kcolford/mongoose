@@ -10,4 +10,8 @@ test3.c						\
 test4.c						\
 test5.c						\
 test6.c						\
-test7.c
+test7.c 					\
+test8.c						\
+test9.c
+
+#XFAIL_TESTS = test8.c

@@ -4,6 +4,7 @@
 #include "config.h"
 
 #include "compiler.h"
+#include "xalloc.h"
   
 #include <stdlib.h>
 #include <string.h>

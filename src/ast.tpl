@@ -1,5 +1,7 @@
-[+ AutoGen5 template h c +]
-/* -*- c-mode -*- */
+[+ AutoGen5 template -*- mode: c -*-
+h 
+c 
++]
 [+ CASE (suffix) +]
 
 [+ == h +]
@@ -34,6 +36,7 @@ extern struct ast *make_whileloop (struct ast *, struct ast *);
 #include "config.h"
 
 #include "compiler.h"
+#include "xalloc.h"
 
 [+ FOR types +]
 struct ast *

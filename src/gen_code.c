@@ -1,14 +1,29 @@
 #include "config.h"
 
 #include "compiler.h"
+#include "xalloc.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <setjmp.h>
 #include <errno.h>
+
 #include <error.h>
 
 #include <assert.h>
+
+#define IS_REGISTER(S) (*((const char *) S) == '%')
+#define IS_LITERAL(S) (*((const char *) S) == '$')
+#define IS_MEMORY(S) (!IS_REGISTER (S) && !IS_LITERAL (S))
+
+#define ALLOC_REGISTER(X)				\
+  ((X) = xstrdup (regis (general_regis (avail++))))
+
+#define FREE_REGISTER(X) do {			\
+    if (IS_REGISTER (X))			\
+      avail -= 1;				\
+  } while (0);
 
 #define PUT(...) do {				\
     fprintf (outfile, __VA_ARGS__);		\
@@ -136,8 +151,10 @@ get_label (char *l)
 char *
 give_register_how (const char *i, const char *s)
 {
-  PUT ("\t%s\t%s, %s\n", i, s, regis(general_regis(avail)));
-  return xstrdup (regis(general_regis(avail++)));
+  char *r;
+  ALLOC_REGISTER (r);
+  PUT ("\t%s\t%s, %s\n", i, s, r);
+  return r;
 }
 
 #define give_register(s)			\
@@ -153,14 +170,14 @@ give_register_how (const char *i, const char *s)
 #define BRANCH_WITH_CODE_BIN(X, Y) do {				\
     gen_code_r (s->op.cond.cond->op.binary.left);		\
     gen_code_r (s->op.cond.cond->op.binary.right);		\
-    if (*s->op.cond.cond->op.binary.left->loc == '$')		\
+    if (IS_LITERAL (s->op.cond.cond->op.binary.left->loc))	\
       s->op.cond.cond->op.binary.left->loc =			\
 	give_register (s->op.cond.cond->op.binary.left->loc);	\
     PUT ("\t%s\t%s, %s\n\t%s\t.L%d\n", (X),			\
 	 s->op.cond.cond->op.binary.right->loc,			\
 	 s->op.cond.cond->op.binary.left->loc, (Y), n);		\
-    if (*s->op.cond.cond->op.binary.left->loc == '%')		\
-      avail--;							\
+    if (IS_REGISTER (s->op.cond.cond->op.binary.left->loc))	\
+      FREE_REGISTER (s->op.cond.cond->op.binary.left->loc);	\
     gen_code_r (s->op.cond.body);				\
     PUT (".L%d:\n", n);						\
   } while (0)
@@ -169,7 +186,7 @@ give_register_how (const char *i, const char *s)
   ENSURE_DESTINATION_REGISTER##N (X, Y)
 
 #define ENSURE_DESTINATION_REGISTER_UNI(X) do {	\
-    if (*(X) != '%')				\
+    if (!IS_REGISTER (X))			\
       (X) = give_register (X);			\
   } while (0)
 
@@ -178,10 +195,10 @@ give_register_how (const char *i, const char *s)
    while the other can be memory or (if it's the source operand) an
    immediate. */
 #define ENSURE_DESTINATION_REGISTER1(X, Y) do {	\
-    if (*(X) != '%')				\
+    if (!IS_REGISTER (X))			\
       {						\
-	if (*(Y) != '%')			\
-	  (X) = give_register ((X));		\
+	if (!IS_REGISTER (Y))			\
+	  (X) = give_register (X);		\
 	else					\
 	  SWAP (X, Y);				\
       }						\
@@ -193,20 +210,20 @@ give_register_how (const char *i, const char *s)
    the operation. */
 #define ENSURE_DESTINATION_REGISTER2(X, Y) do {	\
     ENSURE_DESTINATION_REGISTER1 (X, Y);	\
-    if (*(Y) != '%')				\
-      (Y) = give_register ((Y));		\
+    if (!IS_REGISTER (Y))			\
+      (Y) = give_register (Y);			\
   } while (0)
 
 /* Designed for use with the right and left shift operators.  These
    require the right-hand argument to either be and immediate value or
    placed in the %cl register. */
 #define ENSURE_DESTINATION_REGISTER3(X, Y) do {	\
-    if (*(Y) != '$')				\
+    if (!IS_LITERAL (Y))			\
       {						\
 	PUT ("\tmov\t%s, %%rcx\n", (Y));	\
 	(Y) = "%cl";				\
       }						\
-    if (*(X) == '$')				\
+    if (IS_LITERAL (X))				\
       (X) = give_register (X);			\
   } while (0)
 
@@ -352,7 +369,7 @@ gen_code_r (struct ast *s)
 	  /* Either the source or the destination must be a
 	     register/immediate, if that's not the case, then we have
 	     to move the source operand into a register first. */
-	  if (*from->loc != '%' && *from->loc != '$')
+	  if (IS_MEMORY (from->loc))
 	    from->loc = give_register (from->loc);
 	  PUT ("\tmovq\t%s, %s\n", from->loc, s->loc);
 	  break;
@@ -399,8 +416,7 @@ gen_code_r (struct ast *s)
 	case '%':
 	  PUT ("\tmov\t%s, %%rax\n\tmov\t$0, %%rdx\n", s->loc);
 	  ENSURE_DESTINATION_REGISTER (2, s->loc, from->loc);
-	  PUT ("\tidiv\t%s\n", from->loc);
-	  PUT ("\tmov\t%%rdx, %s\n", s->loc);
+	  PUT ("\tidiv\t%s\n\tmov\t%%rdx, %s\n", from->loc, s->loc);
 	  break;
 
 	case RS:
@@ -428,8 +444,8 @@ gen_code_r (struct ast *s)
 		 s->op.binary.op);
 	}
       /* Release the previously allocated register. */
-      if (*from->loc == '%')
-	avail--;
+      if (IS_REGISTER (from->loc))
+	FREE_REGISTER (from->loc);
       break;
 
     case unary_type:
@@ -443,13 +459,14 @@ gen_code_r (struct ast *s)
 	  break;
 
 	case '&':
-	  assert (*s->loc != '%');
+	  assert (!IS_REGISTER (s->loc));
 #if 1
-	  assert (*s->loc != '$');
-#endif
+	  assert (!IS_LITERAL (s->loc));
+#else
 	  if (*s->loc == '$')
 	    s->loc = s->loc + 1;
 	  else
+#endif
 	    s->loc = give_register_how ("lea", s->loc);
 	  break;
 
@@ -484,8 +501,8 @@ gen_code_r (struct ast *s)
       for (i = s->op.function_call.args; i != NULL; i = i->op.block.next)
 	{
 	  PUT ("\tmov\t%s, %s\n", i->op.block.val->loc, regis(call_regis(a++)));
-	  if (*i->op.block.val->loc == '%')
-	    avail--;
+	  if (IS_REGISTER (i->op.block.val->loc))
+	    FREE_REGISTER (i->op.block.val->loc);
 	}
       assert (s->op.function_call.name->type == variable_type);
       PUT ("\tmov\t$0, %%rax\n\tcall\t%s\n", s->op.function_call.name->op.variable.name);
@@ -495,8 +512,8 @@ gen_code_r (struct ast *s)
 
     case statement_type:
       gen_code_r (s->op.statement.val);
-      if (*s->op.statement.val->loc == '%')
-	avail--;
+      if (IS_REGISTER (s->op.statement.val->loc))
+	FREE_REGISTER (s->op.statement.val->loc);
       break;
 
     default:
@@ -514,6 +531,6 @@ gen_code (struct ast *s)
   data_section = xstrdup ("\t.data\n");
   gen_code_r (s);
   PUT ("%s", data_section);
-  xfree (data_section);
+  free (data_section);
   return 0;
 }

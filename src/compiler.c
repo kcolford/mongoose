@@ -1,6 +1,7 @@
 #include "config.h"
 
 #include "compiler.h"
+#include "xalloc.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -220,8 +221,7 @@ int main (int argc, char *argv[])
   if (outfile_name == NULL)
     outfile_name = "a.out";
 
-  if (try_copy (name, outfile_name))
-    error (1, errno, "Could not rename %s to %s", name, outfile_name);
+  copy_file_preserving (name, outfile_name);
 
   return 0;
 }
