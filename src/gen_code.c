@@ -13,9 +13,9 @@
 
 #include <assert.h>
 
-#define IS_REGISTER(S) (*((const char *) S) == '%')
-#define IS_LITERAL(S) (*((const char *) S) == '$')
-#define IS_MEMORY(S) (!IS_REGISTER (S) && !IS_LITERAL (S))
+#define IS_REGISTER(S) ((S) != NULL && *((const char *) S) == '%')
+#define IS_LITERAL(S) ((S) != NULL && *((const char *) S) == '$')
+#define IS_MEMORY(S) ((S) != NULL && !IS_REGISTER (S) && !IS_LITERAL (S))
 
 #define ALLOC_REGISTER(X)				\
   ((X) = xstrdup (regis (general_regis (avail++))))
@@ -31,7 +31,7 @@
       fprintf (stderr, __VA_ARGS__);		\
   } while (0)
 
-/* Incase of error, fail and then jump out to the top level to return
+/* In case of error, fail and then jump out to the top level to return
    an error value.  This allows us to continue the program as we
    desire. */
 jmp_buf error_jump;
@@ -176,8 +176,7 @@ give_register_how (const char *i, const char *s)
     PUT ("\t%s\t%s, %s\n\t%s\t.L%d\n", (X),			\
 	 s->op.cond.cond->op.binary.right->loc,			\
 	 s->op.cond.cond->op.binary.left->loc, (Y), n);		\
-    if (IS_REGISTER (s->op.cond.cond->op.binary.left->loc))	\
-      FREE_REGISTER (s->op.cond.cond->op.binary.left->loc);	\
+    FREE_REGISTER (s->op.cond.cond->op.binary.left->loc);	\
     gen_code_r (s->op.cond.body);				\
     PUT (".L%d:\n", n);						\
   } while (0)
@@ -267,7 +266,7 @@ gen_code_r (struct ast *s)
       /* Generate the body of the function. */
       gen_code_r (s->op.function.body);
 #if 0
-      /* Generate a second function epilog just incase a
+      /* Generate a second function epilogue just in case a
 	 return-statement wasn't included in the input source.  This
 	 can be toggled for testing. */
       PUT ("\tmov\t%%rbp, %%rsp\n\tpop\t%%rbp\n\tret\n\n");
@@ -437,15 +436,20 @@ gen_code_r (struct ast *s)
 
 	case '[':
 	  ERROR ("Not Implemented: '['");
+	  assert (IS_MEMORY (s->loc));
+	  /* TODO: Implement array indexing using the
+	           `$offset(%base,%index,$scale)' semantics.  This will
+	           require the use of regexp searching in all likely
+	           hood, unless we can alter the location tracking
+	           technique. */
 	  break;
 
 	default:
-	  ERROR ("Invalid binary operator opcode: %d\n", 
+	  ERROR ("Invalid binary operator op-code: %d\n", 
 		 s->op.binary.op);
 	}
       /* Release the previously allocated register. */
-      if (IS_REGISTER (from->loc))
-	FREE_REGISTER (from->loc);
+      FREE_REGISTER (from->loc);
       break;
 
     case unary_type:
@@ -501,8 +505,7 @@ gen_code_r (struct ast *s)
       for (i = s->op.function_call.args; i != NULL; i = i->op.block.next)
 	{
 	  PUT ("\tmov\t%s, %s\n", i->op.block.val->loc, regis(call_regis(a++)));
-	  if (IS_REGISTER (i->op.block.val->loc))
-	    FREE_REGISTER (i->op.block.val->loc);
+	  FREE_REGISTER (i->op.block.val->loc);
 	}
       assert (s->op.function_call.name->type == variable_type);
       PUT ("\tmov\t$0, %%rax\n\tcall\t%s\n", s->op.function_call.name->op.variable.name);
@@ -512,8 +515,7 @@ gen_code_r (struct ast *s)
 
     case statement_type:
       gen_code_r (s->op.statement.val);
-      if (IS_REGISTER (s->op.statement.val->loc))
-	FREE_REGISTER (s->op.statement.val->loc);
+      FREE_REGISTER (s->op.statement.val->loc);
       break;
 
     default:

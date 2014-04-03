@@ -1,4 +1,5 @@
 EXTRA_DIST = $(TESTS) tester.sh
+MOSTLYCLEANFILES = core
 
 TESTS_ENVIRONMENT = \
 env PATH=$(top_builddir)/src:$$PATH CC=$(CC) $(srcdir)/tester.sh
