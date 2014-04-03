@@ -2,7 +2,9 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([Compiler], [1.0], [colfordk@gmail.com])
+AC_INIT([Compiler],
+        [m4_esyscmd([build-aux/git-version-gen .tarball-version])],
+	[colfordk@gmail.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/compiler.h])
 AC_CONFIG_HEADERS([config.h])
