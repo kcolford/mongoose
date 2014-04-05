@@ -1,0 +1,14 @@
+# package source files
+src/compiler.c
+src/gen_code.c
+
+# Gnulib source files
+lib/argp-parse.c
+lib/argp.h
+lib/copy-acl.c
+lib/copy-file.c
+lib/error.c
+lib/getopt.c
+lib/quotearg.c
+lib/set-acl.c
+lib/xalloc-die.c

@@ -26,6 +26,11 @@ along with Compiler; see the file COPYING.  If not see
 #include <stdio.h>
 #include <stddef.h>
 
+#include "gettext.h"
+
+#define _(s) gettext (s)
+#define N_(s) gettext_noop (s)
+
 extern FILE *yyin;
 extern FILE *outfile;
 extern int optimize;

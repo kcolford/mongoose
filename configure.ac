@@ -57,9 +57,13 @@ AC_CHECK_FUNCS([vasprintf atexit memset])
 AC_DEFINE([COPYRIGHT_YEAR], [m4_esyscmd([date +%Y])], 
           [year in copyright message])
 
+AM_GNU_GETTEXT_VERSION([0.18.1])
+AM_GNU_GETTEXT([external])
+
 AC_CONFIG_FILES([Makefile
 		 lib/Makefile
 		 man/Makefile
+		 po/Makefile.in
 		 src/Makefile
 		 tests/Makefile])
 AC_OUTPUT

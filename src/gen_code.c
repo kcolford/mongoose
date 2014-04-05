@@ -456,7 +456,7 @@ gen_code_r (struct ast *s)
 	  break;
 
 	case '[':
-	  ERROR ("Not Implemented: '['");
+	  ERROR (_("Not Implemented: '['"));
 	  assert (IS_MEMORY (s->loc));
 
 	  /* TODO: Type checking semantics will also be necessary to
@@ -471,7 +471,7 @@ gen_code_r (struct ast *s)
 	  break;
 
 	default:
-	  ERROR ("Invalid binary operator op-code: %d\n", 
+	  ERROR (_("Invalid binary operator op-code: %d\n"), 
 		 s->op.binary.op);
 	}
       /* Release the previously allocated register. */
@@ -506,7 +506,7 @@ gen_code_r (struct ast *s)
 	  break;
 
 	default:
-	  ERROR ("Invalid unary operator opcode: %d\n", s->op.unary.op);
+	  ERROR (_("Invalid unary operator opcode: %d\n"), s->op.unary.op);
 	}
       break;
 
@@ -545,7 +545,7 @@ gen_code_r (struct ast *s)
       break;
 
     default:
-      ERROR ("Invalid AST type %d", s->type);
+      ERROR (_("Invalid AST type %d"), s->type);
     }
 }
 

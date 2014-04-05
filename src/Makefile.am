@@ -2,6 +2,9 @@ AM_CPPFLAGS = -I$(top_srcdir)/lib
 AM_YFLAGS = -d
 EXTRA_DIST = ast.def ast.tpl
 
+localedir = $(datadir)/locale
+DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
+
 bin_PROGRAMS = compiler
 
 BUILT_SOURCES =					\
@@ -23,7 +26,7 @@ optimizer.c					\
 parse.y						\
 semantic.c
 
-compiler_LDADD = $(top_builddir)/lib/lib$(PACKAGE).la $(LIB_ACL)
+compiler_LDADD = $(top_builddir)/lib/lib$(PACKAGE).la $(LTLIBINTL) $(LIB_ACL)
 
 ast.c: ast.def ast.tpl
 	$(AM_V_GEN)$(AUTOGEN) ast.def
