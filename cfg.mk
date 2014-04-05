@@ -1,4 +1,4 @@
-man:
+man: $(srcdir)/src/compiler.c $(srcdir)/.version
 	$(MAKE) -C man
 	man -l $(top_srcdir)/man/compiler.1
 
