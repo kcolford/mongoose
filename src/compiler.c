@@ -8,7 +8,8 @@
 #include <string.h>
 #include <argp.h>
 #include <unistd.h>
-#include <error.h>
+
+#include <assert.h>
 
 FILE *outfile = NULL;
 int optimize = 0;
@@ -99,7 +100,9 @@ const char *argp_program_bug_address = PACKAGE_BUGREPORT;
 const char *doc = 
   "This is an experimental compiler that compiles an almost Turing "
   "complete subset of C.  It currently lacks an \"infinite tape\".  "
-  "Where FILE is the input file to be compiled.\v"
+  "Where FILE is the input file to be compiled."
+
+  "\v"
 
   "The current subset supports the following: all arithmetic operators, "
   "goto-statements and labels, if-statements, the comparison operators "
@@ -170,6 +173,10 @@ arg_parse (int key, char *arg, struct argp_state *state)
       infile_name = arg;
       break;
 
+    case ARGP_KEY_NO_ARGS:
+      argp_usage (state);
+      break;
+
     default:
       return ARGP_ERR_UNKNOWN;
     }
@@ -181,8 +188,7 @@ int main (int argc, char *argv[])
   struct argp args = { opts, arg_parse, "FILE", doc };
   argp_parse (&args, argc, argv, 0, NULL, NULL);
 
-  if (infile_name == NULL)
-    error (1, 0, "No input file given");
+  assert (infile_name != NULL);
 
   name = infile_name;
   atexit (del_name);
