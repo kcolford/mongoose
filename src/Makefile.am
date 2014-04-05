@@ -19,6 +19,7 @@ ast.c						\
 ast.h						\
 compiler.c					\
 compiler.h					\
+dealias.c					\
 gen_code.c					\
 lex.l						\
 lib.c						\
