@@ -17,8 +17,9 @@
 #define IS_LITERAL(S) ((S) != NULL && *((const char *) S) == '$')
 #define IS_MEMORY(S) ((S) != NULL && !IS_REGISTER (S) && !IS_LITERAL (S))
 
-#define ALLOC_REGISTER(X)				\
-  ((X) = xstrdup (regis (general_regis (avail++))))
+#define ALLOC_REGISTER(X) do {				\
+    (X) = xstrdup (regis (general_regis (avail++)));	\
+  } while (0)
 
 #define FREE_REGISTER(X) do {			\
     if (IS_REGISTER (X))			\
@@ -437,6 +438,11 @@ gen_code_r (struct ast *s)
 	case '[':
 	  ERROR ("Not Implemented: '['");
 	  assert (IS_MEMORY (s->loc));
+
+	  /* TODO: Type checking semantics will also be necessary to
+	           distinguish between an automaticly allocated array
+	           and a pointer. */
+
 	  /* TODO: Implement array indexing using the
 	           `$offset(%base,%index,$scale)' semantics.  This will
 	           require the use of regexp searching in all likely
