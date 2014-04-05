@@ -54,6 +54,9 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([vasprintf atexit memset])
 
+AC_DEFINE([COPYRIGHT_YEAR], [m4_esyscmd([date +%Y])], 
+          [year in copyright message])
+
 AC_CONFIG_FILES([Makefile
 		 lib/Makefile
 		 man/Makefile

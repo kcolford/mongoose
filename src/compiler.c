@@ -117,6 +117,19 @@ linker (const char *in)
 const char *argp_program_version = PACKAGE_STRING;
 const char *argp_program_bug_address = PACKAGE_BUGREPORT;
 
+void
+print_version (FILE *stream, struct argp_state *state)
+{
+  fprintf (stream, "%s (%s) %s\n\n", PACKAGE, PACKAGE_NAME, VERSION);
+  fprintf (stream, "\
+Copyright (C) %d Kieran Colford\n\
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n\
+This is free software: you are free to change and redistribute it.\n\
+There is NO WARRANTY, to the extent permitted by law.\n", COPYRIGHT_YEAR);
+}
+
+void (*argp_program_version_hook)(FILE *, struct argp_state *) = print_version;
+
 const char *doc = 
   "This is an experimental compiler that compiles an almost Turing "
   "complete subset of C.  It currently lacks an \"infinite tape\".  "
