@@ -343,7 +343,9 @@ gen_code_r (struct ast *s)
 	     expression evaluates to 0 then it is false, otherwise it
 	     is true. */
 	  gen_code_r (s->op.cond.cond);
-	  PUT ("\tcmp\t%s, $0\n\tjz\t.L%d\n", s->op.cond.cond->loc, n);
+	  PUT ("\tcmp\t%s, $0\n", s->op.cond.cond->loc);
+	  FREE_REGISTER (s->op.cond.cond->loc);
+	  PUT ("\tjz\t.L%d\n", n);
 	  gen_code_r (s->op.cond.body);
 	  PUT (".L%d:\n", n);
 	}
