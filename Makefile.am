@@ -1,6 +1,6 @@
 SUBDIRS = lib src man tests
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = m4/gnulib-cache.m4 .version
+EXTRA_DIST = m4/gnulib-cache.m4 .version COPYING
 BUILT_SOURCES = .version
 
 .version:
