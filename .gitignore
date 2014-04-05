@@ -1,10 +1,15 @@
 autom4te.cache
 build-aux
+gnulib
+lib
+m4
 
 GNUmakefile
 Makefile
 Makefile.in
 maint.mk
+
+.version
 
 aclocal.m4
 libtool
@@ -16,6 +21,7 @@ configure.scan
 config.cache
 config.h
 config.h.in
+config.h.in~
 config.log
 config.status
 configure
