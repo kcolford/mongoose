@@ -29,7 +29,7 @@ along with Compiler; see the file COPYING.  If not see
 #ifndef AST_H
 #define AST_H
 
-#include <stddef.h>
+[+added_code+]
 
 struct ast
 {
@@ -37,6 +37,8 @@ struct ast
          ' +][+name+]_type[+ ENDFOR types +] } type;
   [+ FOR top_level '
   ' +][+type+] [+call+];[+ ENDFOR top_level +]
+  int flags;
+  struct ast *next;
   union
   {
     [+ FOR types '
@@ -51,7 +53,7 @@ struct ast
 };
 
 [+ FOR types '
-' +]extern struct ast *make_[+name+] ([+ FOR cont ", " +][+type+][+ ENDFOR cont +]);[+ ENDFOR types +]
+' +]extern struct ast *make_[+name+] (int, struct ast *[+ FOR cont +], [+type+][+ ENDFOR cont +]);[+ ENDFOR types +]
 
 extern struct ast *make_whileloop (struct ast *, struct ast *);
 
@@ -64,10 +66,14 @@ extern struct ast *make_whileloop (struct ast *, struct ast *);
 
 [+ FOR types +]
 struct ast *
-make_[+name+] ([+ FOR cont ',' +][+type+] [+call+][+ ENDFOR cont +])
+make_[+name+] (int flags, struct ast *next[+ FOR cont +], [+type+] [+call+][+ ENDFOR cont +])
 {
-  struct ast *out = xzalloc (sizeof *out);
+  struct ast *out = xmalloc (sizeof *out);
   out->type = [+name+]_type;
+  out->flags = flags;
+  out->next = next;
+  [+ FOR extra ';
+  ' +]out->op.[+name+].[+call+] = ([+type+]) 0[+ ENDFOR extra +];
   [+ FOR cont ';
   ' +]out->op.[+name+].[+call+] = [+call+][+ ENDFOR cont +];
   return out;

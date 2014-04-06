@@ -20,27 +20,24 @@ You should have received a copy of the GNU General Public License
 along with Compiler; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.*/
 
+added_code = "
+#include <stdbool.h>
+#include <stddef.h>
+
+#define AST_THROW_AWAY 1
+#define AST_RETURN     2
+";
+
 top_level = {
     type = "char *";
     call = loc;
 };
-
-#if 0
-top_level = {
-    type = "struct ast *";
-    call = right;
-};
-#endif
 
 types = {
     name = block;
     cont = { 
 	type = "struct ast *";
 	call = val; 
-    };
-    cont = { 
-	type = "struct ast *";
-	call = next; 
     };
 };
 
@@ -58,18 +55,6 @@ types = {
 	type = "struct ast *";
 	call = args;
     };
-    cont = {
-	type = "struct ast *";
-	call = body;
-    };
-};
-
-types = {
-    name = ret;
-    cont = {
-	type = "struct ast *";
-	call = val;
-    };
 };
 
 types = {
@@ -78,10 +63,6 @@ types = {
 	type = "struct ast *";
 	call = cond;
     };
-    cont = {
-	type = "struct ast *";
-	call = body;
-    };
 };
 
 types = {
@@ -89,10 +70,6 @@ types = {
     cont = {
 	type = "char *";
 	call = name;
-    };
-    cont = {
-	type = "struct ast *";
-	call = stuff;
     };
 };
 
@@ -137,22 +114,6 @@ types = {
 };
 
 types = {
-    name = array;
-    cont = {
-	type = "char *";
-	call = type;
-    };
-    cont = {
-	type = "char *";
-	call = name;
-    };
-    cont = {
-	type = "long long";
-	call = len;
-    };
-};
-
-types = {
     name = binary;
     cont = {
 	type = int;
@@ -162,10 +123,6 @@ types = {
 	type = "struct ast *";
 	call = left;
     };
-    cont = {
-	type = "struct ast *";
-	call = right;
-    };
 };
 
 types = {
@@ -174,10 +131,6 @@ types = {
 	type = int;
 	call = op;
     };
-    cont = {
-	type = "struct ast *";
-	call = arg;
-    };
 };
 
 types = {
@@ -185,30 +138,6 @@ types = {
     cont = {
 	type = "struct ast *";
 	call = name;
-    };
-    cont = {
-	type = "struct ast *";
-	call = args;
-    };
-};
-
-types = {
-    name = statement;
-    cont = {
-	type = "struct ast *";
-	call = val;
-    };
-};
-
-types = {
-    name = move;
-    cont = {
-	type = "char *";
-	call = from;
-    };
-    cont = {
-	type = "char *";
-	call = to;
     };
 };
 
@@ -221,9 +150,5 @@ types = {
     cont = {
 	type = int;
 	call = isincrease;
-    };
-    cont = {
-	type = "struct ast *";
-	call = val;
     };
 };
