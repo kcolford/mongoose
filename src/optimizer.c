@@ -69,7 +69,7 @@ optimizer_r (struct ast **ss)
     {
     case block_type:
       optimizer_r (&s->op.block.val);
-      optimizer_r (&s->op.block.next);
+      optimizer_r (&s->next);
       break;
 
     case function_type:
@@ -82,7 +82,7 @@ optimizer_r (struct ast **ss)
 
     case cond_type:
       optimizer_r (&s->op.cond.cond);
-      optimizer_r (&s->op.cond.body);
+      optimizer_r (&s->next);
       if (s->op.cond.cond->type == integer_type)
 	{
 	  if (s->op.cond.cond->op.integer.i)
