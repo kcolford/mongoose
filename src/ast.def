@@ -24,8 +24,11 @@ added_code = "
 #include <stdbool.h>
 #include <stddef.h>
 
-#define AST_THROW_AWAY 1
-#define AST_RETURN     2
+#define AST_THROW_AWAY 0x1
+#define AST_RETURN     0x2
+
+#define AST_UNARY_PREFIX    0x20000
+
 ";
 
 top_level = {
@@ -123,6 +126,10 @@ types = {
 	type = "struct ast *";
 	call = left;
     };
+    cont = {
+	type = "struct ast *";
+	call = right;
+    };
 };
 
 types = {
@@ -131,6 +138,10 @@ types = {
 	type = int;
 	call = op;
     };
+    cont = {
+	type = "struct ast *";
+	call = arg;
+    };
 };
 
 types = {
@@ -138,17 +149,5 @@ types = {
     cont = {
 	type = "struct ast *";
 	call = name;
-    };
-};
-
-types = {
-    name = crement;
-    cont = {
-	type = int;
-	call = isprefix;
-    };
-    cont = {
-	type = int;
-	call = isincrease;
     };
 };

@@ -92,33 +92,33 @@ input:		file END { if (run_compilation_passes (&$1)) YYERROR; }
 	;
 
 file:		/* empty */   { $$ = NULL; }
-	|	def file      { $$ = make_block ($1, $2); }
+	|	def file      { $$ = make_block (0, $2, $1); }
 	;
 
 /* Function definitions. */
-def:		STR STR '(' defargs ')' '{' body '}' { $$ = make_function ($1, $2, $4, $7); }
-	|	STR STR '('         ')' '{' body '}' { $$ = make_function ($1, $2, NULL, $6); }
+def:		STR STR '(' defargs ')' '{' body '}' { $$ = make_function (0, $7, $1, $2, $4); }
+	|	STR STR '('         ')' '{' body '}' { $$ = make_function (0, $6, $1, $2, NULL); }
 	;
 
-defargs:	STR STR             { $$ = make_block (make_variable ($1, $2), NULL); }
-	|	STR STR ',' defargs { $$ = make_block (make_variable ($1, $2), $4); }
+defargs:	STR STR             { $$ = make_variable (0, NULL, $1, $2); }
+	|	STR STR ',' defargs { $$ = make_variable (0, $4, $1, $2); }
 	;
 
 body:		/* empty */         { $$ = NULL; }
-	|	statement body      { $$ = make_block ($1, $2); }
+	|	statement body      { $$ = make_block (0, $2, $1); }
 	;
 
 /* Code statements. */
 statement:	';'                             { $$ = NULL; }
-	|	rval ';'                        { $$ = make_statement ($1); }
-	|	IF '(' rval ')' statement       { $$ = make_cond ($3, $5); }
-	|	IF '(' rval ')' '{' body '}'    { $$ = make_cond ($3, $6); }
-	|	STR ':' statement               { $$ = make_label ($1, $3); }
-	|	GOTO STR ';'                    { $$ = make_jump ($2); }
+	|	rval ';'                        { $$ = $1; $$->flags |= AST_THROW_AWAY; }
+	|	IF '(' rval ')' statement       { $$ = make_cond (0, $5, $3); }
+	|	IF '(' rval ')' '{' body '}'    { $$ = make_cond (0, $6, $3); }
+	|	STR ':' statement               { $$ = make_label (0, $3, $1); }
+	|	GOTO STR ';'                    { $$ = make_jump (0, NULL, $2); }
 	|	WHILE '(' rval ')' statement    { $$ = make_whileloop ($3, $5); }
 	|	WHILE '(' rval ')' '{' body '}' { $$ = make_whileloop ($3, $6); }
-	|	RETURN ';'                      { $$ = make_ret (NULL); }
-	|	RETURN rval ';'                 { $$ = make_ret ($2); }
+	|	RETURN ';'                      { $$ = make_ret (0, NULL); }
+	|	RETURN rval ';'                 { $$ = make_ret (0, $2); }
 	;
 
 /* Adjacent strings are concatenated together. */
@@ -127,52 +127,51 @@ str:		STRING     { $$ = $1; }
 	;
 
 /* These are all the constant expressions. */
-constrval:	INT { $$ = make_integer ($1); }
-	|	str { $$ = make_string ($1); }
+constrval:	INT { $$ = make_integer (0, NULL, $1); }
+	|	str { $$ = make_string (0, NULL, $1); }
 	;
 
 /* Expressions that can be written to. */
-lval:		STR STR              { $$ = make_variable ($1, $2); }
-	|	STR STR '[' INT ']'  { $$ = make_array ($1, $2, $4); }
-	|	STR                  { $$ = make_variable (NULL, $1); }
-	|	rval '[' rval ']'    { $$ = make_binary ('[', $1, $3); }
-	|	'*'rval %prec SIZEOF { $$ = make_unary ('*', $2); }
+lval:		STR STR              { $$ = make_variable (0, NULL, $1, $2); }
+	|	STR                  { $$ = make_variable (0, NULL, NULL, $1); }
+	|	rval '[' rval ']'    { $$ = make_binary (0, NULL, '[', $1, $3); }
+	|	'*'rval %prec SIZEOF { $$ = make_unary (0, NULL, '*', $2); }
 	;
 
 /* Expressions that can be read from. */
-rval:		STR '(' ')'           { $$ = make_function_call (make_variable (NULL, $1), NULL); }
-	|	STR '(' callargs ')'  { $$ = make_function_call (make_variable (NULL, $1), $3); }
-	|	lval '=' rval         { $$ = make_binary ('=', $1, $3); }
-	|	rval '<' rval         { $$ = make_binary ('<', $1, $3); }
-	|	rval '>' rval         { $$ = make_binary ('>', $1, $3); }
-	|	rval '&' rval         { $$ = make_binary ('&', $1, $3); }
-	|	rval '|' rval         { $$ = make_binary ('|', $1, $3); }
-	|	rval '^' rval         { $$ = make_binary ('^', $1, $3); }
-	|	rval '+' rval         { $$ = make_binary ('+', $1, $3); }
-	|	rval '-' rval         { $$ = make_binary ('-', $1, $3); }
-	|	rval '*' rval         { $$ = make_binary ('*', $1, $3); }
-	|	rval '/' rval         { $$ = make_binary ('/', $1, $3); }
-	|	rval '%' rval         { $$ = make_binary ('%', $1, $3); }
-	|	rval EQ rval          { $$ = make_binary (EQ, $1, $3); }
-	|	rval NE rval          { $$ = make_binary (NE, $1, $3); }
-	|	rval LE rval          { $$ = make_binary (LE, $1, $3); }
-	|	rval GE rval          { $$ = make_binary (GE, $1, $3); }
-	|	rval RS rval          { $$ = make_binary (RS, $1, $3); }
-	|	rval LS rval          { $$ = make_binary (LS, $1, $3); }
-	|	'&'lval %prec SIZEOF  { $$ = make_unary ('&', $2); }
-	|	lval INC              { $$ = make_crement (0, 1, $1); }
-	|	lval DEC              { $$ = make_crement (0, 0, $1); }
-	|	INC lval              { $$ = make_crement (1, 1, $2); }
-	|	DEC lval              { $$ = make_crement (1, 0, $2); }
-	|	'-'rval %prec SIZEOF  { $$ = make_unary ('-', $2); }
+rval:		STR '(' ')'           { $$ = make_function_call (0, NULL, make_variable (NULL, $1)); }
+	|	STR '(' callargs ')'  { $$ = make_function_call (0, NULL, make_variable (NULL, $1)); }
+	|	lval '=' rval         { $$ = make_binary (0, NULL, '=', $1, $3); }
+	|	rval '<' rval         { $$ = make_binary (0, NULL, '<', $1, $3); }
+	|	rval '>' rval         { $$ = make_binary (0, NULL, '>', $1, $3); }
+	|	rval '&' rval         { $$ = make_binary (0, NULL, '&', $1, $3); }
+	|	rval '|' rval         { $$ = make_binary (0, NULL, '|', $1, $3); }
+	|	rval '^' rval         { $$ = make_binary (0, NULL, '^', $1, $3); }
+	|	rval '+' rval         { $$ = make_binary (0, NULL, '+', $1, $3); }
+	|	rval '-' rval         { $$ = make_binary (0, NULL, '-', $1, $3); }
+	|	rval '*' rval         { $$ = make_binary (0, NULL, '*', $1, $3); }
+	|	rval '/' rval         { $$ = make_binary (0, NULL, '/', $1, $3); }
+	|	rval '%' rval         { $$ = make_binary (0, NULL, '%', $1, $3); }
+	|	rval EQ rval          { $$ = make_binary (0, NULL, EQ, $1, $3); }
+	|	rval NE rval          { $$ = make_binary (0, NULL, NE, $1, $3); }
+	|	rval LE rval          { $$ = make_binary (0, NULL, LE, $1, $3); }
+	|	rval GE rval          { $$ = make_binary (0, NULL, GE, $1, $3); }
+	|	rval RS rval          { $$ = make_binary (0, NULL, RS, $1, $3); }
+	|	rval LS rval          { $$ = make_binary (0, NULL, LS, $1, $3); }
+	|	'&'lval %prec SIZEOF  { $$ = make_unary (0, NULL, '&', $2); }
+	|	lval INC              { $$ = make_unary (0, NULL, INC, $1); }
+	|	lval DEC              { $$ = make_unary (0, NULL, DEC, $1); }
+	|	INC lval              { $$ = make_unary (0, NULL, AST_UNARY_PREFIX | INC, $2); }
+	|	DEC lval              { $$ = make_unary (0, NULL, AST_UNARY_PREFIX | DEC, $2); }
+	|	'-'rval %prec SIZEOF  { $$ = make_unary (0, NULL, '-', $2); }
 	|	'(' rval ')'          { $$ = $2; }
 	|	lval                  { $$ = $1; }
 	|	constrval             { $$ = $1; }
 	;
 
 /* Function call arguments. */
-callargs:	rval              { $$ = make_block ($1, NULL); }
-	|	rval ',' callargs { $$ = make_block ($1, $3); }
+callargs:	rval              { $$ = $1; }
+	|	rval ',' callargs { $$ = $1; $$->next = $3; }
 	;
 
 %%
