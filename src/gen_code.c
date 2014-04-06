@@ -144,7 +144,7 @@ give_register_how (const char *i, const char *s)
 	 s->op.cond.cond->op.binary.right->loc,			\
 	 s->op.cond.cond->op.binary.left->loc, (Y), n);		\
     FREE_REGISTER (s->op.cond.cond->op.binary.left->loc);	\
-    gen_code_r (s->op.cond.body);				\
+    DO_RECURSIVE;						\
     PUT (".LB%d:\n", n);					\
   } while (0)
 
@@ -196,13 +196,20 @@ give_register_how (const char *i, const char *s)
 void
 gen_code_r (struct ast *s)
 {
+  int done_next = 0;
+
+#define DO_RECURSIVE do {			\
+    if (!done_next)				\
+      gen_code_r (s->next);			\
+    done_next = 1;				\
+  } while (0)
+
   if (s == NULL)
     return;
   switch (s->type)
     {
     case block_type:
       gen_code_r (s->op.block.val);
-      gen_code_r (s->op.block.next);
       break;
 
     case function_type:
@@ -217,16 +224,16 @@ gen_code_r (struct ast *s)
 	 stack. */
       struct ast *i;
       int argnum = 0;
-      for (i = s->op.function.args; i != NULL; i = i->op.block.next)
+      for (i = s->op.function.args; i != NULL; i = i->next)
 	{
-	  struct ast *v = i->op.block.val;
-	  PUT ("\tsub\t$%d, %%rsp\n", v->op.variable.alloc);
-	  PUT ("\tmov\t%s, %s\n", regis(call_regis(argnum)), v->loc);
+	  assert (i->type == variable_type);
+	  PUT ("\tsub\t$%d, %%rsp\n", i->op.variable.alloc);
+	  PUT ("\tmov\t%s, %s\n", regis(call_regis(argnum)), i->loc);
 	  argnum++;
 	}
 
       /* Generate the body of the function. */
-      gen_code_r (s->op.function.body);
+      DO_RECURSIVE;
 #if 0
       assert (avail == 0);
 #endif
@@ -287,14 +294,13 @@ gen_code_r (struct ast *s)
 	     is true. */
 	  gen_code_r (s->op.cond.cond);
 	  PUT ("\tcmp\t%s, $0\n\tjz\t.LB%d\n", s->op.cond.cond->loc, n);
-	  gen_code_r (s->op.cond.body);
+	  DO_RECURSIVE;
 	  PUT (".LB%d:\n", n);
 	}
       break;
 
     case label_type:
       PUT ("%s:\n", s->loc);
-      gen_code_r (s->op.label.stuff);
       break;
 
     case jump_type:
@@ -420,6 +426,11 @@ gen_code_r (struct ast *s)
     case unary_type:
       gen_code_r (s->op.unary.arg);
       s->loc = s->op.unary.arg->loc;
+      if (!(s->op.unary.op & AST_UNARY_PREFIX))
+	{
+	  s->loc = give_register (s->loc);
+	  s->op.unary.op &= ~AST_UNARY_PREFIX;
+	}
       switch (s->op.unary.op)
 	{
 	case '*':
@@ -444,48 +455,41 @@ gen_code_r (struct ast *s)
 	  PUT ("\tnegq\t%s\n", s->loc);
 	  break;
 
+	case INC:
+	  PUT ("\tinc\t%s\n", s->op.unary.arg->loc);
+	  break;
+	  
+	case DEC:
+	  PUT ("\tdec\t%s\n", s->op.unary.arg->loc);
+	  break;
+
 	default:
 	  ERROR (_("Invalid unary operator opcode: %d\n"), s->op.unary.op);
 	}
-      break;
-
-    case crement_type:
-      gen_code_r (s->op.crement.val);
-      s->loc = s->op.crement.val->loc;
-      if (!s->op.crement.isprefix)
-	s->loc = give_register (s->loc);
-      if (s->op.crement.isincrease)
-	PUT ("\tinc\t%s\n", s->op.crement.val->loc);
-      else
-	PUT ("\tdec\t%s\n", s->op.crement.val->loc);
-      break;	      
+      break;      
 
     case function_call_type:
       ;
       /* TODO: Don't clobber other registers when making a function
 	       call. */
       int a = 0;
-      for (i = s->op.function_call.args; i != NULL; i = i->op.block.next)
-	gen_code_r (i->op.block.val);
-      for (i = s->op.function_call.args; i != NULL; i = i->op.block.next)
+      DO_RECURSIVE;
+      for (i = s->op.function_call.args; i != NULL; i = i->next)
 	{
-	  PUT ("\tmov\t%s, %s\n", i->op.block.val->loc, regis(call_regis(a++)));
-	  FREE_REGISTER (i->op.block.val->loc);
+	  PUT ("\tmov\t%s, %s\n", i->loc, regis(call_regis(a++)));
+	  FREE_REGISTER (i->loc);
 	}
       assert (s->op.function_call.name->type == variable_type);
       PUT ("\tmov\t$0, %%rax\n\tcall\t%s\n", s->op.function_call.name->loc);
       s->loc = "%rax";
-      s->loc = give_register (s->loc);
-      break;
-
-    case statement_type:
-      gen_code_r (s->op.statement.val);
-      FREE_REGISTER (s->op.statement.val->loc);
+      if (!(s->flags & AST_THROW_AWAY))
+	s->loc = give_register (s->loc);
       break;
 
     default:
       ERROR (_("Invalid AST type %d"), s->type);
     }
+  DO_RECURSIVE;
 }
 
 /* Top level entry point to the code generation phase. */

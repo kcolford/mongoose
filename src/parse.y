@@ -117,8 +117,8 @@ statement:	';'                             { $$ = NULL; }
 	|	GOTO STR ';'                    { $$ = make_jump (0, NULL, $2); }
 	|	WHILE '(' rval ')' statement    { $$ = make_whileloop ($3, $5); }
 	|	WHILE '(' rval ')' '{' body '}' { $$ = make_whileloop ($3, $6); }
-	|	RETURN ';'                      { $$ = make_ret (0, NULL); }
-	|	RETURN rval ';'                 { $$ = make_ret (0, $2); }
+	|	RETURN ';'                      { $$ = make_ret (0, NULL, NULL); }
+	|	RETURN rval ';'                 { $$ = make_ret (0, NULL, $2); }
 	;
 
 /* Adjacent strings are concatenated together. */
@@ -139,8 +139,8 @@ lval:		STR STR              { $$ = make_variable (0, NULL, $1, $2); }
 	;
 
 /* Expressions that can be read from. */
-rval:		STR '(' ')'           { $$ = make_function_call (0, NULL, make_variable (NULL, $1)); }
-	|	STR '(' callargs ')'  { $$ = make_function_call (0, NULL, make_variable (NULL, $1)); }
+rval:		STR '(' ')'           { $$ = make_function_call (0, NULL, make_variable (NULL, $1), NULL); }
+	|	STR '(' callargs ')'  { $$ = make_function_call (0, NULL, make_variable (NULL, $1), $3); }
 	|	lval '=' rval         { $$ = make_binary (0, NULL, '=', $1, $3); }
 	|	rval '<' rval         { $$ = make_binary (0, NULL, '<', $1, $3); }
 	|	rval '>' rval         { $$ = make_binary (0, NULL, '>', $1, $3); }

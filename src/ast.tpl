@@ -83,6 +83,6 @@ struct ast *
 make_whileloop (struct ast *cond, struct ast *body)
 {
   char *t = place_holder ();
-  return make_label (t, make_cond (cond, make_block (body, make_jump (t))));
+  return make_label (0, make_cond (0, make_block (0, make_jump (0, NULL, t), body), cond), t);
 }
 [+ ESAC +]

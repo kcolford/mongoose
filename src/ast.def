@@ -25,7 +25,6 @@ added_code = "
 #include <stddef.h>
 
 #define AST_THROW_AWAY 0x1
-#define AST_RETURN     0x2
 
 #define AST_UNARY_PREFIX    0x20000
 
@@ -41,6 +40,14 @@ types = {
     cont = { 
 	type = "struct ast *";
 	call = val; 
+    };
+};
+
+types = {
+    name = ret;
+    cont = {
+	type = "struct ast *";
+	call = val;
     };
 };
 
@@ -149,5 +156,9 @@ types = {
     cont = {
 	type = "struct ast *";
 	call = name;
+    };
+    cont = {
+	type = "struct ast *";
+	call = args;
     };
 };
