@@ -32,7 +32,7 @@ along with Compiler; see the file COPYING.  If not see
 	long long a = s->op.unary.arg->op.integer.i;	\
 	free (s->op.unary.arg);				\
 	free (s);					\
-	s = make_integer (OP a);			\
+	s = make_integer (0, NULL, OP a);		\
       }							\
   } while (0)
 
@@ -47,7 +47,7 @@ along with Compiler; see the file COPYING.  If not see
 	long long r = s->op.binary.right->op.integer.i;	\
 	free (s->op.binary.right);			\
 	free (s);					\
-	s = make_integer (l OP r);			\
+	s = make_integer (0, NULL, l OP r);		\
       }							\
   } while (0)
 
@@ -73,7 +73,7 @@ optimizer_r (struct ast **ss)
       break;
 
     case function_type:
-      optimizer_r (&s->op.function.body);
+      optimizer_r (&s->next);
       break;
 
     case ret_type:
@@ -86,26 +86,10 @@ optimizer_r (struct ast **ss)
       if (s->op.cond.cond->type == integer_type)
 	{
 	  if (s->op.cond.cond->op.integer.i)
-	    s = s->op.cond.body;
+	    s = s->next;
 	  else
 	    s = NULL;
 	}
-      break;
-
-    case label_type:
-      optimizer_r (&s->op.label.stuff);
-      break;
-
-    case jump_type:
-      break;
-
-    case integer_type:
-      break;
-
-    case variable_type:
-      break;
-
-    case string_type:
       break;
 
     case binary_type:
@@ -130,6 +114,7 @@ optimizer_r (struct ast **ss)
 	      FOLD_INT_BIN (LS, <<);
 	    }
 	}
+      optimizer_r (&s->next);
       break;
 
     case unary_type:
@@ -143,9 +128,11 @@ optimizer_r (struct ast **ss)
 	      break;
 	    }
 	}
+      optimizer_r (&s->next);
       break;
 
-    case function_call_type:
+    default:
+      optimizer_r (&s->next);
       break;
     }
 #undef s

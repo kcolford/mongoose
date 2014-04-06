@@ -35,8 +35,8 @@ struct ast
 {
   enum { [+ FOR types ',
          ' +][+name+]_type[+ ENDFOR types +] } type;
-  [+ FOR top_level '
-  ' +][+type+] [+call+];[+ ENDFOR top_level +]
+  [+ FOR top_level ';
+  ' +][+type+] [+call+][+ ENDFOR top_level +];
   int flags;
   struct ast *next;
   union

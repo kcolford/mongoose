@@ -139,8 +139,8 @@ lval:		STR STR              { $$ = make_variable (0, NULL, $1, $2); }
 	;
 
 /* Expressions that can be read from. */
-rval:		STR '(' ')'           { $$ = make_function_call (0, NULL, make_variable (NULL, $1), NULL); }
-	|	STR '(' callargs ')'  { $$ = make_function_call (0, NULL, make_variable (NULL, $1), $3); }
+rval:		STR '(' ')'           { $$ = make_function_call (0, NULL, make_variable (0, NULL, NULL, $1), NULL); }
+	|	STR '(' callargs ')'  { $$ = make_function_call (0, NULL, make_variable (0, NULL, NULL, $1), $3); }
 	|	lval '=' rval         { $$ = make_binary (0, NULL, '=', $1, $3); }
 	|	rval '<' rval         { $$ = make_binary (0, NULL, '<', $1, $3); }
 	|	rval '>' rval         { $$ = make_binary (0, NULL, '>', $1, $3); }
