@@ -17,6 +17,7 @@ parse.h
 compiler_SOURCES =				\
 ast.c						\
 ast.h						\
+compilation_passes.c				\
 compiler.c					\
 compiler.h					\
 dealias.c					\

@@ -25,7 +25,6 @@ along with Compiler; see the file COPYING.  If not see
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <setjmp.h>
 #include <errno.h>
 
@@ -111,63 +110,10 @@ general_regis(int a)
 
 int avail = 0;
 
-struct state_entry
-{
-  char *label;
-  char *meaning;
-};
-
-int state_end = 0;
-struct state_entry state[0x10000] = { {NULL, NULL} };
-
-int func_allocd = 0;
-int curr_labelno = 1;
-
+int str_labelno = 0;
 char *data_section = NULL;
 
-void
-clear_state ()
-{
-  memset (state, 0, sizeof state);
-  state_end = 0;
-  func_allocd = 0;
-  avail = 0;
-}
-
-void
-add_to_state (char *v, size_t s)
-{
-  func_allocd += s;
-  state[state_end].label = v;
-  state[state_end].meaning = my_printf ("-%d(%%rbp)", func_allocd);
-  ++state_end;
-}
-
-char *
-get_from_state (char *l)
-{
-  int i;
-  for (i = state_end - 1; i >= 0; i--)
-    {
-      assert (state[i].label != NULL);
-      if (strcmp (l, state[i].label) == 0)
-	return state[i].meaning;
-    }
-  return l;
-} 
-
-char *
-get_label (char *l)
-{
-  char *s = get_from_state (l);
-  if (*s != '.')
-    {
-      state[state_end].label = l;
-      state[state_end].meaning = s = my_printf (".L%d", curr_labelno++);
-      ++state_end;
-    }
-  return s;
-}
+int branch_labelno = 0;
 
 char *
 give_register_how (const char *i, const char *s)
@@ -194,12 +140,12 @@ give_register_how (const char *i, const char *s)
     if (IS_LITERAL (s->op.cond.cond->op.binary.left->loc))	\
       s->op.cond.cond->op.binary.left->loc =			\
 	give_register (s->op.cond.cond->op.binary.left->loc);	\
-    PUT ("\t%s\t%s, %s\n\t%s\t.L%d\n", (X),			\
+    PUT ("\t%s\t%s, %s\n\t%s\t.LB%d\n", (X),			\
 	 s->op.cond.cond->op.binary.right->loc,			\
 	 s->op.cond.cond->op.binary.left->loc, (Y), n);		\
     FREE_REGISTER (s->op.cond.cond->op.binary.left->loc);	\
     gen_code_r (s->op.cond.body);				\
-    PUT (".L%d:\n", n);						\
+    PUT (".LB%d:\n", n);					\
   } while (0)
 
 #define ENSURE_DESTINATION_REGISTER(N, X, Y)	\
@@ -260,9 +206,6 @@ gen_code_r (struct ast *s)
       break;
 
     case function_type:
-      /* We need a clean state for the function's variables. */
-      clear_state ();
-
       /* Enter the .text section and declare this symbol as global. */
       PUT ("\t.global\t%s\n", s->op.function.name);
       PUT ("%s:\n", s->op.function.name);
@@ -277,10 +220,8 @@ gen_code_r (struct ast *s)
       for (i = s->op.function.args; i != NULL; i = i->op.block.next)
 	{
 	  struct ast *v = i->op.block.val;
-	  add_to_state (v->op.variable.name, 8);
-	  PUT ("\tsub\t$8, %%rsp\n");
-	  PUT ("\tmov\t%s, %s\n", regis(call_regis(argnum)), 
-	       get_from_state (v->op.variable.name));
+	  PUT ("\tsub\t$%d, %%rsp\n", v->op.variable.alloc);
+	  PUT ("\tmov\t%s, %s\n", regis(call_regis(argnum)), v->loc);
 	  argnum++;
 	}
 
@@ -292,7 +233,6 @@ gen_code_r (struct ast *s)
 	 can be toggled for testing. */
       PUT ("\tmov\t%%rbp, %%rsp\n\tpop\t%%rbp\n\tret\n\n");
 #endif
-      clear_state ();
       break;
 
     case ret_type:
@@ -309,7 +249,7 @@ gen_code_r (struct ast *s)
     case cond_type:
       ;
       int n;
-      n = curr_labelno++;
+      n = branch_labelno++;
       if (s->op.cond.cond->type == binary_type)
 	{
 	  switch (s->op.cond.cond->op.binary.op)
@@ -343,19 +283,19 @@ gen_code_r (struct ast *s)
 	     expression evaluates to 0 then it is false, otherwise it
 	     is true. */
 	  gen_code_r (s->op.cond.cond);
-	  PUT ("\tcmp\t%s, $0\n\tjz\t.L%d\n", s->op.cond.cond->loc, n);
+	  PUT ("\tcmp\t%s, $0\n\tjz\t.LB%d\n", s->op.cond.cond->loc, n);
 	  gen_code_r (s->op.cond.body);
-	  PUT (".L%d:\n", n);
+	  PUT (".LB%d:\n", n);
 	}
       break;
 
     case label_type:
-      PUT ("%s:\n", get_label (s->op.label.name));
+      PUT ("%s:\n", s->loc);
       gen_code_r (s->op.label.stuff);
       break;
 
     case jump_type:
-      PUT ("\tjmp\t%s\n", get_label (s->op.jump.name));
+      PUT ("\tjmp\t%s\n", s->loc);
       break;
 
     case integer_type:
@@ -363,16 +303,12 @@ gen_code_r (struct ast *s)
       break;
 
     case variable_type:
-      if (s->op.variable.type != NULL)
-	{
-	  add_to_state (s->op.variable.name, 8);
-	  PUT ("\tsub\t$8, %%rsp\n");
-	}
-      s->loc = get_from_state (s->op.variable.name);
+      if (s->op.variable.type != NULL && s->op.variable.alloc != 0)
+	PUT ("\tsub\t$%d, %%rsp\n", s->op.variable.alloc);
       break;
 
     case string_type:
-      s->loc = my_printf ("$.L%d", curr_labelno++);
+      s->loc = my_printf ("$.LS%d", str_labelno++);
       char *out = my_printf ("%s:\n\t.string\t\"%s\"\n", s->loc + 1, 
 			     s->op.string.val);
       data_section = my_strcat (data_section, out);
@@ -534,7 +470,7 @@ gen_code_r (struct ast *s)
 	  FREE_REGISTER (i->op.block.val->loc);
 	}
       assert (s->op.function_call.name->type == variable_type);
-      PUT ("\tmov\t$0, %%rax\n\tcall\t%s\n", s->op.function_call.name->op.variable.name);
+      PUT ("\tmov\t$0, %%rax\n\tcall\t%s\n", s->op.function_call.name->loc);
       s->loc = "%rax";
       s->loc = give_register (s->loc);
       break;

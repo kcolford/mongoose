@@ -38,7 +38,10 @@ extern int debug;
 
 extern int gen_code (struct ast *);
 extern int optimizer (struct ast **);
+extern int dealias (struct ast **);
 extern int semantic (struct ast *);
+
+extern int run_compilation_passes (struct ast **);
 
 extern char *my_strcat (char *, char *);
 extern char *place_holder (void);

@@ -1,39 +1,68 @@
 #include "config.h"
 
 #include "compiler.h"
-#include "gl_oset.h"
-#include "gl_avltree_oset.h"
-#include "xalloc.h"
 
+#include <string.h>
 #include <stdbool.h>
 #include <assert.h>
 
-struct cons
+struct state_entry
 {
-  gl_oset_t tree;
-  struct cons *prev;
+  char *label;
+  char *meaning;
 };
 
-#define CREATE_CONS(ALIAS, PREV)					\
-  struct cons ALIAS;							\
-  (ALIAS).tree = gl_oset_create_empty (GL_AVLTREE_OSET, NULL, NULL);	\
-	 (ALIAS).prev = (PREV)
+struct state_entry state[0x10000] = { {NULL, NULL} };
+int state_end = 0;
 
-bool
-contains (struct cons *c, struct ast *s)
+int func_allocd = 0;
+int curr_labelno = 1;
+
+void
+clear_state ()
 {
-  while (c != NULL)
-    {
-      if (gl_oset_search (c->tree, s))
-	return true;
-      else
-	c = c->prev;
-    }
-  return false;
+  memset (state, 0, sizeof state);
+  state_end = 0;
+  func_allocd = 0;
 }
 
 void
-dealias_r (struct ast **ss, struct cons *c)
+add_to_state (char *v, size_t s)
+{
+  func_allocd += s;
+  state[state_end].label = v;
+  state[state_end].meaning = my_printf ("-%d(%%rbp)", func_allocd);
+  ++state_end;
+}
+
+char *
+get_from_state (char *l)
+{
+  int i;
+  for (i = state_end - 1; i >= 0; i--)
+    {
+      assert (state[i].label != NULL);
+      if (strcmp (l, state[i].label) == 0)
+	return state[i].meaning;
+    }
+  return l;
+} 
+
+char *
+get_label (char *l)
+{
+  char *s = get_from_state (l);
+  if (*s != '.')
+    {
+      state[state_end].label = l;
+      state[state_end].meaning = s = my_printf (".LJ%d", curr_labelno++);
+      ++state_end;
+    }
+  return s;
+}
+
+void
+dealias_r (struct ast **ss)
 {
   assert (ss != NULL);
 #define s (*ss)
@@ -42,18 +71,71 @@ dealias_r (struct ast **ss, struct cons *c)
   switch (s->type)
     {
     case block_type:
-      dealias_r (&s->op.block.val, c);
-      dealias_r (&s->op.block.next, c);
+      dealias_r (&s->op.block.val);
+      dealias_r (&s->op.block.next);
       break;
       
     case function_type:
-      CREATE_CONS (cc, c);
-      dealias_r (&s->op.function.args, &cc);
-      dealias_r (&s->op.funciton.body, &cc);
-      gl_oset_free (cc.tree);
+      clear_state ();
+      dealias_r (&s->op.function.args);
+      dealias_r (&s->op.function.body);
+      clear_state ();
+      break;
+
+    case ret_type:
+      dealias_r (&s->op.ret.val);
+      break;
+
+    case cond_type:
+      dealias_r (&s->op.cond.cond);
+      dealias_r (&s->op.cond.body);
       break;
 
     case variable_type:
       if (s->op.variable.type != NULL)
 	{
-	  
+	  s->op.variable.alloc = 8;
+	  add_to_state (s->op.variable.name, 8);
+	}
+      s->loc = get_from_state (s->op.variable.name);
+      break;
+
+    case label_type:
+      s->loc = get_label (s->op.label.name);
+      dealias_r (&s->op.label.stuff);
+      break;
+      
+    case jump_type:
+      s->loc = get_label (s->op.jump.name);
+      break;
+
+    case binary_type:
+      dealias_r (&s->op.binary.left);
+      dealias_r (&s->op.binary.right);
+      break;
+
+    case unary_type:
+      dealias_r (&s->op.unary.arg);
+      break;
+      
+    case crement_type:
+      dealias_r (&s->op.crement.val);
+      break;
+
+    case function_call_type:
+      dealias_r (&s->op.function_call.args);
+      dealias_r (&s->op.function_call.name);
+      break;
+
+    case statement_type:
+      dealias_r (&s->op.statement.val);
+      break;
+    }
+}
+
+int
+dealias (struct ast **ss)
+{
+  dealias_r (ss);
+  return 0;
+}
