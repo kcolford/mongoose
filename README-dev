@@ -1,0 +1,19 @@
+Compiler Developer's Manual
+===========================
+
+How to Set Up
+-------------
+
+The first step to working on Compiler is to run the bootstrap script
+like this,
+
+        $ ./bootstrap
+	$ ./configure -C CFLAGS='-g'
+	$ make
+
+With this done, you can now start working on the project proper.
+
+Translators
+-----------
+
+TODO
