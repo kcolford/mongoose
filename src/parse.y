@@ -88,7 +88,7 @@ void yyerror (const char *);
 
 %%
 
-input:		file END { if (semantic ($1) || optimizer (&$1) || gen_code ($1)) YYERROR; }
+input:		file END { if (run_compilation_passes (&$1)) YYERROR; }
 	;
 
 file:		/* empty */   { $$ = NULL; }

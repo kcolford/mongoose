@@ -35,7 +35,8 @@ struct ast
 {
   enum { [+ FOR types ',
          ' +][+name+]_type[+ ENDFOR types +] } type;
-  char *loc;
+  [+ FOR top_level '
+  ' +][+type+] [+call+];[+ ENDFOR top_level +]
   union
   {
     [+ FOR types '
@@ -43,6 +44,8 @@ struct ast
     {
       [+ FOR cont '
       ' +][+type+] [+call+];[+ ENDFOR cont +]
+      [+ FOR extra '
+      ' +][+type+] [+call+];[+ ENDFOR extra +]
     } [+name+];[+ ENDFOR types +]
   } op;
 };
@@ -63,9 +66,8 @@ extern struct ast *make_whileloop (struct ast *, struct ast *);
 struct ast *
 make_[+name+] ([+ FOR cont ',' +][+type+] [+call+][+ ENDFOR cont +])
 {
-  struct ast *out = xmalloc (sizeof *out);
+  struct ast *out = xzalloc (sizeof *out);
   out->type = [+name+]_type;
-  out->loc = NULL;
   [+ FOR cont ';
   ' +]out->op.[+name+].[+call+] = [+call+][+ ENDFOR cont +];
   return out;
