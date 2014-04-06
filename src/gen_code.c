@@ -228,6 +228,9 @@ gen_code_r (struct ast *s)
       /* Generate the body of the function. */
       gen_code_r (s->op.function.body);
 #if 0
+      assert (avail == 0);
+#endif
+#if 0
       /* Generate a second function epilogue just in case a
 	 return-statement wasn't included in the input source.  This
 	 can be toggled for testing. */
