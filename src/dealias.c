@@ -64,7 +64,7 @@ get_label (char *l)
 void
 dealias_r (struct ast **ss)
 {
-  int done_recursive;
+  int done_recursive = 0;
   assert (ss != NULL);
 #define s (*ss)
 
@@ -104,14 +104,23 @@ dealias_r (struct ast **ss)
 	  add_to_state (s->op.variable.name, 8);
 	}
       s->loc = get_from_state (s->op.variable.name);
+      assert (s->loc != NULL);
       break;
 
     case label_type:
       s->loc = get_label (s->op.label.name);
+      assert (s->loc != NULL);
       break;
       
     case jump_type:
       s->loc = get_label (s->op.jump.name);
+      assert (s->loc != NULL);
+      break;
+
+    case integer_type:
+      break;
+
+    case string_type:
       break;
 
     case binary_type:
@@ -127,6 +136,12 @@ dealias_r (struct ast **ss)
       dealias_r (&s->op.function_call.args);
       dealias_r (&s->op.function_call.name);
       break;
+
+#ifndef NDEBUG
+    default:
+      error (1, errno, _("default case, this shouldn't happen..."));
+      break;
+#endif
     }
   DO_RECURSIVE;
 }

@@ -26,9 +26,6 @@ along with Compiler; see the file COPYING.  If not see
 #include <stdlib.h>
 #include <stdio.h>
 #include <setjmp.h>
-#include <errno.h>
-
-#include <error.h>
 
 #include <assert.h>
 
@@ -136,7 +133,9 @@ give_register_how (const char *i, const char *s)
 /* This macro makes branching a whole lot easier. */
 #define BRANCH_WITH_CODE_BIN(X, Y) do {				\
     gen_code_r (s->op.cond.cond->op.binary.left);		\
+    assert (s->op.cond.cond->op.binary.left->loc != NULL);	\
     gen_code_r (s->op.cond.cond->op.binary.right);		\
+    assert (s->op.cond.cond->op.binary.right->loc != NULL);	\
     if (IS_LITERAL (s->op.cond.cond->op.binary.left->loc))	\
       s->op.cond.cond->op.binary.left->loc =			\
 	give_register (s->op.cond.cond->op.binary.left->loc);	\
@@ -148,8 +147,11 @@ give_register_how (const char *i, const char *s)
     PUT (".LB%d:\n", n);					\
   } while (0)
 
-#define ENSURE_DESTINATION_REGISTER(N, X, Y)	\
-  ENSURE_DESTINATION_REGISTER##N (X, Y)
+#define ENSURE_DESTINATION_REGISTER(N, X, Y) do {	\
+    ENSURE_DESTINATION_REGISTER##N (X, Y);		\
+    assert ((X) != NULL);				\
+    assert ((Y) != NULL);				\
+  } while (0)
 
 #define ENSURE_DESTINATION_REGISTER_UNI(X) do {	\
     if (!IS_REGISTER (X))			\
@@ -228,6 +230,7 @@ gen_code_r (struct ast *s)
 	{
 	  assert (i->type == variable_type);
 	  PUT ("\tsub\t$%d, %%rsp\n", i->op.variable.alloc);
+	  assert (i->loc != NULL);
 	  PUT ("\tmov\t%s, %s\n", regis(call_regis(argnum)), i->loc);
 	  argnum++;
 	}
@@ -250,6 +253,7 @@ gen_code_r (struct ast *s)
       if (s->op.ret.val != NULL)
 	{
 	  gen_code_r (s->op.ret.val);
+	  assert (s->op.ret.val->loc != NULL);
 	  PUT ("\tmov\t%s, %%rax\n", s->op.ret.val->loc);
 	}
       /* Function footer. */
@@ -293,6 +297,7 @@ gen_code_r (struct ast *s)
 	     expression evaluates to 0 then it is false, otherwise it
 	     is true. */
 	  gen_code_r (s->op.cond.cond);
+	  assert (s->op.cond.cond->loc != NULL);
 	  PUT ("\tcmp\t%s, $0\n\tjz\t.LB%d\n", s->op.cond.cond->loc, n);
 	  DO_RECURSIVE;
 	  PUT (".LB%d:\n", n);
@@ -300,20 +305,24 @@ gen_code_r (struct ast *s)
       break;
 
     case label_type:
+      assert (s->loc != NULL);
       PUT ("%s:\n", s->loc);
       break;
 
     case jump_type:
+      assert (s->loc != NULL);
       PUT ("\tjmp\t%s\n", s->loc);
       break;
 
     case integer_type:
       s->loc = my_printf ("$%lld", s->op.integer.i);
+      assert (s->loc != NULL);
       break;
 
     case variable_type:
       if (s->op.variable.type != NULL && s->op.variable.alloc != 0)
 	PUT ("\tsub\t$%d, %%rsp\n", s->op.variable.alloc);
+      assert (s->loc != NULL);
       break;
 
     case string_type:
@@ -321,11 +330,14 @@ gen_code_r (struct ast *s)
       char *out = my_printf ("%s:\n\t.string\t\"%s\"\n", s->loc + 1, 
 			     s->op.string.val);
       data_section = my_strcat (data_section, out);
+      assert (s->loc != NULL);
       break;
 
     case binary_type:
       gen_code_r (s->op.binary.left);
+      assert (s->op.binary.left->loc != NULL);
       gen_code_r (s->op.binary.right);
+      assert (s->op.binary.right->loc != NULL);
       s->loc = s->op.binary.left->loc;
       struct ast *from = s->op.binary.right;
       switch (s->op.binary.op)
@@ -419,6 +431,8 @@ gen_code_r (struct ast *s)
 	  ERROR (_("Invalid binary operator op-code: %d\n"), 
 		 s->op.binary.op);
 	}
+      assert (s->loc != NULL);
+      assert (from->loc != NULL);
       /* Release the previously allocated register. */
       FREE_REGISTER (from->loc);
       break;
@@ -466,6 +480,7 @@ gen_code_r (struct ast *s)
 	default:
 	  ERROR (_("Invalid unary operator opcode: %d\n"), s->op.unary.op);
 	}
+      assert (s->loc != NULL);
       break;      
 
     case function_call_type:
@@ -473,9 +488,10 @@ gen_code_r (struct ast *s)
       /* TODO: Don't clobber other registers when making a function
 	       call. */
       int a = 0;
-      DO_RECURSIVE;
+      gen_code_r (s->op.function_call.args);
       for (i = s->op.function_call.args; i != NULL; i = i->next)
 	{
+	  assert (i->loc != NULL);
 	  PUT ("\tmov\t%s, %s\n", i->loc, regis(call_regis(a++)));
 	  FREE_REGISTER (i->loc);
 	}

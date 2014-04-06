@@ -28,9 +28,8 @@ along with Compiler; see the file COPYING.  If not see
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <locale.h>
 #include <argp.h>
-#include <error.h>
-#include <errno.h>
 #include <unistd.h>
 
 #include <assert.h>
@@ -232,7 +231,10 @@ int main (int argc, char *argv[])
   textdomain (PACKAGE);
 #endif
 
-  struct argp args = { opts, arg_parse, "FILE", doc };
+  char *test = _("testing");
+  assert (test != NULL);
+
+  struct argp args = { opts, arg_parse, N_("FILE"), doc };
   argp_parse (&args, argc, argv, 0, NULL, NULL);
 
   assert (infile_name != NULL);

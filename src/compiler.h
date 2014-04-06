@@ -25,6 +25,8 @@ along with Compiler; see the file COPYING.  If not see
 #include "parse.h"
 #include <stdio.h>
 #include <stddef.h>
+#include <errno.h>
+#include <error.h>
 
 #include "gettext.h"
 
