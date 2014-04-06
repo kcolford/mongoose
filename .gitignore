@@ -15,6 +15,7 @@ maint.mk
 aclocal.m4
 libtool
 stamp-h1
+INSTALL
 
 autoscan.log
 configure.scan
