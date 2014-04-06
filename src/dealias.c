@@ -64,21 +64,28 @@ get_label (char *l)
 void
 dealias_r (struct ast **ss)
 {
+  int done_recursive;
   assert (ss != NULL);
 #define s (*ss)
+
+#define DO_RECURSIVE do {			\
+    if (!done_recursive)			\
+      dealias_r (&s->next);			\
+    done_recursive = 1;				\
+  } while (0)
+
   if (s == NULL)
     return;
   switch (s->type)
     {
     case block_type:
       dealias_r (&s->op.block.val);
-      dealias_r (&s->op.block.next);
       break;
       
     case function_type:
       clear_state ();
       dealias_r (&s->op.function.args);
-      dealias_r (&s->op.function.body);
+      DO_RECURSIVE;
       clear_state ();
       break;
 
@@ -88,7 +95,6 @@ dealias_r (struct ast **ss)
 
     case cond_type:
       dealias_r (&s->op.cond.cond);
-      dealias_r (&s->op.cond.body);
       break;
 
     case variable_type:
@@ -102,7 +108,6 @@ dealias_r (struct ast **ss)
 
     case label_type:
       s->loc = get_label (s->op.label.name);
-      dealias_r (&s->op.label.stuff);
       break;
       
     case jump_type:
@@ -118,19 +123,12 @@ dealias_r (struct ast **ss)
       dealias_r (&s->op.unary.arg);
       break;
       
-    case crement_type:
-      dealias_r (&s->op.crement.val);
-      break;
-
     case function_call_type:
       dealias_r (&s->op.function_call.args);
       dealias_r (&s->op.function_call.name);
       break;
-
-    case statement_type:
-      dealias_r (&s->op.statement.val);
-      break;
     }
+  DO_RECURSIVE;
 }
 
 int
