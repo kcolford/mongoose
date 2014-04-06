@@ -229,6 +229,10 @@ int main (int argc, char *argv[])
   textdomain (PACKAGE);
 #endif
 
+  /* XXX: This has some sort of side effect that affects the printf
+          family of functions, the cause must be found out at once and
+          fixed with a proper solution rather than what we have
+          here. */
   char *test = _("testing");
   assert (test != NULL);
 
