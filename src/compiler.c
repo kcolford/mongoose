@@ -35,6 +35,8 @@ along with Compiler; see the file COPYING.  If not see
 
 #include <assert.h>
 
+#include <locale.h>
+
 FILE *outfile = NULL;
 int optimize = 0;
 int debug = 0;
