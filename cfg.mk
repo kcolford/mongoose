@@ -10,9 +10,9 @@ copyright:
 	@env UPDATE_COPYRIGHT_HOLDER="Kieran Colford" $(MAKE) update-copyright
 
 todo-list:
-	@grep 'TODO' $(WRITTEN_FILES) | sed -e 's/:[ \t]*/: /'
-	@grep 'FIXME' $(WRITTEN_FILES) | sed -e 's/:[ \t]*/: /'
-	@grep 'XXX' $(WRITTEN_FILES) | sed -e 's/:[ \t]*/: /'
+	@grep -n 'TODO' $(WRITTEN_FILES) | sed -e 's/:[ \t]\+/: /'
+	@grep -n 'FIXME' $(WRITTEN_FILES) | sed -e 's/:[ \t]\+/: /'
+	@grep -n 'XXX' $(WRITTEN_FILES) | sed -e 's/:[ \t]\+/: /'
 
 count:
 	@echo

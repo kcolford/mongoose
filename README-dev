@@ -1,6 +1,21 @@
 Compiler Developer's Manual
 ===========================
 
+Prerequisites
+-------------
+
+In order to develop this project you need the following list of
+installed programs,
+
+  Autoconf
+  AutoGen
+  Automake
+  Bash
+  GCC
+  GIT
+  Help2man
+  Make
+
 How to Set Up
 -------------
 
@@ -13,7 +28,20 @@ like this,
 
 With this done, you can now start working on the project proper.
 
+What To Do
+----------
+
+If you can't think of something to work on, there is a convenient
+make-command set up to help you out,
+
+        $ make todo-list
+
+This will print out all the places where developers have left comments
+indicating where work needs to be done.
+
+If you can't find anything
+
 Translators
 -----------
 
-TODO
+TODO: Instructions for translators.
