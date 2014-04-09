@@ -44,6 +44,16 @@ along with Compiler; see the file COPYING.  If not see
 "++"                   { return INC; }
 "--"                   { return DEC; }
 
+/* Not implemented yet. */
+"&&"
+"||"
+"+="
+"-="
+"*="
+"/="
+"%="
+
+
 "return"               { return RETURN; }
 "if"                   { return IF; }
 "goto"                 { return GOTO; }
