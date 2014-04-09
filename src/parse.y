@@ -19,6 +19,7 @@ along with Compiler; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>. */
 
 %error-verbose
+%expect 6
 
 %{
 #include "config.h"
@@ -84,7 +85,7 @@ void yyerror (const char *);
 %left '(' ')' '[' ']' '.'
 
 %union { struct ast *ast_val; }
-%type <ast_val> file def defargs body statement constrval lval rval callargs
+%type <ast_val> expr file def defargs body statement constrval callargs
 
 %%
 
@@ -110,15 +111,16 @@ body:		/* empty */         { $$ = NULL; }
 
 /* Code statements. */
 statement:	';'                             { $$ = NULL; }
-	|	rval ';'                        { $$ = $1; $$->flags |= AST_THROW_AWAY; }
-	|	IF '(' rval ')' statement       { $$ = make_cond (0, $5, $3); }
-	|	IF '(' rval ')' '{' body '}'    { $$ = make_cond (0, $6, $3); }
+	|	STR expr ';'                    { $$ = $2; $$->op.variable.type = $1; }
+	|	expr ';'                        { $$ = $1; $$->flags |= AST_THROW_AWAY; }
+	|	IF '(' expr ')' statement       { $$ = make_cond (0, $5, $3); }
+	|	IF '(' expr ')' '{' body '}'    { $$ = make_cond (0, $6, $3); }
 	|	STR ':' statement               { $$ = make_label (0, $3, $1); }
 	|	GOTO STR ';'                    { $$ = make_jump (0, NULL, $2); }
-	|	WHILE '(' rval ')' statement    { $$ = make_whileloop ($3, $5); }
-	|	WHILE '(' rval ')' '{' body '}' { $$ = make_whileloop ($3, $6); }
+	|	WHILE '(' expr ')' statement    { $$ = make_whileloop ($3, $5); }
+	|	WHILE '(' expr ')' '{' body '}' { $$ = make_whileloop ($3, $6); }
 	|	RETURN ';'                      { $$ = make_ret (0, NULL, NULL); }
-	|	RETURN rval ';'                 { $$ = make_ret (0, NULL, $2); }
+	|	RETURN expr ';'                 { $$ = make_ret (0, NULL, $2); }
 	;
 
 /* Adjacent strings are concatenated together. */
@@ -131,47 +133,42 @@ constrval:	INT { $$ = make_integer (0, NULL, $1); }
 	|	str { $$ = make_string (0, NULL, $1); }
 	;
 
-/* Expressions that can be written to. */
-lval:		STR STR              { $$ = make_variable (0, NULL, $1, $2); }
-	|	STR                  { $$ = make_variable (0, NULL, NULL, $1); }
-	|	rval '[' rval ']'    { $$ = make_binary (0, NULL, '[', $1, $3); }
-	|	'*'rval %prec SIZEOF { $$ = make_unary (0, NULL, '*', $2); }
-	;
-
-/* Expressions that can be read from. */
-rval:		STR '(' ')'           { $$ = make_function_call (0, NULL, make_variable (0, NULL, NULL, $1), NULL); }
-	|	STR '(' callargs ')'  { $$ = make_function_call (0, NULL, make_variable (0, NULL, NULL, $1), $3); }
-	|	lval '=' rval         { $$ = make_binary (0, NULL, '=', $1, $3); }
-	|	rval '<' rval         { $$ = make_binary (0, NULL, '<', $1, $3); }
-	|	rval '>' rval         { $$ = make_binary (0, NULL, '>', $1, $3); }
-	|	rval '&' rval         { $$ = make_binary (0, NULL, '&', $1, $3); }
-	|	rval '|' rval         { $$ = make_binary (0, NULL, '|', $1, $3); }
-	|	rval '^' rval         { $$ = make_binary (0, NULL, '^', $1, $3); }
-	|	rval '+' rval         { $$ = make_binary (0, NULL, '+', $1, $3); }
-	|	rval '-' rval         { $$ = make_binary (0, NULL, '-', $1, $3); }
-	|	rval '*' rval         { $$ = make_binary (0, NULL, '*', $1, $3); }
-	|	rval '/' rval         { $$ = make_binary (0, NULL, '/', $1, $3); }
-	|	rval '%' rval         { $$ = make_binary (0, NULL, '%', $1, $3); }
-	|	rval EQ rval          { $$ = make_binary (0, NULL, EQ, $1, $3); }
-	|	rval NE rval          { $$ = make_binary (0, NULL, NE, $1, $3); }
-	|	rval LE rval          { $$ = make_binary (0, NULL, LE, $1, $3); }
-	|	rval GE rval          { $$ = make_binary (0, NULL, GE, $1, $3); }
-	|	rval RS rval          { $$ = make_binary (0, NULL, RS, $1, $3); }
-	|	rval LS rval          { $$ = make_binary (0, NULL, LS, $1, $3); }
-	|	'&'lval %prec SIZEOF  { $$ = make_unary (0, NULL, '&', $2); }
-	|	lval INC              { $$ = make_unary (0, NULL, INC, $1); }
-	|	lval DEC              { $$ = make_unary (0, NULL, DEC, $1); }
-	|	INC lval              { $$ = make_unary (0, NULL, AST_UNARY_PREFIX | INC, $2); }
-	|	DEC lval              { $$ = make_unary (0, NULL, AST_UNARY_PREFIX | DEC, $2); }
-	|	'-'rval %prec SIZEOF  { $$ = make_unary (0, NULL, '-', $2); }
-	|	'(' rval ')'          { $$ = $2; }
-	|	lval                  { $$ = $1; }
+/* Expressions. */
+expr:		STR                   { $$ = make_variable (0, NULL, NULL, $1); }
+	|	expr '(' ')'          { $$ = make_function_call (0, NULL, $1, NULL); }
+	|	expr '(' callargs ')' { $$ = make_function_call (0, NULL, $1, $3); }
+	|	expr '=' expr         { $$ = make_binary (0, NULL, '=', $1, $3); }
+	|	expr '<' expr         { $$ = make_binary (0, NULL, '<', $1, $3); }
+	|	expr '>' expr         { $$ = make_binary (0, NULL, '>', $1, $3); }
+	|	expr '&' expr         { $$ = make_binary (0, NULL, '&', $1, $3); }
+	|	expr '|' expr         { $$ = make_binary (0, NULL, '|', $1, $3); }
+	|	expr '^' expr         { $$ = make_binary (0, NULL, '^', $1, $3); }
+	|	expr '+' expr         { $$ = make_binary (0, NULL, '+', $1, $3); }
+	|	expr '-' expr         { $$ = make_binary (0, NULL, '-', $1, $3); }
+	|	expr '*' expr         { $$ = make_binary (0, NULL, '*', $1, $3); }
+	|	expr '/' expr         { $$ = make_binary (0, NULL, '/', $1, $3); }
+	|	expr '%' expr         { $$ = make_binary (0, NULL, '%', $1, $3); }
+	|	expr '[' expr ']'     { $$ = make_binary (0, NULL, '[', $1, $3); }
+	|	expr EQ expr          { $$ = make_binary (0, NULL, EQ, $1, $3); }
+	|	expr NE expr          { $$ = make_binary (0, NULL, NE, $1, $3); }
+	|	expr LE expr          { $$ = make_binary (0, NULL, LE, $1, $3); }
+	|	expr GE expr          { $$ = make_binary (0, NULL, GE, $1, $3); }
+	|	expr RS expr          { $$ = make_binary (0, NULL, RS, $1, $3); }
+	|	expr LS expr          { $$ = make_binary (0, NULL, LS, $1, $3); }
+	|	'&'expr %prec SIZEOF  { $$ = make_unary (0, NULL, '&', $2); }
+	|	'*'expr %prec SIZEOF  { $$ = make_unary (0, NULL, '*', $2); }
+	|	expr INC              { $$ = make_unary (0, NULL, INC, $1); }
+	|	expr DEC              { $$ = make_unary (0, NULL, DEC, $1); }
+	|	INC expr              { $$ = make_unary (0, NULL, AST_UNARY_PREFIX | INC, $2); }
+	|	DEC expr              { $$ = make_unary (0, NULL, AST_UNARY_PREFIX | DEC, $2); }
+	|	'-'expr %prec SIZEOF  { $$ = make_unary (0, NULL, '-', $2); }
+	|	'(' expr ')'          { $$ = $2; }
 	|	constrval             { $$ = $1; }
 	;
 
 /* Function call arguments. */
-callargs:	rval              { $$ = $1; }
-	|	rval ',' callargs { $$ = $1; $$->next = $3; }
+callargs:	expr              { $$ = $1; }
+	|	expr ',' callargs { $$ = $1; $$->next = $3; }
 	;
 
 %%
