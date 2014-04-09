@@ -56,7 +56,7 @@ enum stop_point {
 void
 del_name ()
 {
-  if (strcmp (name, infile_name) != 0)
+  if (name != NULL && strcmp (name, infile_name) != 0)
     unlink (name);
 }
 
