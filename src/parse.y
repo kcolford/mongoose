@@ -19,6 +19,7 @@ along with Compiler; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>. */
 
 %error-verbose
+%define parse.lac full
 %expect 6
 
 %{
@@ -82,7 +83,7 @@ void yyerror (const char *);
 %left '+' '-'
 %left '*' '/' '%'
 %right '!' '~' INC DEC SIZEOF
-%left '(' ')' '[' ']' '.'
+%nonassoc '(' ')' '[' ']' '.'
 
 %union { struct ast *ast_val; }
 %type <ast_val> expr file def defargs body statement constrval callargs

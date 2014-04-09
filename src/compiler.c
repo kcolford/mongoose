@@ -250,7 +250,7 @@ int main (int argc, char *argv[])
       del_name ();						\
       name = r;							\
       if (r == NULL)						\
-	error (1, errno, _("failure"));				\
+	exit (1);						\
     } while (0);						\
     if (stop == C##_point)					\
       {								\
