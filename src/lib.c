@@ -6,28 +6,9 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include <errno.h>
 
 #include <unistd.h>
 #include <sys/wait.h>
-
-#include <error.h>
-
-char *
-my_strcat (char *l, char *r)
-{
-  l = xrealloc (l, strlen (l) + strlen (r) + 1);
-  strcat (l, r);
-  free (r);
-  return l;
-}
-
-char *
-place_holder ()
-{
-  static int var = 1;
-  return my_printf ("place$holder%d", var++);
-}
 
 char *
 my_printf (const char *fmt, ...)
@@ -42,7 +23,43 @@ my_printf (const char *fmt, ...)
 }
 
 char *
+my_strcat (char *l, char *r)
+{
+  char *out = my_printf ("%s%s", l, r);
+  free (l);
+  free (r);
+  return out;
+}
+
+char *
+place_holder ()
+{
+  static int var = 1;
+  return my_printf ("place$holder%d", var++);
+}
+
+
+char *
 tmpfile_name ()
 {
   return xstrdup (tmpnam (NULL));
+}
+
+int
+safe_system (const char *args[])
+{
+  pid_t p = fork ();
+  if (p < 0)
+    error (1, errno, "Could not fork the process to run %s", args[0]);
+  else if (p == 0)
+    {
+      if (execv (args[0], (char * const *) args))
+	error (1, errno, "Could not exec to program %s", args[0]);
+    }
+  else
+    {
+      int r = 0;
+      waitpid (p, &r, 0);
+      return r;
+    }
 }

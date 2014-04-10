@@ -83,40 +83,22 @@ char *
 assemble (const char *in)
 {
   char *out = tmpfile_name ();
-  pid_t p = fork ();
-  if (p < 0)
+  const char *args[] = { "/usr/bin/as", "-o", out, in, NULL };
+  if (safe_system (args))
     return NULL;
-  else if (p == 0)
-    execl ("/usr/bin/as", "as", "-o", out, in, NULL);
   else
-    {
-      int r = 0;;
-      waitpid (p, &r, 0);
-      if (r)
-	return NULL;
-      else
-	return out;
-    }
+    return out;
 }
 
 char *
 linker (const char *in)
 {
   char *out = tmpfile_name ();
-  pid_t p = fork ();
-  if (p < 0)
+  const char *args[] = { "/usr/bin/gcc", "-o", out, in, NULL };
+  if (safe_system (args))
     return NULL;
-  else if (p == 0)
-    execl ("/usr/bin/gcc", "gcc", "-o", out, in, NULL);
   else
-    {
-      int r;
-      waitpid (p, &r, 0);
-      if (r)
-	return NULL;
-      else
-	return out;
-    }
+    return out;
 }
 
 const char *argp_program_version = PACKAGE_STRING;

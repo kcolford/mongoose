@@ -53,5 +53,6 @@ extern char *my_strcat (char *, char *);
 extern char *place_holder (void);
 extern char *my_printf (const char *, ...);
 extern char *tmpfile_name (void);
+extern int safe_system (const char **);
 
 #endif
