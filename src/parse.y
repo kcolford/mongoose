@@ -20,7 +20,6 @@ along with Compiler; see the file COPYING.  If not see
 
 %error-verbose
 %define parse.lac full
-%expect 6
 
 %{
 #include "config.h"
@@ -71,6 +70,7 @@ void yyerror (const char *);
 %token <str> STR STRING
 %type <str> str
 
+%right ','
 %right '=' MUT_ADD MUT_SUB MUT_MUL MUT_DIV MUT_MOD MUT_RS MUT_LS MUT_AND MUT_OR MUT_XOR
 %left OR
 %left AND
@@ -112,7 +112,8 @@ body:		/* empty */         { $$ = NULL; }
 
 /* Code statements. */
 statement:	';'                             { $$ = NULL; }
-	|	STR expr ';'                    { $$ = $2; $$->op.variable.type = $1; }
+	|	STR STR ';'                     { $$ = make_variable (0, NULL, $1, $2); }
+	|	STR STR '=' expr ';'            { $$ = make_binary (0, NULL, '=', make_variable (0, NULL, $1, $2), $4); }
 	|	expr ';'                        { $$ = $1; $$->flags |= AST_THROW_AWAY; }
 	|	IF '(' expr ')' statement       { $$ = make_cond (0, $5, $3); }
 	|	IF '(' expr ')' '{' body '}'    { $$ = make_cond (0, $6, $3); }
@@ -177,5 +178,5 @@ callargs:	expr              { $$ = $1; }
 void
 yyerror (const char *msg)
 {
-  error_at_line (0, 0, infile_name, lineno, "%s", msg);
+  error_at_line (0, 0, file_name, lineno, "%s", msg);
 }

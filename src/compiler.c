@@ -68,6 +68,8 @@ compile (const char *in)
   yyin = fopen (in, "r");
   char *out = tmpfile_name ();
   outfile = fopen (out, "w");
+  lineno = 1;
+  file_name = infile_name;
   int i = yyparse ();
   fclose (yyin);
   fclose (outfile);

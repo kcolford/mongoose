@@ -29,7 +29,8 @@ along with Compiler; see the file COPYING.  If not see
 #include <stdlib.h>
 #include <string.h>
 
-int lineno = 0;
+char *file_name = NULL;
+int lineno = 1;
 
 %}
 
@@ -65,6 +66,6 @@ int lineno = 0;
 <LINE_COMMENT>.        ;
 <LINE_COMMENT>\n       { lineno++; BEGIN (INITIAL); }
 
-\n                     { lineno++; }
+<*>\n                  { lineno++; }
 
 .                      { return yytext[0]; }
