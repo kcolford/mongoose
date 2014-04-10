@@ -120,12 +120,13 @@ void (*argp_program_version_hook)(FILE *, struct argp_state *) = print_version;
 const char *doc = N_("\
 This is an experimental compiler that compiles an almost Turing \
 complete subset of C.  It currently lacks an \"infinite tape\".	\
-Where FILE is the input file to be compiled. \v The current subset \
-supports the following: all arithmetic operators, goto-statements \
-and labels, if-statements, the comparison operators (<, >, <=, >=, ==, \
-!=) can be used in the test for an if-statement, the bit wise \
-operators (|, &, ^) are available, as well as pointers (but there is \
-no pointer data type), and more...");
+Where FILE is the input file to be compiled."
+"\v"
+"The current subset supports the following: all arithmetic operators, \
+goto-statements and labels, if-statements, the comparison operators \
+(<, >, <=, >=, ==, !=) can be used in the test for an if-statement, \
+the bit wise operators (|, &, ^) are available, as well as pointers \
+(but there is no pointer data type), and more...");
 
 struct argp_option opts[] = {
   { "outfile",  'o', "FILE",                   0, 
