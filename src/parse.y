@@ -175,7 +175,7 @@ callargs:	expr              { $$ = $1; }
 %%
 
 void
-yyerror (const char *s)
+yyerror (const char *msg)
 {
-  fprintf (stderr, "%s\n", s);
+  error_at_line (0, 0, infile_name, lineno, "%s", msg);
 }
