@@ -28,6 +28,10 @@ along with Compiler; see the file COPYING.  If not see
   
 #include <stdlib.h>
 #include <string.h>
+
+char *file_name = NULL;
+int lineno = 1;
+
 %}
 
 %x LINE_COMMENT
@@ -49,17 +53,19 @@ along with Compiler; see the file COPYING.  If not see
 "goto"                 { return GOTO; }
 "while"                { return WHILE; }
 
-[ \t\r\n]+             ;
+[ \t\r]                ;
 -?[0-9]+               { yylval.i = atoi (yytext); return INT; }
 [_a-zA-Z][_a-zA-Z0-9]* { yylval.str = xstrdup (yytext); return STR; }
 \"([^\\\"]|\\[^\"])*\" { yylval.str = xmemdup (yytext + 1, yyleng - 2); return STRING; }
 
 "/*"                   { BEGIN (BLOCK_COMMENT); }
-<BLOCK_COMMENT>.|\n    ;
+<BLOCK_COMMENT>.       ;
 <BLOCK_COMMENT>"*/"    { BEGIN (INITIAL); }
 
 "//"                   { BEGIN (LINE_COMMENT); }
 <LINE_COMMENT>.        ;
-<LINE_COMMENT>\n       { BEGIN (INITIAL); }
+<LINE_COMMENT>\n       { lineno++; BEGIN (INITIAL); }
+
+<*>\n                  { lineno++; }
 
 .                      { return yytext[0]; }

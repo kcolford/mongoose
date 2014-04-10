@@ -68,6 +68,8 @@ compile (const char *in)
   yyin = fopen (in, "r");
   char *out = tmpfile_name ();
   outfile = fopen (out, "w");
+  lineno = 1;
+  file_name = infile_name;
   int i = yyparse ();
   fclose (yyin);
   fclose (outfile);
@@ -250,7 +252,7 @@ int main (int argc, char *argv[])
       del_name ();						\
       name = r;							\
       if (r == NULL)						\
-	error (1, errno, _("failure"));				\
+	exit (1);						\
     } while (0);						\
     if (stop == C##_point)					\
       {								\

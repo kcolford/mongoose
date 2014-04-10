@@ -35,6 +35,10 @@ along with Compiler; see the file COPYING.  If not see
 
 extern FILE *yyin;
 extern FILE *outfile;
+
+extern char *file_name;
+extern int lineno;
+
 extern int optimize;
 extern int debug;
 
