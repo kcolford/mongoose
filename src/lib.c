@@ -63,3 +63,10 @@ safe_system (const char *args[])
       return r;
     }
 }
+
+void
+xalloc_die ()
+{
+  error (1, ENOMEM, "Out of memory");
+  abort ();
+}
