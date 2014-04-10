@@ -1,10 +1,11 @@
 # package source files
 src/compiler.c
+src/dealias.c
 src/gen_code.c
 
 # Gnulib source files
-lib/argp-parse.c
 lib/argp.h
+lib/argp-parse.c
 lib/copy-acl.c
 lib/copy-file.c
 lib/error.c
