@@ -11,9 +11,11 @@ installed programs,
   AutoGen
   Automake
   Bash
+  Bison
   GCC
   GIT
   Help2man
+  Lex
   Make
 
 How to Set Up
