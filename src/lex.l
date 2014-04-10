@@ -47,16 +47,18 @@ int lineno = 1;
 "<<"                   { return LS; }
 "++"                   { return INC; }
 "--"                   { return DEC; }
-
-/* Not implemented yet. */
-"&&"
-"||"
-"+="
-"-="
-"*="
-"/="
-"%="
-
+"&&"                   { return AND; }
+"||"                   { return OR; }
+"+="                   { return MUT_ADD; }
+"-="                   { return MUT_SUB; }
+"*="                   { return MUT_MUL; }
+"/="                   { return MUT_DIV; }
+"%="                   { return MUT_MOD; }
+">>="                  { return MUT_RS; }
+"<<="                  { return MUT_LS; }
+"&="                   { return MUT_AND; }
+"|="                   { return MUT_OR; }
+"^="                   { return MUT_XOR; }
 
 "return"               { return RETURN; }
 "if"                   { return IF; }
