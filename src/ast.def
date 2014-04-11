@@ -37,19 +37,11 @@ top_level = {
 
 types = {
     name = block;
-    cont = { 
-	type = "struct ast *";
-	call = val; 
-    };
     sub = val;
 };
 
 types = {
     name = ret;
-    cont = {
-	type = "struct ast *";
-	call = val;
-    };
     sub = val;
 };
 
@@ -63,28 +55,12 @@ types = {
 	type = "char *";
 	call = name;
     };
-    cont = {
-	type = "struct ast *";
-	call = args;
-    };
-    cont = {
-	type = "struct ast *";
-	call = body;
-    };
     sub = args;
     sub = body;
 };
 
 types = {
     name = cond;
-    cont = {
-	type = "struct ast *";
-	call = cond;
-    };
-    cont = {
-	type = "struct ast *";
-	call = body;
-    };
     sub = cond;
     sub = body;
 };
@@ -143,14 +119,6 @@ types = {
 	type = int;
 	call = op;
     };
-    cont = {
-	type = "struct ast *";
-	call = left;
-    };
-    cont = {
-	type = "struct ast *";
-	call = right;
-    };
     sub = left;
     sub = right;
 };
@@ -161,23 +129,11 @@ types = {
 	type = int;
 	call = op;
     };
-    cont = {
-	type = "struct ast *";
-	call = arg;
-    };
     sub = arg;
 };
 
 types = {
     name = function_call;
-    cont = {
-	type = "struct ast *";
-	call = name;
-    };
-    cont = {
-	type = "struct ast *";
-	call = args;
-    };
     sub = name;
     sub = args;
 };

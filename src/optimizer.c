@@ -30,7 +30,7 @@ along with Compiler; see the file COPYING.  If not see
     if (s->ops[0]->type == integer_type)	\
       {						\
 	long long a = s->ops[0]->op.integer.i;	\
-	free (s->op.unary.arg);			\
+	free (s->ops[0]);			\
 	free (s);				\
 	s = make_integer (0, NULL, OP a);	\
       }						\
