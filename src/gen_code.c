@@ -143,7 +143,7 @@ give_register_how (const char *i, const char *s)
 	 s->op.cond.cond->op.binary.right->loc,			\
 	 s->op.cond.cond->op.binary.left->loc, (Y), n);		\
     FREE_REGISTER (s->op.cond.cond->op.binary.left->loc);	\
-    DO_RECURSIVE;						\
+    gen_code_r (s->op.cond.body);				\
     PUT (".LB%d:\n", n);					\
   } while (0)
 
@@ -198,14 +198,6 @@ give_register_how (const char *i, const char *s)
 void
 gen_code_r (struct ast *s)
 {
-  int done_next = 0;
-
-#define DO_RECURSIVE do {			\
-    if (!done_next)				\
-      gen_code_r (s->next);			\
-    done_next = 1;				\
-  } while (0)
-
   if (s == NULL)
     return;
   switch (s->type)
@@ -236,7 +228,7 @@ gen_code_r (struct ast *s)
 	}
 
       /* Generate the body of the function. */
-      DO_RECURSIVE;
+      gen_code_r (s->op.function.body);
 #if 0
       assert (avail == 0);
 #endif
@@ -299,7 +291,7 @@ gen_code_r (struct ast *s)
 	  gen_code_r (s->op.cond.cond);
 	  assert (s->op.cond.cond->loc != NULL);
 	  PUT ("\tcmp\t%s, $0\n\tjz\t.LB%d\n", s->op.cond.cond->loc, n);
-	  DO_RECURSIVE;
+	  gen_code_r (s->op.cond.body);
 	  PUT (".LB%d:\n", n);
 	}
       break;
@@ -505,7 +497,7 @@ gen_code_r (struct ast *s)
     default:
       ERROR (_("Invalid AST type %d"), s->type);
     }
-  DO_RECURSIVE;
+  gen_code_r (s->next);
 }
 
 /* Top level entry point to the code generation phase. */

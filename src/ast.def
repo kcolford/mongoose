@@ -65,6 +65,10 @@ types = {
 	type = "struct ast *";
 	call = args;
     };
+    cont = {
+	type = "struct ast *";
+	call = body;
+    };
 };
 
 types = {
@@ -72,6 +76,10 @@ types = {
     cont = {
 	type = "struct ast *";
 	call = cond;
+    };
+    cont = {
+	type = "struct ast *";
+	call = body;
     };
 };
 

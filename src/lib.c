@@ -90,3 +90,18 @@ xalloc_die ()
   error (1, ENOMEM, _("Out of memory"));
   abort ();
 }
+
+struct ast *
+ast_cat (struct ast *l, struct ast *r)
+{
+  if (l == NULL)
+    return r;
+  else
+    {
+      struct ast *t = l;
+      while (t->next != NULL)
+	t = t->next;
+      t->next = r;
+      return l;
+    }
+}

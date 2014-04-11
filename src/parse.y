@@ -70,7 +70,7 @@ void yyerror (const char *);
 %token <str> STR STRING
 %type <str> str
 
-%right ','
+%left ','
 %right '=' MUT_ADD MUT_SUB MUT_MUL MUT_DIV MUT_MOD MUT_RS MUT_LS MUT_AND MUT_OR MUT_XOR
 %left OR
 %left AND
@@ -94,20 +94,20 @@ input:		file END { if (run_compilation_passes (&$1)) YYERROR; }
 	;
 
 file:		/* empty */   { $$ = NULL; }
-	|	def file      { $$ = make_block (0, $2, $1); }
+	|	def file      { $$ = ast_cat ($1, $2); }
 	;
 
 /* Function definitions. */
-def:		STR STR '(' defargs ')' '{' body '}' { $$ = make_function (0, $7, $1, $2, $4); }
-	|	STR STR '('         ')' '{' body '}' { $$ = make_function (0, $6, $1, $2, NULL); }
+def:		STR STR '(' defargs ')' '{' body '}' { $$ = make_function (0, NULL, $1, $2, $4, $7); }
+	|	STR STR '('         ')' '{' body '}' { $$ = make_function (0, NULL, $1, $2, NULL, $6); }
 	;
 
 defargs:	STR STR             { $$ = make_variable (0, NULL, $1, $2); }
-	|	STR STR ',' defargs { $$ = make_variable (0, $4, $1, $2); }
+	|	defargs ',' defargs { $$ = ast_cat ($1, $3); }
 	;
 
 body:		/* empty */         { $$ = NULL; }
-	|	statement body      { $$ = make_block (0, $2, $1); }
+	|	statement body      { $$ = ast_cat ($1, $2); }
 	;
 
 /* Code statements. */
@@ -115,8 +115,8 @@ statement:	';'                             { $$ = NULL; }
 	|	STR STR ';'                     { $$ = make_variable (0, NULL, $1, $2); }
 	|	STR STR '=' expr ';'            { $$ = make_binary (0, NULL, '=', make_variable (0, NULL, $1, $2), $4); }
 	|	expr ';'                        { $$ = $1; $$->flags |= AST_THROW_AWAY; }
-	|	IF '(' expr ')' statement       { $$ = make_cond (0, $5, $3); }
-	|	IF '(' expr ')' '{' body '}'    { $$ = make_cond (0, $6, $3); }
+	|	IF '(' expr ')' statement       { $$ = make_cond (0, NULL, $3, $5); }
+	|	IF '(' expr ')' '{' body '}'    { $$ = make_cond (0, NULL, $3, $6); }
 	|	STR ':' statement               { $$ = make_label (0, $3, $1); }
 	|	GOTO STR ';'                    { $$ = make_jump (0, NULL, $2); }
 	|	WHILE '(' expr ')' statement    { $$ = make_whileloop ($3, $5); }
@@ -169,8 +169,8 @@ expr:		STR                   { $$ = make_variable (0, NULL, NULL, $1); }
 	;
 
 /* Function call arguments. */
-callargs:	expr              { $$ = $1; }
-	|	expr ',' callargs { $$ = $1; $$->next = $3; }
+callargs:	expr                  { $$ = $1; }
+	|	callargs ',' callargs { $$ = ast_cat ($1, $3); }
 	;
 
 %%
