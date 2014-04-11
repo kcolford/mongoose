@@ -58,7 +58,7 @@ struct ast
 };
 
 [+ FOR types +]
-extern struct ast *make_[+name+] (int, struct ast *[+ FOR cont +], [+type+][+ ENDFOR cont +]);
+extern struct ast *make_[+name+] (int, struct ast *[+ FOR cont +][+ IF (not (== "struct ast *" (get "type"))) +], [+type+][+ ENDIF +][+ ENDFOR cont +][+ FOR sub +], struct ast *[+sub+][+ ENDFOR +]);
 [+ ENDFOR types +]
 
 extern struct ast *make_whileloop (struct ast *, struct ast *);
@@ -78,6 +78,9 @@ make_[+name+] (int flags, struct ast *next[+ FOR cont +][+ IF (not (== "struct a
   out->type = [+name+]_type;
   out->flags = flags;
   out->next = next;
+  [+ FOR top_level +]
+    out->[+call+] = ([+type+]) 0;
+  [+ ENDFOR top_level +]
   [+ FOR extra +]
     out->op.[+name+].[+call+] = ([+type+]) 0;
   [+ ENDFOR extra +];

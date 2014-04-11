@@ -26,29 +26,29 @@ along with Compiler; see the file COPYING.  If not see
 #include <stdlib.h>
 #include <assert.h>
 
-#define FOLD_INTEGER_UNI(OP) do {			\
-    if (s->op.unary.arg->type == integer_type)		\
-      {							\
-	long long a = s->op.unary.arg->op.integer.i;	\
-	free (s->op.unary.arg);				\
-	free (s);					\
-	s = make_integer (0, NULL, OP a);		\
-      }							\
+#define FOLD_INTEGER_UNI(OP) do {		\
+    if (s->ops[0]->type == integer_type)	\
+      {						\
+	long long a = s->ops[0]->op.integer.i;	\
+	free (s->op.unary.arg);			\
+	free (s);				\
+	s = make_integer (0, NULL, OP a);	\
+      }						\
   } while (0)
 
 /* Fold up expressions involving constant integer expressions into a
    single constant integer. */
-#define FOLD_INTEGER_BIN(OP) do {			\
-    if (s->op.binary.left->type == integer_type &&	\
-	s->op.binary.right->type == integer_type)	\
-      {							\
-	long long l = s->op.binary.left->op.integer.i;	\
-	free (s->op.binary.left);			\
-	long long r = s->op.binary.right->op.integer.i;	\
-	free (s->op.binary.right);			\
-	free (s);					\
-	s = make_integer (0, NULL, l OP r);		\
-      }							\
+#define FOLD_INTEGER_BIN(OP) do {		\
+    if (s->ops[0]->type == integer_type &&	\
+	s->ops[1]->type == integer_type)	\
+      {						\
+	long long l = s->ops[0]->op.integer.i;	\
+	free (s->ops[0]);			\
+	long long r = s->ops[1]->op.integer.i;	\
+	free (s->ops[1]);			\
+	free (s);				\
+	s = make_integer (0, NULL, l OP r);	\
+      }						\
   } while (0)
 
 /* Convience macro for declaring how to fold up each binary
@@ -58,7 +58,7 @@ along with Compiler; see the file COPYING.  If not see
   FOLD_INTEGER_BIN (OP);			\
   break
 
-static void
+void
 optimizer_r (struct ast **ss)
 {
   assert (ss != NULL);
@@ -67,25 +67,12 @@ optimizer_r (struct ast **ss)
     return;
   switch (s->type)
     {
-    case block_type:
-      optimizer_r (&s->op.block.val);
-      optimizer_r (&s->next);
-      break;
-
-    case function_type:
-      optimizer_r (&s->next);
-      break;
-
-    case ret_type:
-      optimizer_r (&s->op.ret.val);
-      break;
-
     case cond_type:
-      optimizer_r (&s->op.cond.cond);
-      optimizer_r (&s->next);
-      if (s->op.cond.cond->type == integer_type)
+      optimizer_r (&s->ops[0]);
+      optimizer_r (&s->ops[1]);
+      if (s->ops[0]->type == integer_type)
 	{
-	  if (s->op.cond.cond->op.integer.i)
+	  if (s->ops[0]->op.integer.i)
 	    s = s->next;
 	  else
 	    s = NULL;
@@ -93,8 +80,8 @@ optimizer_r (struct ast **ss)
       break;
 
     case binary_type:
-      optimizer_r (&s->op.binary.left);
-      optimizer_r (&s->op.binary.right);
+      optimizer_r (&s->ops[0]);
+      optimizer_r (&s->ops[0]);
       if (optimize > 0)
 	{
 	  switch (s->op.binary.op)
@@ -114,11 +101,10 @@ optimizer_r (struct ast **ss)
 	      FOLD_INT_BIN (LS, <<);
 	    }
 	}
-      optimizer_r (&s->next);
       break;
 
     case unary_type:
-      optimizer_r (&s->op.unary.arg);
+      optimizer_r (&s->ops[0]);
       if (optimize > 0)
 	{
 	  switch (s->op.unary.op)
@@ -128,13 +114,15 @@ optimizer_r (struct ast **ss)
 	      break;
 	    }
 	}
-      optimizer_r (&s->next);
       break;
 
     default:
-      optimizer_r (&s->next);
-      break;
+      ;
+      int j;
+      for (j = 0; j < s->num_ops; j++)
+	optimizer_r (&s->ops[j]);
     }
+  optimizer_r (&s->next);
 #undef s
 }
 

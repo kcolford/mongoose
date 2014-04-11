@@ -92,24 +92,11 @@ dealias_r (struct ast **ss)
     return;
   switch (s->type)
     {
-    case block_type:
-      dealias_r (&s->op.block.val);
-      break;
-      
     case function_type:
       clear_state ();
-      dealias_r (&s->op.function.args);
-      dealias_r (&s->op.function.body);
+      dealias_r (&s->ops[0]);
+      dealias_r (&s->ops[1]);
       clear_state ();
-      break;
-
-    case ret_type:
-      dealias_r (&s->op.ret.val);
-      break;
-
-    case cond_type:
-      dealias_r (&s->op.cond.cond);
-      dealias_r (&s->op.cond.body);
       break;
 
     case variable_type:
@@ -132,31 +119,11 @@ dealias_r (struct ast **ss)
       assert (s->loc != NULL);
       break;
 
-    case integer_type:
-      break;
-
-    case string_type:
-      break;
-
-    case binary_type:
-      dealias_r (&s->op.binary.left);
-      dealias_r (&s->op.binary.right);
-      break;
-
-    case unary_type:
-      dealias_r (&s->op.unary.arg);
-      break;
-      
-    case function_call_type:
-      dealias_r (&s->op.function_call.args);
-      dealias_r (&s->op.function_call.name);
-      break;
-
-#ifndef NDEBUG
     default:
-      error (1, errno, _("default case, this shouldn't happen..."));
-      break;
-#endif
+      ;
+      int j;
+      for (j = 0; j < s->num_ops; j++)
+	dealias_r (&s->ops[j]);
     }
   dealias_r (&s->next);
 }

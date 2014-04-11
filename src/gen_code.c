@@ -132,18 +132,18 @@ give_register_how (const char *i, const char *s)
 
 /* This macro makes branching a whole lot easier. */
 #define BRANCH_WITH_CODE_BIN(X, Y) do {				\
-    gen_code_r (s->op.cond.cond->op.binary.left);		\
-    assert (s->op.cond.cond->op.binary.left->loc != NULL);	\
-    gen_code_r (s->op.cond.cond->op.binary.right);		\
-    assert (s->op.cond.cond->op.binary.right->loc != NULL);	\
-    if (IS_LITERAL (s->op.cond.cond->op.binary.left->loc))	\
-      s->op.cond.cond->op.binary.left->loc =			\
-	give_register (s->op.cond.cond->op.binary.left->loc);	\
+    gen_code_r (s->ops[0]->ops[0]);		\
+    assert (s->ops[0]->ops[0]->loc != NULL);	\
+    gen_code_r (s->ops[0]->ops[1]);		\
+    assert (s->ops[0]->ops[1]->loc != NULL);	\
+    if (IS_LITERAL (s->ops[0]->ops[0]->loc))	\
+      s->ops[0]->ops[0]->loc =			\
+	give_register (s->ops[0]->ops[0]->loc);	\
     PUT ("\t%s\t%s, %s\n\t%s\t.LB%d\n", (X),			\
-	 s->op.cond.cond->op.binary.right->loc,			\
-	 s->op.cond.cond->op.binary.left->loc, (Y), n);		\
-    FREE_REGISTER (s->op.cond.cond->op.binary.left->loc);	\
-    gen_code_r (s->op.cond.body);				\
+	 s->ops[0]->ops[1]->loc,			\
+	 s->ops[0]->ops[0]->loc, (Y), n);		\
+    FREE_REGISTER (s->ops[0]->ops[0]->loc);	\
+    gen_code_r (s->ops[1]);				\
     PUT (".LB%d:\n", n);					\
   } while (0)
 
@@ -202,10 +202,6 @@ gen_code_r (struct ast *s)
     return;
   switch (s->type)
     {
-    case block_type:
-      gen_code_r (s->op.block.val);
-      break;
-
     case function_type:
       /* Enter the .text section and declare this symbol as global. */
       PUT ("\t.global\t%s\n", s->op.function.name);
@@ -218,7 +214,7 @@ gen_code_r (struct ast *s)
 	 stack. */
       struct ast *i;
       int argnum = 0;
-      for (i = s->op.function.args; i != NULL; i = i->next)
+      for (i = s->ops[0]; i != NULL; i = i->next)
 	{
 	  assert (i->type == variable_type);
 	  PUT ("\tsub\t$%d, %%rsp\n", i->op.variable.alloc);
@@ -228,7 +224,7 @@ gen_code_r (struct ast *s)
 	}
 
       /* Generate the body of the function. */
-      gen_code_r (s->op.function.body);
+      gen_code_r (s->ops[1]);
 #if 0
       assert (avail == 0);
 #endif
@@ -242,11 +238,11 @@ gen_code_r (struct ast *s)
 
     case ret_type:
       /* Move the return value into the %rax register. */
-      if (s->op.ret.val != NULL)
+      if (s->ops[0] != NULL)
 	{
-	  gen_code_r (s->op.ret.val);
-	  assert (s->op.ret.val->loc != NULL);
-	  PUT ("\tmov\t%s, %%rax\n", s->op.ret.val->loc);
+	  gen_code_r (s->ops[0]);
+	  assert (s->ops[0]->loc != NULL);
+	  PUT ("\tmov\t%s, %%rax\n", s->ops[0]->loc);
 	}
       /* Function footer. */
       PUT ("\tmov\t%%rbp, %%rsp\n\tpop\t%%rbp\n\tret\n");
@@ -256,9 +252,9 @@ gen_code_r (struct ast *s)
       ;
       int n;
       n = branch_labelno++;
-      if (s->op.cond.cond->type == binary_type)
+      if (s->ops[0]->type == binary_type)
 	{
-	  switch (s->op.cond.cond->op.binary.op)
+	  switch (s->ops[0]->op.binary.op)
 	    {
 	    case '<':
 	      BRANCH_WITH_CODE_BIN ("cmp", "jnl");
@@ -288,10 +284,10 @@ gen_code_r (struct ast *s)
 	  /* When in doubt, the C standard requires that if an
 	     expression evaluates to 0 then it is false, otherwise it
 	     is true. */
-	  gen_code_r (s->op.cond.cond);
-	  assert (s->op.cond.cond->loc != NULL);
-	  PUT ("\tcmp\t%s, $0\n\tjz\t.LB%d\n", s->op.cond.cond->loc, n);
-	  gen_code_r (s->op.cond.body);
+	  gen_code_r (s->ops[0]);
+	  assert (s->ops[0]->loc != NULL);
+	  PUT ("\tcmp\t%s, $0\n\tjz\t.LB%d\n", s->ops[0]->loc, n);
+	  gen_code_r (s->ops[1]);
 	  PUT (".LB%d:\n", n);
 	}
       break;
@@ -326,12 +322,12 @@ gen_code_r (struct ast *s)
       break;
 
     case binary_type:
-      gen_code_r (s->op.binary.left);
-      assert (s->op.binary.left->loc != NULL);
-      gen_code_r (s->op.binary.right);
-      assert (s->op.binary.right->loc != NULL);
-      s->loc = s->op.binary.left->loc;
-      struct ast *from = s->op.binary.right;
+      gen_code_r (s->ops[0]);
+      assert (s->ops[0]->loc != NULL);
+      gen_code_r (s->ops[1]);
+      assert (s->ops[1]->loc != NULL);
+      s->loc = s->ops[0]->loc;
+      struct ast *from = s->ops[1];
       switch (s->op.binary.op)
 	{
 	case '=':
@@ -366,7 +362,7 @@ gen_code_r (struct ast *s)
 	case '-':
 	  ENSURE_DESTINATION_REGISTER (1, s->loc, from->loc);
 	  PUT ("\tsub\t%s, %s\n", from->loc, s->loc);
-	  if (from != s->op.binary.right)
+	  if (from != s->ops[1])
 	    PUT ("\tneg\t%s\n", s->loc);
 	  break;
 
@@ -430,8 +426,8 @@ gen_code_r (struct ast *s)
       break;
 
     case unary_type:
-      gen_code_r (s->op.unary.arg);
-      s->loc = s->op.unary.arg->loc;
+      gen_code_r (s->ops[0]);
+      s->loc = s->ops[0]->loc;
       if (!(s->op.unary.op & AST_UNARY_PREFIX))
 	{
 	  s->loc = give_register (s->loc);
@@ -462,11 +458,11 @@ gen_code_r (struct ast *s)
 	  break;
 
 	case INC:
-	  PUT ("\tinc\t%s\n", s->op.unary.arg->loc);
+	  PUT ("\tinc\t%s\n", s->ops[0]->loc);
 	  break;
 	  
 	case DEC:
-	  PUT ("\tdec\t%s\n", s->op.unary.arg->loc);
+	  PUT ("\tdec\t%s\n", s->ops[0]->loc);
 	  break;
 
 	default:
@@ -480,22 +476,25 @@ gen_code_r (struct ast *s)
       /* TODO: Don't clobber other registers when making a function
 	       call. */
       int a = 0;
-      gen_code_r (s->op.function_call.args);
-      for (i = s->op.function_call.args; i != NULL; i = i->next)
+      gen_code_r (s->ops[1]);
+      for (i = s->ops[1]; i != NULL; i = i->next)
 	{
 	  assert (i->loc != NULL);
 	  PUT ("\tmov\t%s, %s\n", i->loc, regis(call_regis(a++)));
 	  FREE_REGISTER (i->loc);
 	}
-      assert (s->op.function_call.name->type == variable_type);
-      PUT ("\tmov\t$0, %%rax\n\tcall\t%s\n", s->op.function_call.name->loc);
+      assert (s->ops[0]->type == variable_type);
+      PUT ("\tmov\t$0, %%rax\n\tcall\t%s\n", s->ops[0]->loc);
       s->loc = "%rax";
       if (!(s->flags & AST_THROW_AWAY))
 	s->loc = give_register (s->loc);
       break;
 
     default:
-      ERROR (_("Invalid AST type %d"), s->type);
+      ;
+      int j;
+      for (j = 0; j < s->num_ops; j++)
+	gen_code_r (s->ops[j]);
     }
   gen_code_r (s->next);
 }
