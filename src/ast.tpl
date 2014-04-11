@@ -41,19 +41,25 @@ struct ast
   struct ast *next;
   union
   {
-    [+ FOR types '
-    '+]struct
+    [+ FOR types +]
+    struct
     {
-      [+ FOR cont '
-      ' +][+type+] [+call+];[+ ENDFOR cont +]
-      [+ FOR extra '
-      ' +][+type+] [+call+];[+ ENDFOR extra +]
-    } [+name+];[+ ENDFOR types +]
+      [+ FOR cont +]
+      [+type+] [+call+];
+      [+ ENDFOR cont +]
+      [+ FOR extra +]
+      [+type+] [+call+];
+      [+ ENDFOR extra +]
+    } [+name+];
+    [+ ENDFOR types +]
   } op;
+  int num_ops;
+  struct ast *ops[1];
 };
 
-[+ FOR types '
-' +]extern struct ast *make_[+name+] (int, struct ast *[+ FOR cont +], [+type+][+ ENDFOR cont +]);[+ ENDFOR types +]
+[+ FOR types +]
+extern struct ast *make_[+name+] (int, struct ast *[+ FOR cont +], [+type+][+ ENDFOR cont +]);
+[+ ENDFOR types +]
 
 extern struct ast *make_whileloop (struct ast *, struct ast *);
 
@@ -66,16 +72,22 @@ extern struct ast *make_whileloop (struct ast *, struct ast *);
 
 [+ FOR types +]
 struct ast *
-make_[+name+] (int flags, struct ast *next[+ FOR cont +], [+type+] [+call+][+ ENDFOR cont +])
+make_[+name+] (int flags, struct ast *next[+ FOR cont +][+ IF (not (== "struct ast *" (get "type"))) +], [+type+] [+call+][+ ENDIF +][+ ENDFOR cont +][+ FOR sub +], struct ast *[+sub+][+ ENDFOR sub +])
 {
-  struct ast *out = xmalloc (sizeof *out);
+  struct ast *out = xmalloc (sizeof *out + sizeof out * ([+ (count "sub") +] - 1));
   out->type = [+name+]_type;
   out->flags = flags;
   out->next = next;
-  [+ FOR extra ';
-  ' +]out->op.[+name+].[+call+] = ([+type+]) 0[+ ENDFOR extra +];
-  [+ FOR cont ';
-  ' +]out->op.[+name+].[+call+] = [+call+][+ ENDFOR cont +];
+  [+ FOR extra +]
+    out->op.[+name+].[+call+] = ([+type+]) 0;
+  [+ ENDFOR extra +];
+  [+ FOR cont +]
+    out->op.[+name+].[+call+] = [+call+];
+  [+ ENDFOR cont +];
+  out->num_ops = [+ (count "sub") +];
+  [+ FOR sub +]
+    out->ops[[+ (for-index) +]] = [+sub+];
+  [+ ENDFOR sub +];
   return out;
 }
 [+ ENDFOR types +]

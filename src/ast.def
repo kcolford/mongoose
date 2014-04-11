@@ -41,6 +41,7 @@ types = {
 	type = "struct ast *";
 	call = val; 
     };
+    sub = val;
 };
 
 types = {
@@ -49,6 +50,7 @@ types = {
 	type = "struct ast *";
 	call = val;
     };
+    sub = val;
 };
 
 types = { 
@@ -69,6 +71,8 @@ types = {
 	type = "struct ast *";
 	call = body;
     };
+    sub = args;
+    sub = body;
 };
 
 types = {
@@ -81,6 +85,8 @@ types = {
 	type = "struct ast *";
 	call = body;
     };
+    sub = cond;
+    sub = body;
 };
 
 types = {
@@ -145,6 +151,8 @@ types = {
 	type = "struct ast *";
 	call = right;
     };
+    sub = left;
+    sub = right;
 };
 
 types = {
@@ -157,6 +165,7 @@ types = {
 	type = "struct ast *";
 	call = arg;
     };
+    sub = arg;
 };
 
 types = {
@@ -169,4 +178,6 @@ types = {
 	type = "struct ast *";
 	call = args;
     };
+    sub = name;
+    sub = args;
 };
