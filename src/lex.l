@@ -66,7 +66,11 @@ int lineno = 1;
 "while"                { return WHILE; }
 
 [ \t\r]                ;
--?[0-9]+               { yylval.i = atoi (yytext); return INT; }
+
+[-+]?0[0-9]*           { yylval.i = strtoll (yytext, NULL, 8); return INT; }
+[-+]?[1-9][0-9]*       { yylval.i = strtoll (yytext, NULL, 10); return INT; }
+[-+]?0x[0-9]+          { yylval.i = strtoll (yytext, NULL, 16); return INT; }
+
 [_a-zA-Z][_a-zA-Z0-9]* { yylval.str = xstrdup (yytext); return STR; }
 \"([^\\\"]|\\[^\"])*\" { yylval.str = xmemdup (yytext + 1, yyleng - 2); return STRING; }
 
