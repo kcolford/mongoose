@@ -26,7 +26,8 @@ lex.l						\
 lib.c						\
 optimizer.c					\
 parse.y						\
-semantic.c
+semantic.c					\
+unit.c
 
 compiler_LDADD = $(top_builddir)/lib/lib$(PACKAGE).la $(LTLIBINTL) $(LIB_ACL)
 

@@ -34,82 +34,15 @@ along with Compiler; see the file COPYING.  If not see
 
 #include <assert.h>
 
-FILE *outfile = NULL;
 int optimize = 0;
 int debug = 0;
 
 char *infile_name = NULL;
 char *outfile_name = NULL;
 
-char *name = NULL;
-
-extern int yyparse (void);
-
 extern int yydebug;
-
-enum stop_point {
-  preprocess_point,
-  compile_point,
-  assemble_point,
-  linker_point, 
-  unknown_point } stop = unknown_point;
-
-void
-del_name ()
-{
-  if (name != NULL && strcmp (name, infile_name) != 0)
-    unlink (name);
-}
-
-char *
-preprocess (const char *in)
-{
-  char *out = tmpfile_name ();
-  const char *args[] = { "/usr/bin/cpp", in, out, NULL };
-  if (safe_system (args))
-    return NULL;
-  else
-    return out;
-}
-
-char *
-compile (const char *in)
-{
-  if (in ==  NULL)
-    return NULL;
-  yyin = fopen (in, "r");
-  char *out = tmpfile_name ();
-  outfile = fopen (out, "w");
-  int i = yyparse ();
-  fclose (yyin);
-  fclose (outfile);
-  if (i)
-    return NULL;
-  else
-    return out;
-}
-
-char *
-assemble (const char *in)
-{
-  char *out = tmpfile_name ();
-  const char *args[] = { "/usr/bin/as", "-o", out, in, NULL };
-  if (safe_system (args))
-    return NULL;
-  else
-    return out;
-}
-
-char *
-linker (const char *in)
-{
-  char *out = tmpfile_name ();
-  const char *args[] = { "/usr/bin/gcc", "-o", out, in, NULL };
-  if (safe_system (args))
-    return NULL;
-  else
-    return out;
-}
+extern char stop;
+extern void run_unit (void);
 
 const char *argp_program_version = PACKAGE_STRING;
 const char *argp_program_bug_address = PACKAGE_BUGREPORT;
@@ -187,15 +120,15 @@ arg_parse (int key, char *arg, struct argp_state *state)
       break;
 
     case 'c':
-      stop = assemble_point;
+      stop = 'o';
       break;
 
     case 'S':
-      stop = compile_point;
+      stop = 's';
       break;
 
     case 'E':
-      stop = preprocess_point;
+      stop = 'i';
       break;
 
     case 'q':
@@ -239,46 +172,7 @@ int main (int argc, char *argv[])
 
   assert (infile_name != NULL);
 
-  name = infile_name;
-  atexit (del_name);
-
-#define CHECK(C, S)						\
-    do {							\
-      char *r = C (name);					\
-      del_name ();						\
-      name = r;							\
-      if (r == NULL)						\
-	exit (1);						\
-    } while (0);						\
-    if (stop == C##_point)					\
-      {								\
-	if (outfile_name == NULL)				\
-	  {							\
-	    outfile_name = xstrdup (infile_name);		\
-	    outfile_name[strlen (outfile_name) - 1] = S;	\
-	  }							\
-	break;							\
-      }								\
-
-  switch (name[strlen (name) - 1])
-    {
-    case 'c':
-      CHECK (preprocess, 'i');
-    case 'i':
-      CHECK (compile, 's');
-    case 's':
-      CHECK (assemble, 'o');
-    case 'o':
-    default:
-      CHECK (linker, outfile_name[strlen (outfile_name) - 1]);
-    }
-
-#undef CHECK
-
-  if (outfile_name == NULL)
-    outfile_name = "a.out";
-
-  copy_file_preserving (name, outfile_name);
+  run_unit ();
 
   return 0;
 }
