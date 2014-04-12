@@ -42,6 +42,7 @@ struct ast
   union
   {
     [+ FOR types +]
+    [+ IF (or (exist? "cont") (exist? "extra")) +]
     struct
     {
       [+ FOR cont +]
@@ -51,6 +52,7 @@ struct ast
       [+type+] [+call+];
       [+ ENDFOR extra +]
     } [+name+];
+    [+ ENDIF +]
     [+ ENDFOR types +]
   } op;
   int num_ops;
@@ -58,7 +60,7 @@ struct ast
 };
 
 [+ FOR types +]
-extern struct ast *make_[+name+] (int, struct ast *[+ FOR cont +][+ IF (not (== "struct ast *" (get "type"))) +], [+type+][+ ENDIF +][+ ENDFOR cont +][+ FOR sub +], struct ast *[+sub+][+ ENDFOR +]);
+extern struct ast *make_[+name+] (int, struct ast *[+ FOR cont +], [+type+][+ ENDFOR cont +][+ FOR sub +], struct ast *[+ ENDFOR +]);
 [+ ENDFOR types +]
 
 extern struct ast *make_whileloop (struct ast *, struct ast *);
@@ -72,7 +74,7 @@ extern struct ast *make_whileloop (struct ast *, struct ast *);
 
 [+ FOR types +]
 struct ast *
-make_[+name+] (int flags, struct ast *next[+ FOR cont +][+ IF (not (== "struct ast *" (get "type"))) +], [+type+] [+call+][+ ENDIF +][+ ENDFOR cont +][+ FOR sub +], struct ast *[+sub+][+ ENDFOR sub +])
+make_[+name+] (int flags, struct ast *next[+ FOR cont +], [+type+] [+call+][+ ENDFOR cont +][+ FOR sub +], struct ast *[+sub+][+ ENDFOR sub +])
 {
   struct ast *out = xmalloc (sizeof *out + sizeof out * ([+ (count "sub") +] - 1));
   out->type = [+name+]_type;
