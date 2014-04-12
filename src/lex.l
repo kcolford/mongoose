@@ -30,7 +30,7 @@ along with Compiler; see the file COPYING.  If not see
 #include <string.h>
 
 char *file_name = NULL;
-int lineno = 1;
+int lineno = 0;
 
 %}
 
@@ -83,8 +83,7 @@ int lineno = 1;
 <LINE_COMMENT>\n       { lineno++; BEGIN (INITIAL); }
 
 "# "[0-9]+.*           {
-  strtok (yytext, "# \"");
-  lineno = strtol (strtok (NULL, "# \""), NULL, 10);
+  lineno = strtol (strtok (yytext, "# \""), NULL, 10);
   file_name = xstrdup (strtok (NULL, "# \""));
 }
 

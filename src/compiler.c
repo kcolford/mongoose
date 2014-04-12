@@ -48,6 +48,7 @@ extern int yyparse (void);
 extern int yydebug;
 
 enum stop_point {
+  preprocess_point,
   compile_point,
   assemble_point,
   linker_point, 
@@ -61,6 +62,17 @@ del_name ()
 }
 
 char *
+preprocess (const char *in)
+{
+  char *out = tmpfile_name ();
+  const char *args[] = { "/usr/bin/cpp", in, out, NULL };
+  if (safe_system (args))
+    return NULL;
+  else
+    return out;
+}
+
+char *
 compile (const char *in)
 {
   if (in ==  NULL)
@@ -68,8 +80,6 @@ compile (const char *in)
   yyin = fopen (in, "r");
   char *out = tmpfile_name ();
   outfile = fopen (out, "w");
-  lineno = 1;
-  file_name = infile_name;
   int i = yyparse ();
   fclose (yyin);
   fclose (outfile);
@@ -141,6 +151,8 @@ struct argp_option opts[] = {
     N_("Only compile to object file") },
   { NULL,       'S',   NULL,                   0,
     N_("Only compile to assembly") },
+  { NULL,       'E',   NULL,                   0,
+    N_("Only run the preprocessor") },
   { "quiet",    'q',   NULL,                   0,
     N_("Don't print anything (disables -d and -v)") },
 #if 0
@@ -180,6 +192,10 @@ arg_parse (int key, char *arg, struct argp_state *state)
 
     case 'S':
       stop = compile_point;
+      break;
+
+    case 'E':
+      stop = preprocess_point;
       break;
 
     case 'q':
@@ -247,6 +263,8 @@ int main (int argc, char *argv[])
   switch (name[strlen (name) - 1])
     {
     case 'c':
+      CHECK (preprocess, 'i');
+    case 'i':
       CHECK (compile, 's');
     case 's':
       CHECK (assemble, 'o');
