@@ -48,6 +48,8 @@ char *
 preprocess (const char *in)
 {
   char *out = tmpfile_name ();
+  /* This is the GCC's preprocessor which we hope to replace with our
+     own. */
   const char *args[] = { "/usr/bin/cpp", in, out, NULL };
   if (safe_system (args))
     return NULL;
@@ -87,6 +89,10 @@ char *
 linker (const char *in)
 {
   char *out = tmpfile_name ();
+  /* Hopefully we can move away from having to use the GCC to link our
+     programs, but it seems to link in some other object files that we
+     can't duplicate yet.  Once we can create our own, we will replace
+     this with "ld". */
   const char *args[] = { "/usr/bin/gcc", "-o", out, in, NULL };
   if (safe_system (args))
     return NULL;
@@ -126,6 +132,9 @@ run_unit ()
 
 #undef CHECK
 
+  /* If an output file name wasn't specified, then we need to
+     determine one from the name of the source file.  If that can't be
+     done though, we just set it to "a.out". */
   if (outfile_name == NULL)
     {
       if (stop != 0)

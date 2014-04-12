@@ -34,11 +34,10 @@ int lineno = 0;
 
 %}
 
-%x LINE_COMMENT
-%x BLOCK_COMMENT
-
 %%
 
+ /* As one can see, there are a number of multi-character lexemes that
+    have to be supported. */
 "=="                   { return EQ; }
 "!="                   { return NE; }
 ">="                   { return GE; }
@@ -60,33 +59,40 @@ int lineno = 0;
 "|="                   { return MUT_OR; }
 "^="                   { return MUT_XOR; }
 
+ /* These are the handful of keywords that are currently supported. */
 "return"               { return RETURN; }
 "if"                   { return IF; }
 "goto"                 { return GOTO; }
 "while"                { return WHILE; }
 
+ /* Whitespace is thrown out. */
 [ \t\r]                ;
 
+ /* Different styles of inputting numbers. */
 [-+]?0[0-9]*           { yylval.i = strtoll (yytext, NULL, 8); return INT; }
 [-+]?[1-9][0-9]*       { yylval.i = strtoll (yytext, NULL, 10); return INT; }
 [-+]?0x[0-9]+          { yylval.i = strtoll (yytext, NULL, 16); return INT; }
 
+ /* Symbols are copied and passed over to parser to decide their
+    fate. */
 [_a-zA-Z][_a-zA-Z0-9]* { yylval.str = xstrdup (yytext); return STR; }
+
+ /* Strings are extracted and passed unformated to the assembler so
+    that it can deal with any escape sequences. */
 \"([^\\\"]|\\[^\"])*\" { yylval.str = xmemdup (yytext + 1, yyleng - 2); return STRING; }
 
-"/*"                   { BEGIN (BLOCK_COMMENT); }
-<BLOCK_COMMENT>.       ;
-<BLOCK_COMMENT>"*/"    { BEGIN (INITIAL); }
-
-"//"                   { BEGIN (LINE_COMMENT); }
-<LINE_COMMENT>.        ;
-<LINE_COMMENT>\n       { lineno++; BEGIN (INITIAL); }
-
+ /* Extract the current line number and file name from the directives
+    left by the C preprocessor. */
 "# "[0-9]+.*           {
   lineno = strtol (strtok (yytext, "# \""), NULL, 10);
+  free (file_name);
   file_name = xstrdup (strtok (NULL, "# \""));
 }
 
-<*>\n                  { lineno++; }
+ /* Keep track of line numbers. */
+\n                     { lineno++; }
 
+ /* If something didn't fit into any of the above categories, we'll
+    return it to the parser to let it deal with whether it's valid or
+    should throw an error. */
 .                      { return yytext[0]; }
