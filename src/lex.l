@@ -82,6 +82,12 @@ int lineno = 1;
 <LINE_COMMENT>.        ;
 <LINE_COMMENT>\n       { lineno++; BEGIN (INITIAL); }
 
+"# "[0-9]+.*           {
+  strtok (yytext, "# \"");
+  lineno = strtol (strtok (NULL, "# \""), NULL, 10);
+  file_name = xstrdup (strtok (NULL, "# \""));
+}
+
 <*>\n                  { lineno++; }
 
 .                      { return yytext[0]; }
