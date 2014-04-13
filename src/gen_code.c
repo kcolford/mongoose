@@ -61,7 +61,7 @@ jmp_buf error_jump;
     longjmp (error_jump, 1);			\
   } while (0)
 
-const char *
+static inline const char *
 regis (int a)
 {
   const char *storage[] =
@@ -76,7 +76,7 @@ regis (int a)
    through.  Currently, they seriously conflict with the general-use
    registers and a function call in the middle of an expression is
    likely to fail. */
-const int 
+static inline const int 
 call_regis(int a)
 {
   const int storage[] = 
@@ -94,7 +94,7 @@ call_regis(int a)
    are done like an RPN calculator) so that we only need to increment
    and decrement the avail variable to check which register we should
    use. */
-const int 
+static inline const int 
 general_regis(int a)
 {
   const int storage[] = 
@@ -108,14 +108,14 @@ general_regis(int a)
   return storage[a];
 }
 
-int avail = 0;
+static int avail = 0;
 
-int str_labelno = 0;
-char *data_section = NULL;
+static int str_labelno = 0;
+static char *data_section = NULL;
 
-int branch_labelno = 0;
+static int branch_labelno = 0;
 
-char *
+static inline char *
 give_register_how (const char *i, const char *s)
 {
   char *r;
@@ -198,7 +198,7 @@ give_register_how (const char *i, const char *s)
       (X) = give_register (X);			\
   } while (0)
 
-void
+static void
 gen_code_r (struct ast *s)
 {
   if (s == NULL)

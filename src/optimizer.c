@@ -59,7 +59,7 @@ along with Compiler; see the file COPYING.  If not see
   FOLD_INTEGER_BIN (OP);			\
   break
 
-void
+static void
 optimizer_r (struct ast **ss)
 {
   assert (ss != NULL);

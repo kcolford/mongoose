@@ -36,13 +36,13 @@ struct state_entry
   char *meaning;
 };
 
-struct state_entry state[0x10000] = { {NULL, NULL} };
-int state_end = 0;
+static struct state_entry state[0x10000] = { {NULL, NULL} };
+static int state_end = 0;
 
-int func_allocd = 0;
-int curr_labelno = 1;
+static int func_allocd = 0;
+static int curr_labelno = 1;
 
-void
+static inline void
 clear_state ()
 {
   memset (state, 0, sizeof state);
@@ -50,7 +50,7 @@ clear_state ()
   func_allocd = 0;
 }
 
-void
+static inline void
 add_to_state (char *v, size_t s)
 {
   func_allocd += s;
@@ -59,7 +59,7 @@ add_to_state (char *v, size_t s)
   ++state_end;
 }
 
-char *
+static inline char *
 get_from_state (char *l)
 {
   int i;
@@ -72,7 +72,7 @@ get_from_state (char *l)
   return l;
 } 
 
-char *
+static inline char *
 get_label (char *l)
 {
   char *s = get_from_state (l);
@@ -85,7 +85,7 @@ get_label (char *l)
   return s;
 }
 
-void
+static void
 dealias_r (struct ast **ss)
 {
   assert (ss != NULL);

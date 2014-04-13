@@ -37,7 +37,7 @@ extern char *infile_name;
 extern char *outfile_name;
 extern int yyparse (void);
 
-void
+static void
 del_name ()
 {
   if (name != NULL && strcmp (name, infile_name) != 0)
@@ -45,7 +45,7 @@ del_name ()
   name = NULL;
 }
 
-char *
+static inline char *
 preprocess (const char *in)
 {
   char *out = tmpfile_name ();
@@ -58,7 +58,7 @@ preprocess (const char *in)
     return out;
 }
 
-char *
+static inline char *
 compile (const char *in)
 {
   if (in ==  NULL)
@@ -75,7 +75,7 @@ compile (const char *in)
     return out;
 }
 
-char *
+static inline char *
 assemble (const char *in)
 {
   char *out = tmpfile_name ();
@@ -86,7 +86,7 @@ assemble (const char *in)
     return out;
 }
 
-char *
+static inline char *
 linker (const char *in)
 {
   char *out = tmpfile_name ();
