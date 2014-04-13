@@ -100,7 +100,9 @@ int lineno = 0;
  /* Extract the current line number and file name from the directives
     left by the C preprocessor. */
 "# "[0-9]+.*           {
-  lineno = strtol (strtok (yytext, "# \""), NULL, 10);
+  char *t = alloca (yyleng + 1);
+  strcpy (t, yytext);
+  lineno = strtol (strtok (t, "# \""), NULL, 10);
   file_name = xstrdup (strtok (NULL, "# \""));
 }
 

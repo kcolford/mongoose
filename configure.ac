@@ -52,7 +52,7 @@ AC_FUNC_ERROR_AT_LINE
 AC_FUNC_FORK
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-AC_CHECK_FUNCS([atexit memset setlocale vasprintf])
+AC_CHECK_FUNCS([atexit memset setlocale strchr strtol vasprintf])
 
 AC_DEFINE([COPYRIGHT_YEAR], [m4_esyscmd([date +%Y])], 
           [year in copyright message])
