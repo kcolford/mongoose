@@ -35,10 +35,9 @@ struct ast
 {
   enum { [+ FOR types ',
          ' +][+name+]_type[+ ENDFOR types +] } type;
-  [+ FOR top_level ';
-  ' +][+type+] [+call+][+ ENDFOR top_level +];
-  int flags;
-  struct ast *next;
+  [+ FOR top_level +]
+  [+type+] [+call+];
+  [+ ENDFOR top_level +];
   union
   {
     [+ FOR types +]
@@ -60,7 +59,9 @@ struct ast
 };
 
 [+ FOR types +]
-extern struct ast *make_[+name+] (int, struct ast *[+ FOR cont +], [+type+][+ ENDFOR cont +][+ FOR sub +], struct ast *[+ ENDFOR +]);
+extern struct ast *make_[+name+] ([+ FOR cont ', ' +][+type+][+ ENDFOR cont +]
+				  [+ IF (and (exist? "cont") (exist? "sub")) +], [+ ENDIF +]
+				  [+ FOR sub ', ' +]struct ast *[+ ENDFOR sub +]);
 [+ ENDFOR types +]
 
 extern struct ast *make_whileloop (struct ast *, struct ast *);
@@ -76,12 +77,12 @@ extern struct ast *make_whileloop (struct ast *, struct ast *);
 
 [+ FOR types +]
 struct ast *
-make_[+name+] (int flags, struct ast *next[+ FOR cont +], [+type+] [+call+][+ ENDFOR cont +][+ FOR sub +], struct ast *[+sub+][+ ENDFOR sub +])
+make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
+	       [+ IF (and (exist? "cont") (exist? "sub")) +], [+ ENDIF +]
+	       [+ FOR sub ', ' +]struct ast *[+sub+][+ ENDFOR sub +])
 {
   struct ast *out = xmalloc (sizeof *out + sizeof out * ([+ (count "sub") +] - 1));
   out->type = [+name+]_type;
-  out->flags = flags;
-  out->next = next;
   [+ FOR top_level +]
     out->[+call+] = ([+type+]) 0;
   [+ ENDFOR top_level +]
@@ -102,6 +103,6 @@ struct ast *
 make_whileloop (struct ast *cond, struct ast *body)
 {
   char *t = place_holder ();
-  return make_label (0, make_cond (0, NULL, cond, ast_cat (body, make_jump (0, NULL, t))), t);
+  return ast_cat (make_label (t), make_cond (cond, ast_cat (body, make_jump (t))));
 }
 [+ ESAC +]

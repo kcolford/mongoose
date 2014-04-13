@@ -100,11 +100,11 @@ file:		/* empty */   { $$ = NULL; }
 	;
 
 /* Function definitions. */
-def:		STR STR '(' defargs ')' '{' body '}' { $$ = make_function (0, NULL, $1, $2, $4, $7); }
-	|	STR STR '('         ')' '{' body '}' { $$ = make_function (0, NULL, $1, $2, NULL, $6); }
+def:		STR STR '(' defargs ')' '{' body '}' { $$ = make_function ($1, $2, $4, $7); }
+	|	STR STR '('         ')' '{' body '}' { $$ = make_function ($1, $2, NULL, $6); }
 	;
 
-defargs:	STR STR             { $$ = make_variable (0, NULL, $1, $2); }
+defargs:	STR STR             { $$ = make_variable ($1, $2); }
 	|	defargs ',' defargs { $$ = ast_cat ($1, $3); }
 	;
 
@@ -114,17 +114,17 @@ body:		/* empty */         { $$ = NULL; }
 
 /* Code statements. */
 statement:	';'                             { $$ = NULL; }
-	|	STR STR ';'                     { $$ = make_variable (0, NULL, $1, $2); }
-	|	STR STR '=' expr ';'            { $$ = make_binary (0, NULL, '=', make_variable (0, NULL, $1, $2), $4); }
+	|	STR STR ';'                     { $$ = make_variable ($1, $2); }
+	|	STR STR '=' expr ';'            { $$ = make_binary ('=', make_variable ($1, $2), $4); }
 	|	expr ';'                        { $$ = $1; $$->flags |= AST_THROW_AWAY; }
-	|	IF '(' expr ')' statement       { $$ = make_cond (0, NULL, $3, $5); }
-	|	IF '(' expr ')' '{' body '}'    { $$ = make_cond (0, NULL, $3, $6); }
-	|	STR ':' statement               { $$ = make_label (0, $3, $1); }
-	|	GOTO STR ';'                    { $$ = make_jump (0, NULL, $2); }
+	|	IF '(' expr ')' statement       { $$ = make_cond ($3, $5); }
+	|	IF '(' expr ')' '{' body '}'    { $$ = make_cond ($3, $6); }
+	|	STR ':' statement               { $$ = ast_cat (make_label ($1), $3); }
+	|	GOTO STR ';'                    { $$ = make_jump ($2); }
 	|	WHILE '(' expr ')' statement    { $$ = make_whileloop ($3, $5); }
 	|	WHILE '(' expr ')' '{' body '}' { $$ = make_whileloop ($3, $6); }
-	|	RETURN ';'                      { $$ = make_ret (0, NULL, NULL); }
-	|	RETURN expr ';'                 { $$ = make_ret (0, NULL, $2); }
+	|	RETURN ';'                      { $$ = make_ret (NULL); }
+	|	RETURN expr ';'                 { $$ = make_ret ($2); }
 	;
 
 /* Adjacent strings are concatenated together. */
@@ -133,39 +133,39 @@ str:		STRING     { $$ = $1; }
 	;
 
 /* These are all the constant expressions. */
-constrval:	INT { $$ = make_integer (0, NULL, $1); }
-	|	str { $$ = make_string (0, NULL, $1); }
+constrval:	INT { $$ = make_integer ($1); }
+	|	str { $$ = make_string ($1); }
 	;
 
 /* Expressions. */
-expr:		STR                   { $$ = make_variable (0, NULL, NULL, $1); }
-	|	expr '(' ')'          { $$ = make_function_call (0, NULL, $1, NULL); }
-	|	expr '(' callargs ')' { $$ = make_function_call (0, NULL, $1, $3); }
-	|	expr '=' expr         { $$ = make_binary (0, NULL, '=', $1, $3); }
-	|	expr '<' expr         { $$ = make_binary (0, NULL, '<', $1, $3); }
-	|	expr '>' expr         { $$ = make_binary (0, NULL, '>', $1, $3); }
-	|	expr '&' expr         { $$ = make_binary (0, NULL, '&', $1, $3); }
-	|	expr '|' expr         { $$ = make_binary (0, NULL, '|', $1, $3); }
-	|	expr '^' expr         { $$ = make_binary (0, NULL, '^', $1, $3); }
-	|	expr '+' expr         { $$ = make_binary (0, NULL, '+', $1, $3); }
-	|	expr '-' expr         { $$ = make_binary (0, NULL, '-', $1, $3); }
-	|	expr '*' expr         { $$ = make_binary (0, NULL, '*', $1, $3); }
-	|	expr '/' expr         { $$ = make_binary (0, NULL, '/', $1, $3); }
-	|	expr '%' expr         { $$ = make_binary (0, NULL, '%', $1, $3); }
-	|	expr '[' expr ']'     { $$ = make_binary (0, NULL, '[', $1, $3); }
-	|	expr EQ expr          { $$ = make_binary (0, NULL, EQ, $1, $3); }
-	|	expr NE expr          { $$ = make_binary (0, NULL, NE, $1, $3); }
-	|	expr LE expr          { $$ = make_binary (0, NULL, LE, $1, $3); }
-	|	expr GE expr          { $$ = make_binary (0, NULL, GE, $1, $3); }
-	|	expr RS expr          { $$ = make_binary (0, NULL, RS, $1, $3); }
-	|	expr LS expr          { $$ = make_binary (0, NULL, LS, $1, $3); }
-	|	'&'expr %prec SIZEOF  { $$ = make_unary (0, NULL, '&', $2); }
-	|	'*'expr %prec SIZEOF  { $$ = make_unary (0, NULL, '*', $2); }
-	|	expr INC              { $$ = make_unary (0, NULL, INC, $1); }
-	|	expr DEC              { $$ = make_unary (0, NULL, DEC, $1); }
-	|	INC expr              { $$ = make_unary (0, NULL, AST_UNARY_PREFIX | INC, $2); }
-	|	DEC expr              { $$ = make_unary (0, NULL, AST_UNARY_PREFIX | DEC, $2); }
-	|	'-'expr %prec SIZEOF  { $$ = make_unary (0, NULL, '-', $2); }
+expr:		STR                   { $$ = make_variable (NULL, $1); }
+	|	expr '(' ')'          { $$ = make_function_call ($1, NULL); }
+	|	expr '(' callargs ')' { $$ = make_function_call ($1, $3); }
+	|	expr '=' expr         { $$ = make_binary ('=', $1, $3); }
+	|	expr '<' expr         { $$ = make_binary ('<', $1, $3); }
+	|	expr '>' expr         { $$ = make_binary ('>', $1, $3); }
+	|	expr '&' expr         { $$ = make_binary ('&', $1, $3); }
+	|	expr '|' expr         { $$ = make_binary ('|', $1, $3); }
+	|	expr '^' expr         { $$ = make_binary ('^', $1, $3); }
+	|	expr '+' expr         { $$ = make_binary ('+', $1, $3); }
+	|	expr '-' expr         { $$ = make_binary ('-', $1, $3); }
+	|	expr '*' expr         { $$ = make_binary ('*', $1, $3); }
+	|	expr '/' expr         { $$ = make_binary ('/', $1, $3); }
+	|	expr '%' expr         { $$ = make_binary ('%', $1, $3); }
+	|	expr '[' expr ']'     { $$ = make_binary ('[', $1, $3); }
+	|	expr EQ expr          { $$ = make_binary (EQ, $1, $3); }
+	|	expr NE expr          { $$ = make_binary (NE, $1, $3); }
+	|	expr LE expr          { $$ = make_binary (LE, $1, $3); }
+	|	expr GE expr          { $$ = make_binary (GE, $1, $3); }
+	|	expr RS expr          { $$ = make_binary (RS, $1, $3); }
+	|	expr LS expr          { $$ = make_binary (LS, $1, $3); }
+	|	'&'expr %prec SIZEOF  { $$ = make_unary ('&', $2); }
+	|	'*'expr %prec SIZEOF  { $$ = make_unary ('*', $2); }
+	|	expr INC              { $$ = make_unary (INC, $1); }
+	|	expr DEC              { $$ = make_unary (DEC, $1); }
+	|	INC expr              { $$ = make_unary (AST_UNARY_PREFIX | INC, $2); }
+	|	DEC expr              { $$ = make_unary (AST_UNARY_PREFIX | DEC, $2); }
+	|	'-'expr %prec SIZEOF  { $$ = make_unary ('-', $2); }
 	|	'(' expr ')'          { $$ = $2; }
 	|	constrval             { $$ = $1; }
 	;

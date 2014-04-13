@@ -35,6 +35,16 @@ top_level = {
     call = loc;
 };
 
+top_level = {
+    type = int;
+    call = flags;
+};
+
+top_level = {
+    type = "struct ast *";
+    call = next;
+};
+
 types = {
     name = block;
     sub = val;
