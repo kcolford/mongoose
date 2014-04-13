@@ -26,6 +26,7 @@ along with Compiler; see the file COPYING.  If not see
 #include "lib.h"
 #include "parse.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 #include <assert.h>
@@ -36,51 +37,67 @@ struct state_entry
   char *meaning;
 };
 
-static struct state_entry state[0x10000] = { {NULL, NULL} };
-static int state_end = 0;
+struct state_stack
+{
+  struct state_stack *prev;
+  int state_end;
+  struct state_entry state[0x10000];
+};
+
+static struct state_stack absolute_top = { NULL, 0 };
+static struct state_stack *state = &absolute_top;
 
 static int func_allocd = 0;
 static int curr_labelno = 1;
 
-static inline void
-clear_state ()
-{
-  memset (state, 0, sizeof state);
-  state_end = 0;
-  func_allocd = 0;
-}
-
+/* Add a variable to the state, noting the amount of memory that is
+   allocated to it. */
 static inline void
 add_to_state (char *v, size_t s)
 {
   func_allocd += s;
-  state[state_end].label = v;
-  state[state_end].meaning = my_printf ("-%d(%%rbp)", func_allocd);
-  ++state_end;
+  state->state[state->state_end].label = v;
+  state->state[state->state_end].meaning = my_printf ("-%d(%%rbp)", func_allocd);
+  state->state_end++;
 }
 
+/* Linearly search the state array for an entry with the same key as
+   l.  If one can't be found, then it is an externally linked in
+   symbol and is simply returned as is. */
 static inline char *
 get_from_state (char *l)
 {
-  int i;
-  for (i = state_end - 1; i >= 0; i--)
+  struct state_stack *p;
+  for (p = state; p != NULL; p = p->prev)
     {
-      assert (state[i].label != NULL);
-      if (strcmp (l, state[i].label) == 0)
-	return state[i].meaning;
+      int i;
+      for (i = p->state_end - 1; i >= 0; i--)
+	{
+	  assert (p->state[i].label != NULL);
+	  if (strcmp (l, p->state[i].label) == 0)
+	    return p->state[i].meaning;
+	}
     }
   return l;
 } 
 
+/* A similar routine as above, but if a symbol meaning can't be found
+   then create one and return it. */
 static inline char *
 get_label (char *l)
 {
   char *s = get_from_state (l);
   if (*s != '.')
     {
-      state[state_end].label = l;
-      state[state_end].meaning = s = my_printf (".LJ%d", curr_labelno++);
-      ++state_end;
+      struct state_stack *p = state;
+      /* Jump up to the function level state. */
+      while (p->prev->prev != NULL)
+	p = p->prev;
+
+      /* Add the label. */
+      p->state[p->state_end].label = l;
+      p->state[p->state_end].meaning = s = my_printf (".LJ%d", curr_labelno++);
+      p->state_end++;
     }
   return s;
 }
@@ -93,13 +110,27 @@ dealias_r (struct ast **ss)
 
   if (s == NULL)
     return;
+  struct state_stack *t;
   switch (s->type)
     {
+    case block_type:
+      t = alloca (sizeof *t);
+      t->prev = state;
+      t->state_end = 0;
+      state = t;
+      dealias_r (&s->ops[0]);
+      state = state->prev;
+      break;
+
     case function_type:
-      clear_state ();
+      func_allocd = 0;
+      t = alloca (sizeof *t);
+      t->prev = state;
+      t->state_end = 0;
+      state = t;
       dealias_r (&s->ops[0]);
       dealias_r (&s->ops[1]);
-      clear_state ();
+      state = state->prev;
       break;
 
     case variable_type:
