@@ -21,7 +21,6 @@ along with Compiler; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.*/
 
 added_code = "
-#include <stdbool.h>
 #include <stddef.h>
 
 #define AST_THROW_AWAY 0x1

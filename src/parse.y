@@ -44,6 +44,20 @@ void yyerror (const char *);
 %token IF "if"
 %token GOTO "goto"
 %token WHILE "while"
+%token STATIC "static"
+%token EXTERN "extern"
+%token INLINE "inline"
+%token FOR "for"
+%token DO "do"
+%token ELSE "else"
+%token CONST "const"
+%token STRUCT "struct"
+%token TYPEDEF "typedef"
+%token UNION "union"
+%token ENUM "enum"
+%token SWITCH "switch"
+%token CASE "case"
+
 %token EQ "=="
 %token NE "!="
 %token LE "<="
@@ -88,7 +102,7 @@ void yyerror (const char *);
 %nonassoc '(' ')' '[' ']' '.'
 
 %union { struct ast *ast_val; }
-%type <ast_val> expr file def defargs body statement constrval callargs
+%type <ast_val> expr file def defargs body scoped_body statement constrval callargs
 
 %%
 
@@ -100,8 +114,8 @@ file:		/* empty */   { $$ = NULL; }
 	;
 
 /* Function definitions. */
-def:		STR STR '(' defargs ')' '{' body '}' { $$ = make_function ($1, $2, $4, $7); }
-	|	STR STR '('         ')' '{' body '}' { $$ = make_function ($1, $2, NULL, $6); }
+def:		STR STR '(' defargs ')' scoped_body { $$ = make_function ($1, $2, $4, $6); }
+	|	STR STR '('         ')' scoped_body { $$ = make_function ($1, $2, NULL, $5); }
 	;
 
 defargs:	STR STR             { $$ = make_variable ($1, $2); }
@@ -112,17 +126,20 @@ body:		/* empty */         { $$ = NULL; }
 	|	statement body      { $$ = ast_cat ($1, $2); }
 	;
 
+scoped_body:    '{' body '}' { $$ = make_block ($2); }
+        ;
+
 /* Code statements. */
 statement:	';'                             { $$ = NULL; }
 	|	STR STR ';'                     { $$ = make_variable ($1, $2); }
 	|	STR STR '=' expr ';'            { $$ = make_binary ('=', make_variable ($1, $2), $4); }
 	|	expr ';'                        { $$ = $1; $$->flags |= AST_THROW_AWAY; }
 	|	IF '(' expr ')' statement       { $$ = make_cond ($3, $5); }
-	|	IF '(' expr ')' '{' body '}'    { $$ = make_cond ($3, $6); }
+	|	IF '(' expr ')' scoped_body     { $$ = make_cond ($3, $5); }
 	|	STR ':' statement               { $$ = ast_cat (make_label ($1), $3); }
 	|	GOTO STR ';'                    { $$ = make_jump ($2); }
 	|	WHILE '(' expr ')' statement    { $$ = make_whileloop ($3, $5); }
-	|	WHILE '(' expr ')' '{' body '}' { $$ = make_whileloop ($3, $6); }
+	|	WHILE '(' expr ')' scoped_body  { $$ = make_whileloop ($3, $5); }
 	|	RETURN ';'                      { $$ = make_ret (NULL); }
 	|	RETURN expr ';'                 { $$ = make_ret ($2); }
 	;

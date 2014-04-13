@@ -66,14 +66,28 @@ int lineno = 0;
 "if"                   { return IF; }
 "goto"                 { return GOTO; }
 "while"                { return WHILE; }
+"static"               { return STATIC; }
+"extern"               { return EXTERN; }
+"inline"               { return INLINE; }
+"for"                  { return FOR; }
+"do"                   { return DO; }
+"else"                 { return ELSE; }
+"const"                { return CONST; }
+"struct"               { return STRUCT; }
+"typedef"              { return TYPEDEF; }
+"union"                { return UNION; }
+"enum"                 { return ENUM; }
+"switch"               { return SWITCH; }
+"case"                 { return CASE; }
 
  /* Whitespace is thrown out. */
 [ \t\r]                ;
 
  /* Different styles of inputting numbers. */
-[-+]?0[0-9]*           { yylval.i = strtoll (yytext, NULL, 8); return INT; }
+[-+]?0[0-8]*           { yylval.i = strtoll (yytext, NULL, 8); return INT; }
 [-+]?[1-9][0-9]*       { yylval.i = strtoll (yytext, NULL, 10); return INT; }
-[-+]?0x[0-9]+          { yylval.i = strtoll (yytext, NULL, 16); return INT; }
+[-+]?0x[0-9a-f]+       { yylval.i = strtoll (yytext, NULL, 16); return INT; }
+[-+]?0x[0-9A-F]+       { yylval.i = strtoll (yytext, NULL, 16); return INT; }
 
  /* Symbols are copied and passed over to parser to decide their
     fate. */
@@ -87,9 +101,11 @@ int lineno = 0;
     left by the C preprocessor. */
 "# "[0-9]+.*           {
   lineno = strtol (strtok (yytext, "# \""), NULL, 10);
-  free (file_name);
   file_name = xstrdup (strtok (NULL, "# \""));
 }
+
+ /* Ignore any pragmas found in the source. */
+"#"[ \t]*"pragma".*    ;
 
  /* Keep track of line numbers. */
 \n                     { lineno++; }
