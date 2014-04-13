@@ -3,6 +3,7 @@ src/compiler.c
 src/dealias.c
 src/gen_code.c
 src/lib.c
+src/semantic.c
 
 # Gnulib source files
 lib/argp.h

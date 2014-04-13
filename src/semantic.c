@@ -24,6 +24,14 @@ along with Compiler; see the file COPYING.  If not see
 #include "compiler.h"
 #include "parse.h"
 
+#define ERROR(VAL, ...) do {			\
+    if (!(VAL))					\
+      {						\
+	error (0, 0, __VA_ARGS__);		\
+	return 1;				\
+      }						\
+  } while (0)
+
 static inline int
 is_lval (struct ast *s)
 {
@@ -50,7 +58,7 @@ semantic (struct ast *s)
     {
     case binary_type:
       if (s->op.binary.op == '=')
-	ret = ret || !is_lval (s->ops[0]);
+	ERROR (is_lval (s->ops[0]), _("Syntax Error, operand is not an lval"));
       goto recurse;
     default:
     recurse:
