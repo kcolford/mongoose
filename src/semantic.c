@@ -24,15 +24,21 @@ along with Compiler; see the file COPYING.  If not see
 #include "compiler.h"
 #include "parse.h"
 
-#if 0
-struct state
+static inline int
+is_lval (struct ast *s)
 {
-  char *label;
-  char *meaning;
-};
-
-struct state var_info[0x10000] = { {NULL, NULL} };
-int var_info_off = 0;
+  switch (s->type)
+    {
+    case binary_type:
+      return s->op.binary.op == '[';
+    case unary_type:
+      return s->op.unary.op == '*';
+    case variable_type:
+      return 1;
+    default:
+      return 0;
+    }
+}
 
 int
 semantic (struct ast *s)
@@ -42,23 +48,16 @@ semantic (struct ast *s)
     return ret;
   switch (s->type)
     {
-    case block_type:
-      ret = ret || semantic (s->op.block.val);
-      ret = ret || semantic (s->op.block.next);
-      break;
-
-    case function_type:
-      break;
+    case binary_type:
+      if (s->op.binary.op == '=')
+	ret = ret || !is_lval (s->ops[0]);
+      goto recurse;
+    default:
+    recurse:
+      ;
+      int i;
+      for (i = 0; i < s->num_ops; i++)
+	ret = ret || semantic (s->ops[i]);
     }
   return ret;
 }
-
-#else
-
-int
-semantic (struct ast *s)
-{
-  return 0;
-}
-
-#endif
