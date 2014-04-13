@@ -69,7 +69,9 @@ extern struct ast *make_whileloop (struct ast *, struct ast *);
 [+ == c +]
 #include "config.h"
 
+#include "ast.h"
 #include "compiler.h"
+#include "lib.h"
 #include "xalloc.h"
 
 [+ FOR types +]

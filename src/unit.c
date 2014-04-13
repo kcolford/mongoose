@@ -23,6 +23,7 @@ along with Compiler; see the file COPYING.  If not see
 
 #include "compiler.h"
 #include "copy-file.h"
+#include "lib.h"
 #include "xalloc.h"
 
 #include <stdlib.h>

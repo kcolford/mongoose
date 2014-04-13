@@ -20,9 +20,10 @@ along with Compiler; see the file COPYING.  If not see
 
 #include "config.h"
 
-#include "compiler.h"
 #include "ast.h"
+#include "compiler.h"
 #include "parse.h"
+
 #include <stdlib.h>
 #include <assert.h>
 
