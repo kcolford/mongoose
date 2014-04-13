@@ -47,4 +47,55 @@ extern int safe_system (const char **);
 /* This concatenates two lists of ASTs. */
 extern struct ast *ast_cat (struct ast *, struct ast *);
 
+/* **************************************************************** */
+/* Start of inlined functions. */
+
+#if HAVE_INLINE
+# include <stdio.h>
+# include <stdarg.h>
+
+inline char *
+tmpfile_name ()
+{
+  return xstrdup (tmpnam (NULL));
+}
+
+inline char *
+my_strcat (char *l, char *r)
+{
+  char *out = my_printf ("%s%s", l, r);
+  free (l);
+  free (r);
+  return out;
+}
+
+inline char *
+my_printf (const char *fmt, ...)
+{
+  va_list args;
+  va_start (args, fmt);
+  char *out = NULL;
+  int val = vasprintf (&out, fmt, args);
+  if (out == NULL)
+    xalloc_die ();
+  return out;
+}
+
+inline struct ast *
+ast_cat (struct ast *l, struct ast *r)
+{
+  if (l == NULL)
+    return r;
+  else
+    {
+      struct ast *t = l;
+      while (t->next != NULL)
+	t = t->next;
+      t->next = r;
+      return l;
+    }
+}
+
+#endif	/* HAVE_INLINE */
+
 #endif
