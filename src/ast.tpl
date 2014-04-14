@@ -66,8 +66,6 @@ extern struct ast *make_[+name+] ([+ FOR cont ', ' +][+type+][+ ENDFOR cont +]
 
 extern struct ast *make_whileloop (struct ast *, struct ast *);
 
-extern void destroy_ast (struct ast *);
-
 #endif
 [+ == c +]
 #include "config.h"
@@ -109,24 +107,6 @@ make_whileloop (struct ast *cond, struct ast *body)
 {
   char *t = place_holder ();
   return ast_cat (make_label (t), make_cond (cond, ast_cat (body, make_jump (t))));
-}
-
-void
-destroy_ast (struct ast *s)
-{
-  while (s != NULL)
-    {
-      int i;
-      for (i = 0; i < s->num_ops; i++)
-	destroy_ast (s->ops[i]);
-#if 1
-      if (s->flags & AST_THROW_AWAY)
-	FREE (s->loc);
-#endif
-      struct ast *t = s->next;
-      FREE (s);
-      s = t;
-    }
 }
 
 [+ ESAC +]

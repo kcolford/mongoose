@@ -6,7 +6,11 @@ prog=`mktemp`
 
 $COMPILER -o $prog $srcfile || ret=1
 myout=`mktemp`
-$prog > $myout || ret=1
+if [ -x $prog ]; then
+    $prog > $myout || ret=1
+else
+    ret=1
+fi
 
 nativeout=`mktemp`
 $CC -o $prog $srcfile 2> /dev/null

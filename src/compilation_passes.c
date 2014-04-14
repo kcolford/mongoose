@@ -24,6 +24,22 @@ along with Compiler; see the file COPYING.  If not see
 #include "ast.h"
 #include "compiler.h"
 
+static void
+destroy_ast (struct ast *s)
+{
+  while (s != NULL)
+    {
+      int i;
+      for (i = 0; i < s->num_ops; i++)
+	destroy_ast (s->ops[i]);
+      if (s->flags & AST_THROW_AWAY)
+	FREE (s->loc);
+      struct ast *t = s->next;
+      FREE (s);
+      s = t;
+    }
+}
+
 int
 run_compilation_passes (struct ast **ss)
 {

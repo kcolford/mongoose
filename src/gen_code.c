@@ -444,6 +444,9 @@ gen_code_r (struct ast *s)
 	}
       /* Release the previously allocated register. */
       FREE_REGISTER (from->loc);
+#if 0
+      FREE (from->loc);
+#endif
       break;
 
     case unary_type:
