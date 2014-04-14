@@ -32,6 +32,9 @@ along with Compiler; see the file COPYING.  If not see
 
 #include <assert.h>
 
+/* Macros to help determine the nature of a location.  Locations are
+   currently represented as strings but hopefully they will be
+   extended to something more elegant. */
 #define IS_REGISTER(S) ((S) != NULL && *((const char *) S) == '%')
 #define IS_LITERAL(S) ((S) != NULL && *((const char *) S) == '$')
 #define IS_MEMORY(S) ((S) != NULL && !IS_REGISTER (S) && !IS_LITERAL (S))
@@ -61,6 +64,7 @@ jmp_buf error_jump;
     longjmp (error_jump, 1);			\
   } while (0)
 
+/* These are the string variants of the registers. */
 static inline const char *
 regis (int a)
 {
@@ -419,7 +423,7 @@ gen_code_r (struct ast *s)
 	  break;
 
 	default:
-	  ERROR (_("Invalid binary operator op-code: %d\n"), 
+	  ERROR (_("Invalid binary operator op-code: %d"), 
 		 s->op.binary.op);
 	}
       assert (s->loc != NULL);
@@ -447,11 +451,10 @@ gen_code_r (struct ast *s)
 	  assert (!IS_REGISTER (s->loc));
 #if 1
 	  assert (!IS_LITERAL (s->loc));
-#else
-	  if (*s->loc == '$')
+#endif
+	  if (IS_LITERAL (s->loc))
 	    s->loc = s->loc + 1;
 	  else
-#endif
 	    s->loc = give_register_how ("lea", s->loc);
 	  break;
 
@@ -469,7 +472,7 @@ gen_code_r (struct ast *s)
 	  break;
 
 	default:
-	  ERROR (_("Invalid unary operator opcode: %d\n"), s->op.unary.op);
+	  ERROR (_("Invalid unary operator opcode: %d"), s->op.unary.op);
 	}
       assert (s->loc != NULL);
       break;      

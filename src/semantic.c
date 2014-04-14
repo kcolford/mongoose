@@ -32,6 +32,7 @@ along with Compiler; see the file COPYING.  If not see
       }						\
   } while (0)
 
+
 static inline int
 is_lval (struct ast *s)
 {
@@ -48,6 +49,9 @@ is_lval (struct ast *s)
     }
 }
 
+#define CHECK_LVAL(VAL)							\
+  ERROR (is_lval (VAL), _("Syntax Error, operand is not an lval"))
+
 int
 semantic (struct ast *s)
 {
@@ -58,14 +62,18 @@ semantic (struct ast *s)
     {
     case binary_type:
       if (s->op.binary.op == '=')
-	ERROR (is_lval (s->ops[0]), _("Syntax Error, operand is not an lval"));
-      goto recurse;
-    default:
-    recurse:
-      ;
-      int i;
-      for (i = 0; i < s->num_ops; i++)
-	ret = ret || semantic (s->ops[i]);
+	CHECK_LVAL (s->ops[0]);
+      break;
+
+    case unary_type:
+      if (s->op.binary.op & ~AST_UNARY_PREFIX == INC
+	  || s->op.binary.op & ~AST_UNARY_PREFIX == DEC)
+	CHECK_LVAL (s->ops[0]);
+      break;
     }
+  int i;
+  for (i = 0; i < s->num_ops; i++)
+    ret = ret || semantic (s->ops[i]);
+  ret = ret || semantic (s->next);
   return ret;
 }
