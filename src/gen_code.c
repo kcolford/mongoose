@@ -138,7 +138,7 @@ give_register_how (const char *i, const char *s)
   } while (0)
 
 /* This macro makes branching a whole lot easier. */
-#define BRANCH_WITH_CODE_BIN(X, Y) do {				\
+#define BRANCH_WITH_CODE_BIN(X, Y) do {		\
     gen_code_r (s->ops[0]->ops[0]);		\
     assert (s->ops[0]->ops[0]->loc != NULL);	\
     gen_code_r (s->ops[0]->ops[1]);		\
@@ -146,12 +146,12 @@ give_register_how (const char *i, const char *s)
     if (IS_LITERAL (s->ops[0]->ops[0]->loc))	\
       s->ops[0]->ops[0]->loc =			\
 	give_register (s->ops[0]->ops[0]->loc);	\
-    PUT ("\t%s\t%s, %s\n\t%s\t.LB%d\n", (X),			\
-	 s->ops[0]->ops[1]->loc,			\
-	 s->ops[0]->ops[0]->loc, (Y), n);		\
+    PUT ("\t%s\t%s, %s\n\t%s\t.LB%d\n", (X),	\
+	 s->ops[0]->ops[1]->loc,		\
+	 s->ops[0]->ops[0]->loc, (Y), n);	\
     FREE_REGISTER (s->ops[0]->ops[0]->loc);	\
-    gen_code_r (s->ops[1]);				\
-    PUT (".LB%d:\n", n);					\
+    gen_code_r (s->ops[1]);			\
+    PUT (".LB%d:\n", n);			\
   } while (0)
 
 #define ENSURE_DESTINATION_REGISTER(N, X, Y) do {	\
@@ -200,6 +200,19 @@ give_register_how (const char *i, const char *s)
       }						\
     if (IS_LITERAL (X))				\
       (X) = give_register (X);			\
+  } while (0)
+
+/* Designed for when both operands must be registers but they cannot
+   be swapped (as is the case with ENSURE_DESTINATION_REGISTER2).
+   This operation is mainly designed for the array indexing operation.
+
+   There is a risk that the X operand will be a higher index than the
+   Y operand though, so the X operand must be freed when done. */
+#define ENSURE_DESTINATION_REGISTER4(X, Y) do {	\
+    if (!IS_REGISTER (X))			\
+      (X) = give_register (X);			\
+    if (!IS_REGISTER (Y))			\
+      (Y) = give_register (Y);			\
   } while (0)
 
 static void
@@ -408,18 +421,14 @@ gen_code_r (struct ast *s)
 	  break;
 
 	case '[':
-	  ERROR (_("Not Implemented: '['"));
-	  assert (IS_MEMORY (s->loc));
-
 	  /* TODO: Type checking semantics will also be necessary to
 	           distinguish between an automaticly allocated array
 	           and a pointer. */
-
-	  /* TODO: Implement array indexing using the
-	           `$offset(%base,%index,$scale)' semantics.  This will
-	           require the use of regexp searching in all likely
-	           hood, unless we can alter the location tracking
-	           technique. */
+	  assert (!IS_LITERAL (s->loc));
+	  ENSURE_DESTINATION_REGISTER (4, s->loc, from->loc);
+	  char *temp = my_printf ("(%s,%s,8)", s->loc, from->loc);
+	  FREE_REGISTER (s->loc);
+	  s->loc = temp;
 	  break;
 
 	default:
