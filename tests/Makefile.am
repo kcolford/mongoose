@@ -1,8 +1,10 @@
 EXTRA_DIST = $(TESTS) tester.sh
-MOSTLYCLEANFILES = core
+MOSTLYCLEANFILES = core log-*
+
+COMPILER = "$(VALGRIND) $(top_builddir)/src/compiler"
 
 TESTS_ENVIRONMENT = \
-env PATH=$(top_builddir)/src:$$PATH CC=$(CC) $(SHELL)
+env CC=$(CC) COMPILER=$(COMPILER) $(SHELL)
 
 TESTS =						\
 prog-1						\

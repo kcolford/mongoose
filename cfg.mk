@@ -2,6 +2,10 @@ FILES_IN_VC = $(shell ./build-aux/vc-list-files)
 GENERATED_FILES_IN_VC = bootstrap COPYING
 WRITTEN_FILES = $(filter-out $(GENERATED_FILES_IN_VC) cfg.mk, $(FILES_IN_VC))
 
+VALGRIND = 
+#VALGRIND = valgrind --leak-check=full --log-file="log-%p"
+export VALGRIND
+
 man: $(srcdir)/src/compiler.c $(srcdir)/.version
 	$(MAKE) -C man
 	man -l $(top_srcdir)/man/compiler.1

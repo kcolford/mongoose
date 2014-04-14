@@ -119,14 +119,12 @@ destroy_ast (struct ast *s)
       int i;
       for (i = 0; i < s->num_ops; i++)
 	destroy_ast (s->ops[i]);
-#if 0
-      if (s->type == integer_type
-	  || s->type == string_type)
-	if (*s->loc == '$')
-	  free (s->loc);
+#if 1
+      if (s->flags & AST_THROW_AWAY)
+	FREE (s->loc);
 #endif
       struct ast *t = s->next;
-      free (s);
+      FREE (s);
       s = t;
     }
 }

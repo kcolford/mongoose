@@ -23,6 +23,7 @@ along with Compiler; see the file COPYING.  If not see
 
 #include "ast.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <errno.h>
@@ -34,6 +35,14 @@ along with Compiler; see the file COPYING.  If not see
    translation. */
 #define _(s) gettext (s)
 #define N_(s) gettext_noop (s)
+
+/* Macro for specially freeing dynamically allocated memory and
+   setting the location to NULL so that it's safe from a
+   double-free. */
+#define FREE(X) do {				\
+    free (X);					\
+    (X) = NULL;					\
+  } while (0)
 
 extern FILE *yyin;		/* The input stream for the lexer. */
 extern FILE *outfile;		/* The output stream for the gen_code

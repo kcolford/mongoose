@@ -41,8 +41,10 @@ static void
 del_name ()
 {
   if (name != NULL && strcmp (name, infile_name) != 0)
-    unlink (name);
-  name = NULL;
+    {
+      unlink (name);
+      FREE (name);
+    }
 }
 
 static inline char *

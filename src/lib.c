@@ -49,8 +49,8 @@ char *
 my_strcat (char *l, char *r)
 {
   char *out = my_printf ("%s%s", l, r);
-  free (l);
-  free (r);
+  FREE (l);
+  FREE (r);
   return out;
 }
 

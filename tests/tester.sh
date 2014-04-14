@@ -4,7 +4,7 @@ ret=0
 srcfile=$1
 prog=`mktemp`
 
-compiler -o $prog $srcfile || ret=1
+$COMPILER -o $prog $srcfile || ret=1
 myout=`mktemp`
 $prog > $myout || ret=1
 
