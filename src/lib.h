@@ -51,16 +51,18 @@ extern struct ast *ast_cat (struct ast *, struct ast *);
 /* Start of inlined functions. */
 
 #if HAVE_INLINE
+# include <stdlib.h>
 # include <stdio.h>
 # include <stdarg.h>
+# include "xalloc.h"
 
-inline char *
+extern inline char *
 tmpfile_name ()
 {
   return xstrdup (tmpnam (NULL));
 }
 
-inline char *
+extern inline char *
 my_strcat (char *l, char *r)
 {
   char *out = my_printf ("%s%s", l, r);
@@ -69,7 +71,7 @@ my_strcat (char *l, char *r)
   return out;
 }
 
-inline char *
+extern inline char *
 my_printf (const char *fmt, ...)
 {
   va_list args;
@@ -81,7 +83,7 @@ my_printf (const char *fmt, ...)
   return out;
 }
 
-inline struct ast *
+extern inline struct ast *
 ast_cat (struct ast *l, struct ast *r)
 {
   if (l == NULL)

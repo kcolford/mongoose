@@ -32,5 +32,6 @@ run_compilation_passes (struct ast **ss)
   ret = ret || dealias (ss);
   ret = ret || optimizer (ss);
   ret = ret || gen_code (*ss);
+  destroy_ast (*ss);
   return ret;
 }
