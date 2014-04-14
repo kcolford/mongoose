@@ -103,6 +103,7 @@ int lineno = 0;
   char *t = alloca (yyleng + 1);
   strcpy (t, yytext);
   lineno = strtol (strtok (t, "# \""), NULL, 10);
+  FREE (file_name);
   file_name = xstrdup (strtok (NULL, "# \""));
 }
 

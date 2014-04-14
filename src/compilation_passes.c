@@ -29,6 +29,30 @@ destroy_ast (struct ast *s)
 {
   while (s != NULL)
     {
+      switch (s->type)
+	{
+	case function_type:
+	  FREE (s->op.function.type);
+	  FREE (s->op.function.name);
+	  break;
+
+	case variable_type:
+	  FREE (s->op.variable.type);
+	  FREE (s->op.variable.name);
+	  break;
+
+	case string_type:
+	  FREE (s->op.string.val);
+	  break;
+
+	case label_type:
+	  FREE (s->op.label.name);
+	  break;
+
+	case jump_type:
+	  FREE (s->op.jump.name);
+	  break;
+	}
       int i;
       for (i = 0; i < s->num_ops; i++)
 	destroy_ast (s->ops[i]);
