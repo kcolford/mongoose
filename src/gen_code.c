@@ -40,7 +40,7 @@ along with Compiler; see the file COPYING.  If not see
 #define IS_MEMORY(S) ((S) != NULL && !IS_REGISTER (S) && !IS_LITERAL (S))
 
 #define ALLOC_REGISTER(X) do {				\
-    (X) = xstrdup (regis (general_regis (avail++)));	\
+    (X) = (char *) regis (general_regis (avail++));	\
   } while (0)
 
 #define FREE_REGISTER(X) do {			\
@@ -323,22 +323,21 @@ gen_code_r (struct ast *s)
       break;
 
     case integer_type:
+      assert (s->loc == NULL);
       s->loc = my_printf ("$%lld", s->op.integer.i);
-      assert (s->loc != NULL);
       break;
 
     case variable_type:
       if (s->op.variable.type != NULL && s->op.variable.alloc != 0)
 	PUT ("\tsub\t$%d, %%rsp\n", s->op.variable.alloc);
-      assert (s->loc != NULL);
       break;
 
     case string_type:
       s->loc = my_printf ("$.LS%d", str_labelno++);
       char *out = my_printf ("%s:\n\t.string\t\"%s\"\n", s->loc + 1, 
 			     s->op.string.val);
+      free (s->op.string.val);
       data_section = my_strcat (data_section, out);
-      assert (s->loc != NULL);
       break;
 
     case binary_type:

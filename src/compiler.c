@@ -34,8 +34,6 @@ along with Compiler; see the file COPYING.  If not see
 
 #include <assert.h>
 
-#include <mcheck.h>
-
 int optimize = 0;
 int debug = 0;
 
@@ -154,8 +152,6 @@ arg_parse (int key, char *arg, struct argp_state *state)
 
 int main (int argc, char *argv[])
 {
-  mtrace ();
-
   set_program_name (argv[0]);
   setlocale (LC_ALL, "");
 

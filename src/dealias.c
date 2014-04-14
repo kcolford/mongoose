@@ -111,6 +111,7 @@ dealias_r (struct ast **ss)
   if (s == NULL)
     return;
   struct state_stack *t;
+  int i;
   switch (s->type)
     {
     case block_type:
