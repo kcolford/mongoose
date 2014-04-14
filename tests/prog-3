@@ -1,0 +1,21 @@
+#!/bin/sh
+
+src='
+int test3 () {
+    return "hello world";
+}
+
+int main () {
+    puts (test3 ());
+    return 0;
+}
+'
+
+ret=0
+srcfile=`mktemp --suffix=.c`
+echo "$src" > $srcfile
+
+./tester.sh $srcfile || ret=1
+
+rm $srcfile
+exit $ret

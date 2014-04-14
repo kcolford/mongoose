@@ -1,3 +1,7 @@
+#!/bin/sh
+
+srcfile=`mktemp --suffix=.c`
+cat - > $srcfile <<EOF
 /* this is a 
    block comment */
 
@@ -18,3 +22,9 @@ int main ()
   printf ("%d\n", test1 ());
   return 0;
 }
+EOF
+
+ret=0
+./tester.sh $srcfile || ret=1
+rm $srcfile
+exit $ret
