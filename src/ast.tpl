@@ -83,7 +83,7 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
 	       [+ IF (and (exist? "cont") (exist? "sub")) +], [+ ENDIF +]
 	       [+ FOR sub ', ' +]struct ast *[+sub+][+ ENDFOR sub +])
 {
-  struct ast *out = xmalloc (sizeof *out + sizeof out * ([+ (count "sub") +] - 1));
+  struct ast *out = xmalloc (sizeof *out + sizeof out->ops * ([+ (count "sub") +] - 1));
   out->type = [+name+]_type;
   [+ FOR top_level +]
     out->[+call+] = ([+type+]) 0;
@@ -106,7 +106,8 @@ struct ast *
 make_whileloop (struct ast *cond, struct ast *body)
 {
   char *t = place_holder ();
-  return ast_cat (make_label (t), make_cond (cond, ast_cat (body, make_jump (t))));
+  char *tt = xstrdup (t);
+  return ast_cat (make_label (t), make_cond (cond, ast_cat (body, make_jump (tt))));
 }
 
 [+ ESAC +]

@@ -3,7 +3,7 @@ GENERATED_FILES_IN_VC = bootstrap COPYING
 WRITTEN_FILES = $(filter-out $(GENERATED_FILES_IN_VC) cfg.mk, $(FILES_IN_VC))
 
 VALGRIND = 
-#VALGRIND = valgrind --leak-check=full --log-file="log-%p"
+#VALGRIND = valgrind --leak-check=full --log-file="log-%p-$$2"
 export VALGRIND
 
 man: $(srcdir)/src/compiler.c $(srcdir)/.version
