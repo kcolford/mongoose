@@ -131,17 +131,10 @@ static char *data_section = NULL;
 
 static int branch_labelno = 0;
 
-static inline char *
-give_register_how (const char *i, const char *s)
-{
-  char *r;
-  ALLOC_REGISTER (r);
-  PUT ("\t%s\t%s, %s\n", i, s, r);
-  return r;
-}
-
 #define GIVE_REGISTER_HOW(I, S) do {		\
-    char *_t = give_register_how ((I), (S));	\
+    char *_t;					\
+    ALLOC_REGISTER (_t);			\
+    PUT ("\t%s\t%s, %s\n", (I), (S), _t);	\
     (S) = _t;					\
   } while (0)
 
