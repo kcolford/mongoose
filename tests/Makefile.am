@@ -15,6 +15,8 @@ prog-5						\
 prog-6						\
 prog-7						\
 prog-8						\
-prog-9
+prog-9						\
+prog-10						\
+prog-11
 
 #XFAIL_TESTS = prog-8

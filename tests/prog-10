@@ -1,0 +1,17 @@
+#!/bin/sh
+
+srcfile=`mktemp --suffix=.c`
+cat - > $srcfile <<EOF
+int main ()
+{
+  int a = 45;
+  int a_ptr = &a;
+  printf ("%d\n", *a_ptr);
+  return 0;
+}
+EOF
+
+ret=0
+./tester.sh $srcfile $0 || ret=1
+rm $srcfile
+exit $ret

@@ -453,12 +453,7 @@ gen_code_r (struct ast *s)
     case unary_type:
       gen_code_r (s->ops[0]);
       s->loc = xstrdup (s->ops[0]->loc);
-      if (!(s->op.unary.op & AST_UNARY_PREFIX))
-	{
-	  GIVE_REGISTER (s->loc);
-	  s->op.unary.op &= ~AST_UNARY_PREFIX;
-	}
-      switch (s->op.unary.op)
+      switch (s->op.unary.op & ~AST_UNARY_PREFIX)
 	{
 	case '*':
 	  ENSURE_DESTINATION_REGISTER_UNI (s->loc);
@@ -476,10 +471,14 @@ gen_code_r (struct ast *s)
 	  break;
 
 	case INC:
+	  if (!(s->op.unary.op & AST_UNARY_PREFIX))
+	    GIVE_REGISTER (s->loc);
 	  PUT ("\tinc\t%s\n", s->ops[0]->loc);
 	  break;
 	  
 	case DEC:
+	  if (!(s->op.unary.op & AST_UNARY_PREFIX))
+	    GIVE_REGISTER (s->loc);
 	  PUT ("\tdec\t%s\n", s->ops[0]->loc);
 	  break;
 
