@@ -75,6 +75,9 @@ extern int gen_code (struct ast *);
 /* The optimizer. */
 extern int optimizer (struct ast **);
 
+/* Collect all variables to the start of the function. */
+extern int collect_vars (struct ast *);
+
 /* The pass that translates all aliases into what they really mean. */
 extern int dealias (struct ast **);
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-srcfile=`mktemp --suffix=.c`
+srcfile=file.c
 cat - > $srcfile <<EOF
 /* this is a 
    block comment */

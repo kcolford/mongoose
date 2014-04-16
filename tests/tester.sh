@@ -14,7 +14,11 @@ fi
 
 nativeout=`mktemp`
 $CC -o $prog $srcfile 2> /dev/null
-$prog > $nativeout
+if [ -x $prog ]; then
+    $prog > $nativeout || ret=1
+else
+    ret=1
+fi
 
 cmp -s $myout $nativeout || ret=1
 

@@ -337,7 +337,7 @@ gen_code_r (struct ast *s)
       break;
 
     case variable_type:
-      if (s->op.variable.type != NULL && s->op.variable.alloc != 0)
+      if (s->op.variable.alloc != 0)
 	PUT ("\tsub\t$%d, %%rsp\n", s->op.variable.alloc);
       break;
 

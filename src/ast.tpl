@@ -54,7 +54,7 @@ struct ast
     [+ ENDIF +]
     [+ ENDFOR types +]
   } op;
-  int num_ops;
+  const int num_ops;
   struct ast *ops[1];
 };
 
@@ -83,18 +83,16 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
 	       [+ IF (and (exist? "cont") (exist? "sub")) +], [+ ENDIF +]
 	       [+ FOR sub ', ' +]struct ast *[+sub+][+ ENDFOR sub +])
 {
-  struct ast *out = xmalloc (sizeof *out + sizeof out->ops * ([+ (count "sub") +] - 1));
-  out->type = [+name+]_type;
-  [+ FOR top_level +]
-    out->[+call+] = ([+type+]) 0;
-  [+ ENDFOR top_level +]
+  [+ (tpl-file-line c-file-line-fmt) +]
+  struct ast template = { [+name+]_type[+ FOR top_level +], ([+type+]) 0[+ ENDFOR +], 
+			  {0}, [+ (count "sub") +], NULL };
+  struct ast *out = xmemdup (&template, sizeof *out + sizeof out->ops * ([+ (count "sub") +] - 1));
   [+ FOR extra +]
     out->op.[+name+].[+call+] = ([+type+]) 0;
   [+ ENDFOR extra +];
   [+ FOR cont +]
     out->op.[+name+].[+call+] = [+call+];
   [+ ENDFOR cont +];
-  out->num_ops = [+ (count "sub") +];
   [+ FOR sub +]
     out->ops[[+ (for-index) +]] = [+sub+];
   [+ ENDFOR sub +];

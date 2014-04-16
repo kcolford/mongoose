@@ -13,7 +13,7 @@ int main () {
 '
 
 ret=0
-srcfile=`mktemp --suffix=.c`
+srcfile=file.c
 echo "$src" > $srcfile
 
 ./tester.sh $srcfile $0 || ret=1

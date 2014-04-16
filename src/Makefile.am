@@ -17,6 +17,7 @@ parse.h
 compiler_SOURCES =				\
 ast.c						\
 ast.h						\
+collect_vars.c					\
 compilation_passes.c				\
 compiler.c					\
 compiler.h					\
