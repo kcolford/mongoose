@@ -86,7 +86,7 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
   [+ (tpl-file-line c-file-line-fmt) +]
   struct ast template = { [+name+]_type[+ FOR top_level +], ([+type+]) 0[+ ENDFOR +], 
 			  {0}, [+ (count "sub") +], NULL };
-  struct ast *out = xmemdup (&template, sizeof *out + sizeof out->ops * ([+ (count "sub") +] - 1));
+  struct ast *out = xmemdup (&template, sizeof *out + sizeof out->ops[0] * ([+ (count "sub") +] - 1));
   [+ FOR extra +]
     out->op.[+name+].[+call+] = ([+type+]) 0;
   [+ ENDFOR extra +];

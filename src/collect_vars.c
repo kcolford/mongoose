@@ -51,6 +51,7 @@ collect_vars_r (struct ast *s)
 	{
 	  assert (s->op.variable.type != NULL);
 	  vars = make_variable (xstrdup (s->op.variable.type), xstrdup (s->op.variable.name));
+	  vars->loc = xstrdup (s->loc);
 	  vars->op.variable.alloc = s->op.variable.alloc;
 	  s->op.variable.alloc = 0;
 	}
@@ -60,7 +61,7 @@ collect_vars_r (struct ast *s)
       ;
       int i;
       for (i = 0; i < s->num_ops; i++)
-	vars = ast_cat (vars, s->ops[i]);
+	vars = ast_cat (vars, collect_vars_r (s->ops[i]));
     }
   vars = ast_cat (vars, collect_vars_r (s->next));
   return vars;
