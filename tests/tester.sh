@@ -1,8 +1,9 @@
-#!/bin/sh
 
-ret=0
-srcfile=$1
 prog=`mktemp`
+
+if [ x"$COMPILER" = x ]; then
+    exit 77
+fi
 
 $COMPILER -o $prog $srcfile || ret=1
 myout=`mktemp`
@@ -23,4 +24,3 @@ fi
 cmp -s $myout $nativeout || ret=1
 
 rm $myout $nativeout $prog
-exit $ret
