@@ -95,7 +95,11 @@ int lineno = 0;
 
  /* Strings are extracted and passed unformated to the assembler so
     that it can deal with any escape sequences. */
-\"([^\\\"]|\\[^\"])*\" { yylval.str = xmemdup (yytext + 1, yyleng - 2); return STRING; }
+\"([^\\\"]|\\[^\"])*\" { 
+  yylval.str = xmemdup (yytext + 1, yyleng - 1);
+  yylval.str[yyleng - 2] = '\0';
+  return STRING;
+}
 
  /* Extract the current line number and file name from the directives
     left by the C preprocessor. */

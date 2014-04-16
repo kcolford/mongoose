@@ -205,7 +205,7 @@ static int branch_labelno = 0;
     if (!IS_LITERAL (Y))			\
       {						\
 	PUT ("\tmov\t%s, %%rcx\n", (Y));	\
-	(Y) = xstrdup ("%cl");			\
+	(Y) = "%cl";				\
       }						\
     if (IS_LITERAL (X))				\
       GIVE_REGISTER (X);			\
@@ -337,6 +337,9 @@ gen_code_r (struct ast *s)
       break;
 
     case variable_type:
+      /* The stack position of the variable has already been
+	 determined by a previous pass, but we still have to emit an
+	 instruction if any memory has to be allocated. */
       if (s->op.variable.alloc != 0)
 	PUT ("\tsub\t$%d, %%rsp\n", s->op.variable.alloc);
       break;
@@ -390,6 +393,9 @@ gen_code_r (struct ast *s)
 	case '-':
 	  ENSURE_DESTINATION_REGISTER (1, s->loc, from->loc);
 	  PUT ("\tsub\t%s, %s\n", from->loc, s->loc);
+	  /* If we reversed the arguments in
+	     ENSURE_DESTINATION_REGISTER(1, X, Y), then we have to
+	     negate the final result. */
 	  if (from->loc != s->ops[1]->loc)
 	    PUT ("\tneg\t%s\n", s->loc);
 	  break;
@@ -415,7 +421,7 @@ gen_code_r (struct ast *s)
 	case RS:
 	  ENSURE_DESTINATION_REGISTER (3, s->loc, from->loc);
 	  PUT ("\tshr\t%s, %s\n", from->loc, s->loc);
-	  FREE (from->loc); 	/* Do this so that we don't free a
+	  from->loc = NULL; 	/* Do this so that we don't free a
 				   register when we haven't allocated
 				   one. */
 	  break;
@@ -423,7 +429,7 @@ gen_code_r (struct ast *s)
 	case LS:
 	  ENSURE_DESTINATION_REGISTER (3, s->loc, from->loc);
 	  PUT ("\tshl\t%s, %s\n", from->loc, s->loc);
-	  FREE (from->loc); 	/* Do this so that we don't free a
+	  from->loc = NULL; 	/* Do this so that we don't free a
 				   register when we haven't allocated
 				   one. */
 	  break;
