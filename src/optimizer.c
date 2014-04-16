@@ -31,8 +31,8 @@ along with Compiler; see the file COPYING.  If not see
     if (s->ops[0]->type == integer_type)	\
       {						\
 	long long a = s->ops[0]->op.integer.i;	\
-	free (s->ops[0]);			\
-	free (s);				\
+	FREE (s->ops[0]);			\
+	FREE (s);				\
 	s = make_integer (OP a);		\
       }						\
   } while (0)
@@ -44,10 +44,10 @@ along with Compiler; see the file COPYING.  If not see
 	s->ops[1]->type == integer_type)	\
       {						\
 	long long l = s->ops[0]->op.integer.i;	\
-	free (s->ops[0]);			\
+	FREE (s->ops[0]);			\
 	long long r = s->ops[1]->op.integer.i;	\
-	free (s->ops[1]);			\
-	free (s);				\
+	FREE (s->ops[1]);			\
+	FREE (s);				\
 	s = make_integer (l OP r);		\
       }						\
   } while (0)
