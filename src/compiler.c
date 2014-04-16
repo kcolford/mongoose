@@ -165,7 +165,7 @@ int main (int argc, char *argv[])
           family of functions, the cause must be found out at once and
           fixed with a proper solution rather than what we have
           here. */
-#if 0
+#if 1
   char *test = _("testing");
   assert (test != NULL);
 #endif
