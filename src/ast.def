@@ -54,11 +54,11 @@ types = {
     sub = val;
 };
 
-types = { 
+types = {
     name = function;
-    cont = { 
+    cont = {
 	type = "char *";
-	call = type; 
+	call = type;
     };
     cont = {
 	type = "char *";

@@ -54,7 +54,7 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_CHECK_FUNCS([atexit memset setlocale strchr strtol vasprintf])
 
-AC_DEFINE([COPYRIGHT_YEAR], [m4_esyscmd([date +%Y])], 
+AC_DEFINE([COPYRIGHT_YEAR], [m4_esyscmd([date +%Y])],
           [year in copyright message])
 
 AM_GNU_GETTEXT_VERSION([0.18.1])

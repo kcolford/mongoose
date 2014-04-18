@@ -23,7 +23,6 @@ along with Compiler; see the file COPYING.  If not see
 #include "compiler.h"
 #include "copy-file.h"
 #include "progname.h"
-#include "xalloc.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -60,7 +59,7 @@ There is NO WARRANTY, to the extent permitted by law.\n"), COPYRIGHT_YEAR);
 
 void (*argp_program_version_hook)(FILE *, struct argp_state *) = print_version;
 
-const char *doc = 
+const char *doc =
   N_("This is an experimental compiler that compiles a Turing complete"
      " subset of C.  Where FILE is the input file to be compiled.  All C"
      " functions are supported except for the ones which require complicated"
@@ -73,11 +72,11 @@ const char *doc =
      " (but there is no pointer data type), and more...");
 
 struct argp_option opts[] = {
-  { "outfile",  'o', "FILE",                   0, 
+  { "outfile",  'o', "FILE",                   0,
     N_("Write output to FILE") },
-  { "verbose",  'v',   NULL,                   0, 
+  { "verbose",  'v',   NULL,                   0,
     N_("Give output verbosely (intended for debugging purposes only)") },
-  { NULL,       'O',    "n", OPTION_ARG_OPTIONAL, 
+  { NULL,       'O',    "n", OPTION_ARG_OPTIONAL,
     N_("Control the optimization level (starts at 0, default is 1)") },
   { "echo",     'e',   NULL,                   0,
     N_("Echo all assembly to stdout") },
@@ -96,7 +95,7 @@ struct argp_option opts[] = {
   { 0 }
 };
 
-error_t 
+error_t
 arg_parse (int key, char *arg, struct argp_state *state)
 {
   switch (key)
@@ -113,7 +112,7 @@ arg_parse (int key, char *arg, struct argp_state *state)
       if (arg == NULL)
 	optimize = 1;
       else
-	optimize = atoi (arg);
+	optimize = strtol (arg, NULL, 0);
       break;
 
     case 'e':
@@ -136,7 +135,7 @@ arg_parse (int key, char *arg, struct argp_state *state)
       debug = 0;
       yydebug = 0;
       break;
-      
+
     case ARGP_KEY_ARG:
       infile_name = arg;
       break;

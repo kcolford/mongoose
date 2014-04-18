@@ -2,7 +2,7 @@
 
 srcfile=file.c
 cat - > $srcfile <<EOF
-/* this is a 
+/* this is a
    block comment */
 
 int test1 () {

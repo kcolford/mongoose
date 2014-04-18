@@ -27,7 +27,7 @@ along with Compiler; see the file COPYING.  If not see
 #include "compiler.h"
 #include "parse.h"
 #include "xalloc.h"
-  
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -98,7 +98,7 @@ int lineno = 0;
 
  /* Strings are extracted and passed unformated to the assembler so
     that it can deal with any escape sequences. */
-\"([^\\\"]|\\[^\"])*\" { 
+\"([^\\\"]|\\[^\"])*\" {
   yylval.str = xmemdup (yytext + 1, yyleng - 1);
   yylval.str[yyleng - 2] = '\0';
   return STRING;

@@ -70,7 +70,7 @@ static inline const char *
 regis (int a)
 {
   const char *storage[] =
-    { "%rax", "%rbx", "%rcx", "%rdx", "%rdi", "%rsi", "%r8", "%r9", "%r10", 
+    { "%rax", "%rbx", "%rcx", "%rdx", "%rdi", "%rsi", "%r8", "%r9", "%r10",
       "%r11", "%r12", "%r13", "%r14", "%r15" };
   assert (a >= 0);
   assert (a < sizeof storage / sizeof *storage);
@@ -81,10 +81,10 @@ regis (int a)
    through.  Currently, they seriously conflict with the general-use
    registers and a function call in the middle of an expression is
    likely to fail. */
-static inline const int 
+static inline const int
 call_regis(int a)
 {
-  const int storage[] = 
+  const int storage[] =
     { 4, 5, 2, 3, 6, 7 };
   assert (a >= 0);
   assert (a < sizeof storage / sizeof *storage);
@@ -93,19 +93,19 @@ call_regis(int a)
 
 /* These registers are available for use in expression calculation.
    Registers which are needed for special purposes have been left out.
-   These include: %rax, %rdx, and %rcx. 
+   These include: %rax, %rdx, and %rcx.
 
    The idea to make the allocation behave like a stack (and operations
    are done like an RPN calculator) so that we only need to increment
    and decrement the avail variable to check which register we should
    use. */
-static inline const int 
+static inline const int
 general_regis(int a)
 {
-  const int storage[] = 
+  const int storage[] =
     { 1, 8, 9, 10, 11, 12, 13
 #if 1
-      , 7, 6, 3, 2, 5, 4 
+      , 7, 6, 3, 2, 5, 4
 #endif
     };
   assert (a >= 0);
@@ -228,7 +228,7 @@ gen_code_r (struct ast *s)
 
       /* Set up the stack frame. */
       PUT ("\tpush\t%%rbp\n\tmov\t%%rsp, %%rbp\n");
-      
+
       /* Walk over the list of arguments and push them into the
 	 stack. */
       struct ast *i;
@@ -336,7 +336,7 @@ gen_code_r (struct ast *s)
 
     case string_type:
       s->loc = my_printf ("$.LS%d", str_labelno++);
-      char *out = my_printf ("%s%s:\n\t.string\t\"%s\"\n", data_section, 
+      char *out = my_printf ("%s%s:\n\t.string\t\"%s\"\n", data_section,
 			     s->loc + 1, s->op.string.val);
       FREE (s->op.string.val);
       FREE (data_section);
@@ -394,7 +394,7 @@ gen_code_r (struct ast *s)
 
 	case '*':
 	  ENSURE_DESTINATION_REGISTER (1, s->loc, from->loc);
-	  PUT ("\tmov\t%s, %%rax\n\timul\t%s\n\tmov\t%%rax, %s\n", 
+	  PUT ("\tmov\t%s, %%rax\n\timul\t%s\n\tmov\t%%rax, %s\n",
 	       from->loc, s->loc, s->loc);
 	  break;
 
@@ -413,7 +413,7 @@ gen_code_r (struct ast *s)
 	case RS:
 	  ENSURE_DESTINATION_REGISTER (3, s->loc, from->loc);
 	  PUT ("\tshr\t%s, %s\n", from->loc, s->loc);
-	  from->loc = NULL; 	/* Do this so that we don't free a
+	  from->loc = NULL;	/* Do this so that we don't free a
 				   register when we haven't allocated
 				   one. */
 	  break;
@@ -421,7 +421,7 @@ gen_code_r (struct ast *s)
 	case LS:
 	  ENSURE_DESTINATION_REGISTER (3, s->loc, from->loc);
 	  PUT ("\tshl\t%s, %s\n", from->loc, s->loc);
-	  from->loc = NULL; 	/* Do this so that we don't free a
+	  from->loc = NULL;	/* Do this so that we don't free a
 				   register when we haven't allocated
 				   one. */
 	  break;
@@ -438,7 +438,7 @@ gen_code_r (struct ast *s)
 	  break;
 
 	default:
-	  ERROR (_("Invalid binary operator op-code: %d"), 
+	  ERROR (_("Invalid binary operator op-code: %d"),
 		 s->op.binary.op);
 	}
       /* Release the previously allocated register. */
@@ -470,7 +470,7 @@ gen_code_r (struct ast *s)
 	    GIVE_REGISTER (s->loc);
 	  PUT ("\tinc\t%s\n", s->ops[0]->loc);
 	  break;
-	  
+
 	case DEC:
 	  if (!(s->op.unary.op & AST_UNARY_PREFIX))
 	    GIVE_REGISTER (s->loc);
@@ -481,7 +481,7 @@ gen_code_r (struct ast *s)
 	  ERROR (_("Invalid unary operator opcode: %d"), s->op.unary.op);
 	}
       assert (s->loc != NULL);
-      break;      
+      break;
 
     case function_call_type:
       ;
@@ -512,7 +512,7 @@ gen_code_r (struct ast *s)
 }
 
 /* Top level entry point to the code generation phase. */
-int 
+int
 gen_code (struct ast *s)
 {
   if (setjmp (error_jump))

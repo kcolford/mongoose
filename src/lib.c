@@ -52,22 +52,16 @@ place_holder ()
   return my_printf ("place$holder%d", var++);
 }
 
-char *
-tmpfile_name ()
-{
-  return xstrdup (tmpnam (NULL));
-}
-
 int
 safe_system (const char *args[])
 {
   pid_t p = fork ();
   if (p < 0)
-    error (1, errno, _("Could not fork the process to run %s"), args[0]);
+    error (1, errno, _("could not fork the process to run %s"), args[0]);
   else if (p == 0)
     {
       if (execv (args[0], (char * const *) args))
-	error (1, errno, _("Could not exec to program %s"), args[0]);
+	error (1, errno, _("could not exec to program %s"), args[0]);
     }
   else
     {
@@ -80,21 +74,6 @@ safe_system (const char *args[])
 void
 xalloc_die ()
 {
-  error (1, ENOMEM, _("Out of memory"));
+  error (1, ENOMEM, _("out of memory"));
   abort ();
-}
-
-struct ast *
-ast_cat (struct ast *l, struct ast *r)
-{
-  if (l == NULL)
-    return r;
-  else
-    {
-      struct ast *t = l;
-      while (t->next != NULL)
-	t = t->next;
-      t->next = r;
-      return l;
-    }
 }

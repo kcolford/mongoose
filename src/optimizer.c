@@ -108,7 +108,7 @@ optimizer_r (struct ast **ss)
 	    }
 	}
       break;
-  
+
     case unary_type:
       optimizer_r (&s->ops[0]);
       if (optimize > 0)

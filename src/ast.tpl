@@ -1,6 +1,6 @@
 [+ AutoGen5 template -*- mode: c -*-
-h 
-c 
+h
+c
 +]
 
 /* This is the template file for the AST.
@@ -89,7 +89,7 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
 	       [+ IF (and (exist? "cont") (exist? "sub")) +], [+ ENDIF +]
 	       [+ FOR sub ', ' +]struct ast *[+sub+][+ ENDFOR sub +])
 {
-  struct ast template = { [+name+]_type[+ FOR top_level +], ([+type+]) 0[+ ENDFOR +], 
+  struct ast template = { [+name+]_type[+ FOR top_level +], ([+type+]) 0[+ ENDFOR +],
 			  {0}, [+ (count "sub") +], NULL };
   struct ast *out = xmemdup (&template, sizeof *out + sizeof out->ops[0] * ([+ (count "sub") +] - 1));
   [+ FOR extra +]

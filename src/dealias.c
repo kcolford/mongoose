@@ -25,6 +25,7 @@ along with Compiler; see the file COPYING.  If not see
 #include "compiler.h"
 #include "lib.h"
 #include "parse.h"
+#include "streq.h"
 #include "xalloc.h"
 
 #include <stdlib.h>
@@ -75,12 +76,12 @@ get_from_state (char *l)
       for (i = p->state_end - 1; i >= 0; i--)
 	{
 	  assert (p->state[i].label != NULL);
-	  if (strcmp (l, p->state[i].label) == 0)
+	  if (STREQ (l, p->state[i].label))
 	    return p->state[i].meaning;
 	}
     }
   return l;
-} 
+}
 
 /* A similar routine as above, but if a symbol meaning can't be found
    then create one and return it. */
@@ -163,7 +164,7 @@ dealias_r (struct ast **ss)
       s->loc = xstrdup (get_label (s->op.label.name));
       assert (s->loc != NULL);
       break;
-      
+
     case jump_type:
       s->loc = xstrdup (get_label (s->op.jump.name));
       assert (s->loc != NULL);

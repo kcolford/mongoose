@@ -22,6 +22,21 @@ along with Compiler; see the file COPYING.  If not see
 #define LIB_H
 
 #include "ast.h"
+#include "xalloc.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+/* **************************************************************** */
+/* Start of Macros. */
+
+/* String comparision utilities. */
+#define STREQ(X, Y) (strcmp (X, Y) == 0)
+#define STRNEQ(X, Y) (strcmp (X, Y) != 0)
+
+/* **************************************************************** */
+/* Start of linked in functions. */
 
 /* This creates a unique string to act as a place holder when one
    isn't already provided. */
@@ -31,46 +46,24 @@ extern char *place_holder (void);
    string based on the format specifier. */
 extern char *my_printf (const char *, ...);
 
-/* This creates an appropriate file name that can be used as a
-   temporary file. */
-extern char *tmpfile_name (void);
-
 /* This is a routine that forks the calling process and then calls
    exec to run another program (while the original program waits for
    it to return). */
 extern int safe_system (const char **);
 
-/* This concatenates two lists of ASTs. */
-extern struct ast *ast_cat (struct ast *, struct ast *);
-
 /* **************************************************************** */
 /* Start of inlined functions. */
 
-#if HAVE_INLINE
-# include <stdlib.h>
-# include <stdio.h>
-# include <stdarg.h>
-# include "xalloc.h"
-
-extern inline char *
+/* This creates an appropriate file name that can be used as a
+   temporary file. */
+static inline char *
 tmpfile_name ()
 {
   return xstrdup (tmpnam (NULL));
 }
 
-extern inline char *
-my_printf (const char *fmt, ...)
-{
-  va_list args;
-  va_start (args, fmt);
-  char *out = NULL;
-  int val = vasprintf (&out, fmt, args);
-  if (out == NULL)
-    xalloc_die ();
-  return out;
-}
-
-extern inline struct ast *
+/* This concatenates two lists of ASTs. */
+static inline struct ast *
 ast_cat (struct ast *l, struct ast *r)
 {
   if (l == NULL)
@@ -84,7 +77,5 @@ ast_cat (struct ast *l, struct ast *r)
       return l;
     }
 }
-
-#endif	/* HAVE_INLINE */
 
 #endif

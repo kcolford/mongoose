@@ -8,6 +8,6 @@ BUILT_SOURCES = .version
 
 gen-tarball-version:
 	$(AM_V_GEN)echo $(VERSION) > $(distdir)/.tarball-version
-.PHONY: gen-tarball-version	
+.PHONY: gen-tarball-version
 
 dist-hook: gen-tarball-version

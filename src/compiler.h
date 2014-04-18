@@ -83,7 +83,7 @@ extern int dealias (struct ast **);
 
 /* The pass that verifies the integrity of the AST and that it
    satisfies the semantics of the C language. */
-extern int semantic (struct ast *); 
+extern int semantic (struct ast *);
 
 /* This runs all the above routines in order and collects their return
    values. */

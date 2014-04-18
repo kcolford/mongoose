@@ -55,7 +55,7 @@ collect_vars_r (struct ast *s)
 	  s->op.variable.alloc = 0;
 	}
       break;
-      
+
     default:
       ;
       int i;

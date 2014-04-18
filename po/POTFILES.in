@@ -1,6 +1,5 @@
 # package source files
 src/compiler.c
-src/dealias.c
 src/gen_code.c
 src/lib.c
 src/semantic.c

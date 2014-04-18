@@ -2,8 +2,10 @@ FILES_IN_VC = $(shell ./build-aux/vc-list-files)
 GENERATED_FILES_IN_VC = bootstrap COPYING
 WRITTEN_FILES = $(filter-out $(GENERATED_FILES_IN_VC) cfg.mk, $(FILES_IN_VC))
 
-COMPILER_OPTS = 
+COMPILER_OPTS =
 export COMPILER_OPTS
+
+config_h_header = "config\.h"
 
 man: $(srcdir)/src/compiler.c $(srcdir)/.version
 	$(MAKE) -C man

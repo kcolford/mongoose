@@ -24,6 +24,7 @@ along with Compiler; see the file COPYING.  If not see
 #include "compiler.h"
 #include "copy-file.h"
 #include "lib.h"
+#include "streq.h"
 #include "xalloc.h"
 
 #include <stdlib.h>
@@ -40,7 +41,7 @@ extern int yyparse (void);
 static void
 del_name ()
 {
-  if (name != NULL && strcmp (name, infile_name) != 0)
+  if (name != NULL && STRNEQ (name, infile_name))
     {
       unlink (name);
       FREE (name);
@@ -115,7 +116,7 @@ run_unit ()
       del_name ();						\
       name = r;							\
       if (r == NULL)						\
-	exit (1);						\
+	exit (EXIT_FAILURE);					\
     } while (0);						\
     if (stop == (S))						\
       break;							\
