@@ -164,6 +164,16 @@ expr:		STR                   { $$ = make_variable (NULL, $1); }
 	|	expr '(' ')'          { $$ = make_function_call ($1, NULL); }
 	|	expr '(' callargs ')' { $$ = make_function_call ($1, $3); }
 	|	expr '=' expr         { $$ = make_binary ('=', $1, $3); }
+	|	expr MUT_ADD expr     { $$ = make_binary ('=', $1, make_binary ('+', ast_dup ($1), $3)); }
+	|	expr MUT_SUB expr     { $$ = make_binary ('=', $1, make_binary ('-', ast_dup ($1), $3)); }
+	|	expr MUT_MUL expr     { $$ = make_binary ('=', $1, make_binary ('*', ast_dup ($1), $3)); }
+	|	expr MUT_DIV expr     { $$ = make_binary ('=', $1, make_binary ('/', ast_dup ($1), $3)); }
+	|	expr MUT_MOD expr     { $$ = make_binary ('=', $1, make_binary ('%', ast_dup ($1), $3)); }
+	|	expr MUT_LS expr      { $$ = make_binary ('=', $1, make_binary (LS, ast_dup ($1), $3)); }
+	|	expr MUT_RS expr      { $$ = make_binary ('=', $1, make_binary (RS, ast_dup ($1), $3)); }
+	|	expr MUT_AND expr     { $$ = make_binary ('=', $1, make_binary ('&', ast_dup ($1), $3)); }
+	|	expr MUT_OR expr      { $$ = make_binary ('=', $1, make_binary ('|', ast_dup ($1), $3)); }
+	|	expr MUT_XOR expr     { $$ = make_binary ('=', $1, make_binary ('^', ast_dup ($1), $3)); }
 	|	expr '<' expr         { $$ = make_binary ('<', $1, $3); }
 	|	expr '>' expr         { $$ = make_binary ('>', $1, $3); }
 	|	expr '&' expr         { $$ = make_binary ('&', $1, $3); }

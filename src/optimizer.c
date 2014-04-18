@@ -22,6 +22,7 @@ along with Compiler; see the file COPYING.  If not see
 
 #include "ast.h"
 #include "compiler.h"
+#include "lib.h"
 #include "parse.h"
 
 #include <stdlib.h>
@@ -31,8 +32,7 @@ along with Compiler; see the file COPYING.  If not see
     if (s->ops[0]->type == integer_type)	\
       {						\
 	long long a = s->ops[0]->op.integer.i;	\
-	FREE (s->ops[0]);			\
-	FREE (s);				\
+	AST_FREE (s);				\
 	s = make_integer (OP a);		\
       }						\
   } while (0)
@@ -44,10 +44,8 @@ along with Compiler; see the file COPYING.  If not see
 	s->ops[1]->type == integer_type)	\
       {						\
 	long long l = s->ops[0]->op.integer.i;	\
-	FREE (s->ops[0]);			\
 	long long r = s->ops[1]->op.integer.i;	\
-	FREE (s->ops[1]);			\
-	FREE (s);				\
+	AST_FREE (s);				\
 	s = make_integer (l OP r);		\
       }						\
   } while (0)
@@ -74,15 +72,22 @@ optimizer_r (struct ast **ss)
       if (s->ops[0]->type == integer_type)
 	{
 	  if (s->ops[0]->op.integer.i)
-	    s = s->next;
+	    {
+	      AST_FREE (s->ops[0]);
+	      s = ast_cat (s->ops[1], s->next);
+	    }
 	  else
-	    s = NULL;
+	    {
+	      AST_FREE (s->ops[0]);
+	      AST_FREE (s->ops[1]);
+	      s = s->next;
+	    }
 	}
       break;
 
     case binary_type:
       optimizer_r (&s->ops[0]);
-      optimizer_r (&s->ops[0]);
+      optimizer_r (&s->ops[1]);
       if (optimize > 0)
 	{
 	  switch (s->op.binary.op)
@@ -103,7 +108,7 @@ optimizer_r (struct ast **ss)
 	    }
 	}
       break;
-
+  
     case unary_type:
       optimizer_r (&s->ops[0]);
       if (optimize > 0)
@@ -123,7 +128,8 @@ optimizer_r (struct ast **ss)
       for (j = 0; j < s->num_ops; j++)
 	optimizer_r (&s->ops[j]);
     }
-  optimizer_r (&s->next);
+  if (s != NULL)
+    optimizer_r (&s->next);
 #undef s
 }
 

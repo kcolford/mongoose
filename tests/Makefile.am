@@ -18,6 +18,8 @@ prog-8						\
 prog-9						\
 prog-10						\
 prog-11						\
+prog-12						\
+prog-13						\
 prog-gcd
 
 #XFAIL_TESTS = prog-8

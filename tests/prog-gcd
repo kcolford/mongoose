@@ -2,15 +2,21 @@
 
 srcfile=file.c
 cat - > $srcfile <<EOF
+
+#define SWAP(X, Y) do {				\
+  int _t = (X);					\
+  (X) = (Y);					\
+  (Y) = _t;					\
+ } while (0)
+
 int main ()
 {
   int a = 1892;
   int b = 648;
   while (b != 0)
     {
-      int t = a % b;
-      a = b;
-      b = t;
+      a %= b;
+      SWAP (a, b);
     }
   printf ("%d\n", a);
   return 0;

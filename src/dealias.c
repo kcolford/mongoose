@@ -25,6 +25,7 @@ along with Compiler; see the file COPYING.  If not see
 #include "compiler.h"
 #include "lib.h"
 #include "parse.h"
+#include "xalloc.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -53,10 +54,10 @@ static int curr_labelno = 1;
 /* Add a variable to the state, noting the amount of memory that is
    allocated to it. */
 static inline void
-add_to_state (char *v, size_t s)
+add_to_state (const char *v, size_t s)
 {
   func_allocd += s;
-  state->state[state->state_end].label = v;
+  state->state[state->state_end].label = xstrdup (v);
   state->state[state->state_end].meaning = my_printf ("-%d(%%rbp)", func_allocd);
   state->state_end++;
 }
@@ -95,11 +96,25 @@ get_label (char *l)
 	p = p->prev;
 
       /* Add the label. */
-      p->state[p->state_end].label = l;
+      p->state[p->state_end].label = xstrdup (l);
       p->state[p->state_end].meaning = s = my_printf (".LJ%d", curr_labelno++);
       p->state_end++;
     }
   return s;
+}
+
+static inline struct state_stack *
+clear_state (struct state_stack *s)
+{
+  if (s == NULL)
+    return NULL;
+  int i;
+  for (i = 0; i < s->state_end; i++)
+    {
+      FREE (s->state[i].label);
+      FREE (s->state[i].meaning);
+    }
+  return s->prev;
 }
 
 static void
@@ -120,7 +135,7 @@ dealias_r (struct ast **ss)
       t->state_end = 0;
       state = t;
       dealias_r (&s->ops[0]);
-      state = state->prev;
+      state = clear_state (state);
       break;
 
     case function_type:
@@ -131,7 +146,7 @@ dealias_r (struct ast **ss)
       state = t;
       dealias_r (&s->ops[0]);
       dealias_r (&s->ops[1]);
-      state = state->prev;
+      state = clear_state (state);
       break;
 
     case variable_type:
@@ -140,17 +155,17 @@ dealias_r (struct ast **ss)
 	  s->op.variable.alloc = 8;
 	  add_to_state (s->op.variable.name, 8);
 	}
-      s->loc = get_from_state (s->op.variable.name);
+      s->loc = xstrdup (get_from_state (s->op.variable.name));
       assert (s->loc != NULL);
       break;
 
     case label_type:
-      s->loc = get_label (s->op.label.name);
+      s->loc = xstrdup (get_label (s->op.label.name));
       assert (s->loc != NULL);
       break;
       
     case jump_type:
-      s->loc = get_label (s->op.jump.name);
+      s->loc = xstrdup (get_label (s->op.jump.name));
       assert (s->loc != NULL);
       break;
 

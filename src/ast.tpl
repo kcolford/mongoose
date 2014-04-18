@@ -64,6 +64,14 @@ extern struct ast *make_[+name+] ([+ FOR cont ', ' +][+type+][+ ENDFOR cont +]
 				  [+ FOR sub ', ' +]struct ast *[+ ENDFOR sub +]);
 [+ ENDFOR types +]
 
+extern struct ast *ast_dup (const struct ast *);
+extern void ast_free (struct ast *);
+
+#define AST_FREE(S) do {			\
+    ast_free (S);				\
+    (S) = NULL;					\
+  } while (0)
+
 #endif
 [+ == c +]
 #include "config.h"
@@ -81,7 +89,6 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
 	       [+ IF (and (exist? "cont") (exist? "sub")) +], [+ ENDIF +]
 	       [+ FOR sub ', ' +]struct ast *[+sub+][+ ENDFOR sub +])
 {
-  [+ (tpl-file-line c-file-line-fmt) +]
   struct ast template = { [+name+]_type[+ FOR top_level +], ([+type+]) 0[+ ENDFOR +], 
 			  {0}, [+ (count "sub") +], NULL };
   struct ast *out = xmemdup (&template, sizeof *out + sizeof out->ops[0] * ([+ (count "sub") +] - 1));
@@ -97,5 +104,66 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
   return out;
 }
 [+ ENDFOR types +]
+
+#define USE_RETURN(X, F) if ((X) != NULL) (X) = F (X)
+
+struct ast *
+ast_dup (const struct ast *s)
+{
+  struct ast *out = xmemdup (s, sizeof *s + sizeof s->ops[0] * (s->num_ops - 1));
+  [+ FOR top_level +]
+    [+ IF (== "char *" (get "type")) +]
+    USE_RETURN (out->[+call+], xstrdup);
+  [+ ELIF (== "struct ast *" (get "type")) +]
+    USE_RETURN (out->[+call+], ast_dup);
+  [+ ENDIF +]
+    [+ ENDFOR top_level+];
+  switch (out->type)
+    {
+      [+ FOR types +]
+    case [+name+]_type:
+      [+ FOR cont +]
+	[+ IF (== "char *" (get "type")) +]
+	USE_RETURN (out->op.[+name+].[+call+], xstrdup);
+      [+ ENDIF +]
+	[+ ENDFOR cont +]
+	break;
+      [+ ENDFOR types+]
+    }
+  int i;
+  for (i = 0; i < out->num_ops; i++)
+    USE_RETURN (out->ops[i], ast_dup);
+  return out;
+}
+
+void
+ast_free (struct ast *s)
+{
+  if (s == NULL)
+    return;
+  [+ FOR top_level +]
+    [+ IF (== "char *" (get "type")) +]
+    FREE (s->[+call+]);
+  [+ ELIF (== "struct ast *" (get "type")) +]
+    AST_FREE (s->[+call+]);
+  [+ ENDIF +]
+    [+ ENDFOR top_level +];
+  switch (s->type)
+    {
+      [+ FOR types +]
+    case [+name+]_type:
+      [+ FOR cont +]
+	[+ IF (== "char *" (get "type")) +]
+	FREE (s->op.[+name+].[+call+]);
+      [+ ENDIF +]
+	[+ ENDFOR cont +]
+	break;
+      [+ ENDFOR types +]
+	}
+  int i;
+  for (i = 0; i < s->num_ops; i++)
+    AST_FREE (s->ops[i]);
+  FREE (s);
+}
 
 [+ ESAC +]

@@ -39,26 +39,15 @@ along with Compiler; see the file COPYING.  If not see
 #define IS_LITERAL(S) ((S) != NULL && *((const char *) S) == '$')
 #define IS_MEMORY(S) ((S) != NULL && !IS_REGISTER (S) && !IS_LITERAL (S))
 
-#if 0
-# define ALLOC_REGISTER(X) do {				\
+#define ALLOC_REGISTER(X) do {				\
     (X) = xstrdup (regis (general_regis (avail++)));	\
   } while (0)
-# define FREE_REGISTER(X) do {			\
-    if (IS_REGISTER (X))			\
-      {						\
-	FREE (X);				\
-	avail -= 1;				\
-      }						\
-  } while (0)
-#else
-# define ALLOC_REGISTER(X) do {				\
-    (X) = (char *) regis (general_regis (avail++));	\
-  } while (0)
-# define FREE_REGISTER(X) do {			\
+
+#define FREE_REGISTER(X) do {			\
     if (IS_REGISTER (X))			\
       avail -= 1;				\
+    FREE (X);					\
   } while (0)
-#endif
 
 #define PUT(...) do {				\
     fprintf (outfile, __VA_ARGS__);		\
@@ -135,6 +124,7 @@ static int branch_labelno = 0;
     char *_t;					\
     ALLOC_REGISTER (_t);			\
     PUT ("\t%s\t%s, %s\n", (I), (S), _t);	\
+    FREE (S);					\
     (S) = _t;					\
   } while (0)
 
@@ -357,8 +347,9 @@ gen_code_r (struct ast *s)
       assert (s->ops[0]->loc != NULL);
       gen_code_r (s->ops[1]);
       assert (s->ops[1]->loc != NULL);
-      s->loc = s->ops[0]->loc;
-      struct ast *from = s->ops[1];
+      s->loc = xstrdup (s->ops[0]->loc);
+      struct ast _from, *from = &_from;
+      from->loc = xstrdup (s->ops[1]->loc);
       switch (s->op.binary.op)
 	{
 	case '=':
@@ -451,9 +442,6 @@ gen_code_r (struct ast *s)
 	}
       /* Release the previously allocated register. */
       FREE_REGISTER (from->loc);
-#if 0
-      FREE (from->loc);
-#endif
       break;
 
     case unary_type:
