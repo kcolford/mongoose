@@ -79,6 +79,9 @@ int lineno = 0;
 "enum"                 { return ENUM; }
 "switch"               { return SWITCH; }
 "case"                 { return CASE; }
+"default"              { return DEFAULT; }
+"break"                { return BREAK; }
+"continue"             { return CONTINUE; }
 
  /* Whitespace is thrown out. */
 [ \t\r]                ;

@@ -60,6 +60,9 @@ static struct ast *make_whileloop (struct ast *, struct ast *);
 %token ENUM "enum"
 %token SWITCH "switch"
 %token CASE "case"
+%token DEFAULT "default"
+%token BREAK "break"
+%token CONTINUE "continue"
 
 %token EQ "=="
 %token NE "!="
