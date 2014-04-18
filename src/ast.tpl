@@ -64,8 +64,6 @@ extern struct ast *make_[+name+] ([+ FOR cont ', ' +][+type+][+ ENDFOR cont +]
 				  [+ FOR sub ', ' +]struct ast *[+ ENDFOR sub +]);
 [+ ENDFOR types +]
 
-extern struct ast *make_whileloop (struct ast *, struct ast *);
-
 #endif
 [+ == c +]
 #include "config.h"
@@ -99,13 +97,5 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
   return out;
 }
 [+ ENDFOR types +]
-
-struct ast *
-make_whileloop (struct ast *cond, struct ast *body)
-{
-  char *t = place_holder ();
-  char *tt = xstrdup (t);
-  return ast_cat (make_label (t), make_cond (cond, ast_cat (body, make_jump (tt))));
-}
 
 [+ ESAC +]

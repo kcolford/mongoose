@@ -27,6 +27,7 @@ along with Compiler; see the file COPYING.  If not see
 #include "ast.h"
 #include "compiler.h"
 #include "lib.h"
+#include "xalloc.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -34,6 +35,8 @@ along with Compiler; see the file COPYING.  If not see
 int yydebug = 0;
 
 void yyerror (const char *);
+static struct ast *make_dowhileloop (struct ast *, struct ast *);
+static struct ast *make_whileloop (struct ast *, struct ast *);
 
 #define YYDEBUG 1
 %}
@@ -140,6 +143,8 @@ statement:	';'                             { $$ = NULL; }
 	|	GOTO STR ';'                    { $$ = make_jump ($2); }
 	|	WHILE '(' expr ')' statement    { $$ = make_whileloop ($3, $5); }
 	|	WHILE '(' expr ')' scoped_body  { $$ = make_whileloop ($3, $5); }
+	|	DO statement WHILE '(' expr ')' ';' { $$ = make_dowhileloop ($5, $2); }
+	|	DO scoped_body WHILE '(' expr ')' ';' { $$ = make_dowhileloop ($5, $2); }
 	|	RETURN ';'                      { $$ = make_ret (NULL); }
 	|	RETURN expr ';'                 { $$ = make_ret ($2); }
 	;
@@ -198,4 +203,18 @@ void
 yyerror (const char *msg)
 {
   error_at_line (0, 0, file_name, lineno, "%s", msg);
+}
+
+struct ast *
+make_dowhileloop (struct ast *cond, struct ast *body)
+{
+  char *t = place_holder (), *tt = xstrdup (t);
+  return ast_cat (make_label (t), ast_cat (body, make_cond (cond, make_jump (tt))));
+}
+
+struct ast *
+make_whileloop (struct ast *cond, struct ast *body)
+{
+  char *t = place_holder (), *tt = xstrdup (t);
+  return ast_cat (make_label (t), make_cond (cond, ast_cat (body, make_jump (tt))));
 }
