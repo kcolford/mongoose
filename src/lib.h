@@ -23,10 +23,6 @@ along with Compiler; see the file COPYING.  If not see
 
 #include "ast.h"
 
-/* This concatenates two dynamically allocated strings and frees its
-   arguments. */
-extern char *my_strcat (char *, char *);
-
 /* This creates a unique string to act as a place holder when one
    isn't already provided. */
 extern char *place_holder (void);
@@ -60,15 +56,6 @@ extern inline char *
 tmpfile_name ()
 {
   return xstrdup (tmpnam (NULL));
-}
-
-extern inline char *
-my_strcat (char *l, char *r)
-{
-  char *out = my_printf ("%s%s", l, r);
-  free (l);
-  free (r);
-  return out;
 }
 
 extern inline char *

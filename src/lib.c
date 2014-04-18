@@ -33,7 +33,7 @@ along with Compiler; see the file COPYING.  If not see
 #include <unistd.h>
 #include <sys/wait.h>
 
-char *
+inline char *
 my_printf (const char *fmt, ...)
 {
   va_list args;
@@ -42,15 +42,6 @@ my_printf (const char *fmt, ...)
   int val = vasprintf (&out, fmt, args);
   if (out == NULL)
     xalloc_die ();
-  return out;
-}
-
-char *
-my_strcat (char *l, char *r)
-{
-  char *out = my_printf ("%s%s", l, r);
-  FREE (l);
-  FREE (r);
   return out;
 }
 

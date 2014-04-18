@@ -336,10 +336,11 @@ gen_code_r (struct ast *s)
 
     case string_type:
       s->loc = my_printf ("$.LS%d", str_labelno++);
-      char *out = my_printf ("%s:\n\t.string\t\"%s\"\n", s->loc + 1, 
-			     s->op.string.val);
+      char *out = my_printf ("%s%s:\n\t.string\t\"%s\"\n", data_section, 
+			     s->loc + 1, s->op.string.val);
       FREE (s->op.string.val);
-      data_section = my_strcat (data_section, out);
+      FREE (data_section);
+      data_section = out;
       break;
 
     case binary_type:

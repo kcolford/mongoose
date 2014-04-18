@@ -154,7 +154,7 @@ statement:	';'                             { $$ = NULL; }
 
 /* Adjacent strings are concatenated together. */
 str:		STRING     { $$ = $1; }
-	|	str STRING { $$ = my_strcat ($1, $2); }
+	|	str STRING { $$ = my_printf ("%s%s", $1, $2); FREE ($1); FREE ($2); }
 	;
 
 /* These are all the constant expressions. */
