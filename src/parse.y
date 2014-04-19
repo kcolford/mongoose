@@ -37,6 +37,8 @@ int yydebug = 0;
 void yyerror (const char *);
 static struct ast *make_dowhileloop (struct ast *, struct ast *);
 static struct ast *make_whileloop (struct ast *, struct ast *);
+static struct ast *make_array (char *, char *, struct ast *);
+static struct ast *make_forloop (struct ast *, struct ast *, struct ast *, struct ast *);
 
 #define YYDEBUG 1
 %}
@@ -108,7 +110,7 @@ static struct ast *make_whileloop (struct ast *, struct ast *);
 %nonassoc '(' ')' '[' ']' '.'
 
 %union { struct ast *ast_val; }
-%type <ast_val> expr file def defargs body scoped_body statement constrval callargs
+%type <ast_val> body callargs constrval def defargs expr file maybe_expr scoped_body statement sub_body
 
 %%
 
@@ -135,19 +137,27 @@ body:		/* empty */         { $$ = NULL; }
 scoped_body:    '{' body '}' { $$ = make_block ($2); }
         ;
 
+sub_body:       scoped_body { $$ = $1; }
+	|	statement   { $$ = $1; }
+        ;
+
+maybe_expr:     /* empty */ { $$ = NULL; }
+	|	expr        { $$ = $1; }
+        ;
+
 /* Code statements. */
 statement:	';'                             { $$ = NULL; }
 	|	STR STR ';'                     { $$ = make_variable ($1, $2); }
+	|	STR STR '[' expr ']' ';'        { $$ = make_array ($1, $2, $4); }
 	|	STR STR '=' expr ';'            { $$ = make_binary ('=', make_variable ($1, $2), $4); }
 	|	expr ';'                        { $$ = $1; $$->flags |= AST_THROW_AWAY; }
-	|	IF '(' expr ')' statement       { $$ = make_cond ($3, $5); }
-	|	IF '(' expr ')' scoped_body     { $$ = make_cond ($3, $5); }
+	|	IF '(' expr ')' sub_body        { $$ = make_cond ($3, $5); }
 	|	STR ':' statement               { $$ = ast_cat (make_label ($1), $3); }
 	|	GOTO STR ';'                    { $$ = make_jump ($2); }
-	|	WHILE '(' expr ')' statement    { $$ = make_whileloop ($3, $5); }
-	|	WHILE '(' expr ')' scoped_body  { $$ = make_whileloop ($3, $5); }
-	|	DO statement WHILE '(' expr ')' ';' { $$ = make_dowhileloop ($5, $2); }
-	|	DO scoped_body WHILE '(' expr ')' ';' { $$ = make_dowhileloop ($5, $2); }
+	|	WHILE '(' expr ')' sub_body     { $$ = make_whileloop ($3, $5); }
+	|	DO sub_body WHILE '(' expr ')' ';' { $$ = make_dowhileloop ($5, $2); }
+	|	FOR '(' maybe_expr ';' expr ';' maybe_expr ')' sub_body { $$ = make_forloop ($3, $5, $7, $9); }
+	|	FOR '(' maybe_expr ';' ';' maybe_expr ')' sub_body { $$ = make_forloop ($3, make_integer (1), $6, $8); }
 	|	RETURN ';'                      { $$ = make_ret (NULL); }
 	|	RETURN expr ';'                 { $$ = make_ret ($2); }
 	;
@@ -230,4 +240,26 @@ make_whileloop (struct ast *cond, struct ast *body)
 {
   char *t = place_holder (), *tt = xstrdup (t);
   return ast_cat (make_label (t), make_cond (cond, ast_cat (body, make_jump (tt))));
+}
+
+struct ast *
+make_array (char *type, char *name, struct ast *size)
+{
+  struct ast *func = make_variable (NULL, xstrdup ("__builtin_alloca"));
+  size = make_binary ('*', size, make_integer (8));
+  func = make_function_call (func, size);
+  char *newtype = my_printf ("%s *", type);
+  FREE (type);
+  return make_binary ('=', make_variable (newtype, name), func);
+}
+
+struct ast *
+make_forloop (struct ast *init, struct ast *cond, struct ast *step, struct ast *body)
+{
+  step->flags |= AST_THROW_AWAY;
+  init->flags |= AST_THROW_AWAY;
+  struct ast *out = ast_cat (body, step);
+  out = make_whileloop (cond, out);
+  out = ast_cat (init, out);
+  return out;
 }

@@ -21,6 +21,7 @@ along with Compiler; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.*/
 
 added_code = "
+#include \"loc.h\"
 #include <stddef.h>
 
 #define AST_THROW_AWAY 0x1
@@ -30,7 +31,7 @@ added_code = "
 ";
 
 top_level = {
-    type = "char *";
+    type = "struct loc *";
     call = loc;
 };
 

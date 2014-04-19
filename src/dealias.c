@@ -25,7 +25,6 @@ along with Compiler; see the file COPYING.  If not see
 #include "compiler.h"
 #include "lib.h"
 #include "parse.h"
-#include "streq.h"
 #include "xalloc.h"
 
 #include <stdlib.h>
@@ -36,7 +35,7 @@ along with Compiler; see the file COPYING.  If not see
 struct state_entry
 {
   char *label;
-  char *meaning;
+  struct loc *meaning;
 };
 
 struct state_stack
@@ -59,14 +58,17 @@ add_to_state (const char *v, size_t s)
 {
   func_allocd += s;
   state->state[state->state_end].label = xstrdup (v);
-  state->state[state->state_end].meaning = my_printf ("-%d(%%rbp)", func_allocd);
+  struct loc *l;
+  MAKE_BASE_LOC (l, memory_loc, xstrdup ("%rbp"));
+  l->offset = -func_allocd;
+  state->state[state->state_end].meaning = l;
   state->state_end++;
 }
 
 /* Linearly search the state array for an entry with the same key as
    l.  If one can't be found, then it is an externally linked in
    symbol and is simply returned as is. */
-static inline char *
+static inline struct loc *
 get_from_state (char *l)
 {
   struct state_stack *p;
@@ -77,19 +79,21 @@ get_from_state (char *l)
 	{
 	  assert (p->state[i].label != NULL);
 	  if (STREQ (l, p->state[i].label))
-	    return p->state[i].meaning;
+	    return loc_dup (p->state[i].meaning);
 	}
     }
-  return l;
+  struct loc *s;
+  MAKE_BASE_LOC (s, literal_loc, xstrdup (l));
+  return s;
 }
 
 /* A similar routine as above, but if a symbol meaning can't be found
    then create one and return it. */
-static inline char *
+static inline struct loc *
 get_label (char *l)
 {
-  char *s = get_from_state (l);
-  if (*s != '.')
+  struct loc *s = get_from_state (l);
+  if (*s->base != '.')
     {
       struct state_stack *p = state;
       /* Jump up to the function level state. */
@@ -98,7 +102,9 @@ get_label (char *l)
 
       /* Add the label. */
       p->state[p->state_end].label = xstrdup (l);
-      p->state[p->state_end].meaning = s = my_printf (".LJ%d", curr_labelno++);
+      FREE (s->base);
+      s->base = my_printf (".LJ%d", curr_labelno++);
+      p->state[p->state_end].meaning = loc_dup (s);
       p->state_end++;
     }
   return s;
@@ -113,7 +119,7 @@ clear_state (struct state_stack *s)
   for (i = 0; i < s->state_end; i++)
     {
       FREE (s->state[i].label);
-      FREE (s->state[i].meaning);
+      FREE_LOC (s->state[i].meaning);
     }
   return s->prev;
 }
@@ -128,6 +134,7 @@ dealias_r (struct ast **ss)
     return;
   struct state_stack *t;
   int i;
+  struct loc *l;
   switch (s->type)
     {
     case block_type:
@@ -156,17 +163,17 @@ dealias_r (struct ast **ss)
 	  s->op.variable.alloc = 8;
 	  add_to_state (s->op.variable.name, 8);
 	}
-      s->loc = xstrdup (get_from_state (s->op.variable.name));
+      s->loc = get_from_state (s->op.variable.name);
       assert (s->loc != NULL);
       break;
 
     case label_type:
-      s->loc = xstrdup (get_label (s->op.label.name));
+      s->loc = get_label (s->op.label.name);
       assert (s->loc != NULL);
       break;
 
     case jump_type:
-      s->loc = xstrdup (get_label (s->op.jump.name));
+      s->loc = get_label (s->op.jump.name);
       assert (s->loc != NULL);
       break;
 

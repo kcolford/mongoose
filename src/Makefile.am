@@ -26,6 +26,7 @@ gen_code.c					\
 lex.l						\
 lib.c						\
 lib.h						\
+loc.h						\
 optimizer.c					\
 parse.y						\
 semantic.c					\

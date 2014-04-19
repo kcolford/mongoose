@@ -1,7 +1,7 @@
 EXTRA_DIST = $(TESTS) tester.sh
 MOSTLYCLEANFILES = core log-*
 
-COMPILER = $(top_builddir)/src/compiler $(COMPILER_OPTS)
+COMPILER = $(COMPILER_ENV) $(top_builddir)/src/compiler $(COMPILER_OPTS)
 
 TESTS_ENVIRONMENT = \
 env CC=$(CC) COMPILER="$(COMPILER)" $(SHELL)
@@ -20,6 +20,7 @@ prog-10						\
 prog-11						\
 prog-12						\
 prog-13						\
-prog-gcd
+prog-gcd					\
+prog-primes
 
 #XFAIL_TESTS = prog-8

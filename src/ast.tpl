@@ -116,6 +116,8 @@ ast_dup (const struct ast *s)
     USE_RETURN (out->[+call+], xstrdup);
   [+ ELIF (== "struct ast *" (get "type")) +]
     USE_RETURN (out->[+call+], ast_dup);
+  [+ ELIF (== "struct loc *" (get "type")) +]
+    USE_RETURN (out->[+call+], loc_dup);
   [+ ENDIF +]
     [+ ENDFOR top_level+];
   switch (out->type)
@@ -146,6 +148,8 @@ ast_free (struct ast *s)
     FREE (s->[+call+]);
   [+ ELIF (== "struct ast *" (get "type")) +]
     AST_FREE (s->[+call+]);
+  [+ ELIF (== "struct loc *" (get "type")) +]
+    FREE_LOC (s->[+call+]);
   [+ ENDIF +]
     [+ ENDFOR top_level +];
   switch (s->type)

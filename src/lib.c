@@ -33,7 +33,7 @@ along with Compiler; see the file COPYING.  If not see
 #include <unistd.h>
 #include <sys/wait.h>
 
-inline char *
+char *
 my_printf (const char *fmt, ...)
 {
   va_list args;

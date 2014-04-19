@@ -24,7 +24,6 @@ along with Compiler; see the file COPYING.  If not see
 #include "compiler.h"
 #include "copy-file.h"
 #include "lib.h"
-#include "streq.h"
 #include "xalloc.h"
 
 #include <stdlib.h>
@@ -52,8 +51,8 @@ static inline char *
 preprocess (const char *in)
 {
   char *out = tmpfile_name ();
-  /* This is the GCC's preprocessor which we hope to replace with our
-     own. */
+  /* TODO: This is the GCC's preprocessor which we hope to replace
+           with our own. */
   const char *args[] = { "/usr/bin/cpp", in, out, NULL };
   if (safe_system (args))
     return NULL;
@@ -93,11 +92,11 @@ static inline char *
 linker (const char *in)
 {
   char *out = tmpfile_name ();
-  /* Hopefully we can move away from having to use the GCC to link our
-     programs, but it seems to link in some other object files that we
-     can't duplicate yet.  Once we can create our own, we will replace
-     this with "ld". */
-  const char *args[] = { "/usr/bin/gcc", "-o", out, in, NULL };
+  /* TODO: Hopefully we can move away from having to use the GCC to
+           link our programs, but it seems to link in some other
+           object files that we can't duplicate yet.  Once we can
+           create our own, we will replace this with "ld". */
+  const char *args[] = { "/usr/bin/gcc", "-o", out, in, "-lm", NULL };
   if (safe_system (args))
     return NULL;
   else
