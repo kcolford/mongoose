@@ -21,7 +21,8 @@ along with Compiler; see the file COPYING.  If not see
 #include "config.h"
 
 #define VALID_REGISTER_CHECK(S)						\
-  ((S) != NULL && STREQ ((S), regis (general_regis (avail < 1 ? 0 : avail - 1))))
+  ((S) != NULL								\
+   && STREQ ((S), regis (general_regis (avail < 1 ? 0 : avail - 1))))
 
 #define FREE_LOC_HOOK(X) do {				\
     if (IS_REGISTER (X) || IS_MEMORY (X))		\
@@ -148,10 +149,23 @@ static char *data_section = NULL;
 
 static int branch_labelno = 0;
 
-#define GIVE_REGISTER_HOW(I, S) do {		\
-    struct loc *_t;				\
-    ALLOC_REGISTER (_t);			\
-    MOVE_LOC_WITH (I, S, _t);			\
+#define GIVE_REGISTER_HOW(I, S) do {					\
+    unsigned _addto_avail = 0;						\
+    struct loc *_t = NULL;						\
+    if (IS_MEMORY (S))							\
+      {									\
+	_addto_avail += 1;						\
+	if (STRNEQ ((S)->base, "%rbp"))					\
+	  MAKE_BASE_LOC (_t, register_loc, xstrdup ((S)->base));	\
+	else if ((S)->index != NULL)					\
+	  MAKE_BASE_LOC (_t, register_loc, xstrdup ((S)->index));	\
+	else								\
+	  _addto_avail -= 1;						\
+      }									\
+    if (_t == NULL)							\
+      ALLOC_REGISTER (_t);						\
+    MOVE_LOC_WITH (I, S, _t);						\
+    avail += _addto_avail;						\
   } while (0)
 
 #define GIVE_REGISTER(S)			\
@@ -174,18 +188,21 @@ static int branch_labelno = 0;
     PUT ("\t%s\t%s, %s\n\t%s\t.LB%d\n", (X),			\
 	 print_loc (s->ops[0]->ops[1]->loc),			\
 	 print_loc (s->ops[0]->ops[0]->loc), (Y), n);		\
-    FREE_LOC (s->ops[0]->ops[0]->loc);				\
     FREE_LOC (s->ops[0]->ops[1]->loc);				\
+    FREE_LOC (s->ops[0]->ops[0]->loc);				\
     gen_code_r (s->ops[1]);					\
     PUT (".LB%d:\n", n);					\
   } while (0)
 
+/* Wrapper macro around sub macros to decide on which method of
+   register selection is necessary. */
 #define ENSURE_DESTINATION_REGISTER(N, X, Y) do {	\
     ENSURE_DESTINATION_REGISTER##N (X, Y);		\
     assert ((X) != NULL);				\
     assert ((Y) != NULL);				\
   } while (0)
 
+/* Ensure that that X is in a register. */
 #define ENSURE_DESTINATION_REGISTER_UNI(X) do {	\
     if (!IS_REGISTER (X))			\
       GIVE_REGISTER (X);			\
@@ -198,13 +215,15 @@ static int branch_labelno = 0;
 #define ENSURE_DESTINATION_REGISTER1(X, Y) do {	\
     if (!IS_REGISTER (X))			\
       {						\
-	if (!IS_REGISTER (Y))			\
-	  GIVE_REGISTER (X);			\
-	else					\
+	if (IS_REGISTER (Y))			\
 	  SWAP (X, Y);				\
+	else					\
+	  GIVE_REGISTER (X);			\
       }						\
   } while (0)
 
+/* Designed to behave exactly as ENSURE_DESTINATION_REGISTER1, but is
+   guaranteed to keep the ordering of its arguments. */
 #define ENSURE_DESTINATION_REGISTER2(X, Y) do {	\
     if (!IS_REGISTER (X))			\
       {						\
@@ -216,11 +235,6 @@ static int branch_labelno = 0;
 	  }					\
 	else					\
 	  GIVE_REGISTER (X);			\
-      }						\
-    else					\
-      {						\
-	if (!IS_REGISTER (Y))			\
-	  GIVE_REGISTER (Y);			\
       }						\
   } while (0)
 
@@ -239,6 +253,8 @@ static int branch_labelno = 0;
       GIVE_REGISTER (X);				\
   } while (0)
 
+/* Designed for when both X and Y must be registers but cannot have
+   their arguments swapped. */
 #define ENSURE_DESTINATION_REGISTER4(X, Y) do {	\
     ENSURE_DESTINATION_REGISTER2 (X, Y);	\
     if (!IS_REGISTER (Y))			\
@@ -275,6 +291,7 @@ gen_code_r (struct ast *s)
 
       /* Generate the body of the function. */
       gen_code_r (s->ops[1]);
+      
 #if 0
       assert (avail == 0);
 #endif
@@ -560,8 +577,11 @@ gen_code_r (struct ast *s)
       for (j = 0; j < s->num_ops; j++)
 	gen_code_r (s->ops[j]);
     }
+  /* Since registers are lost during the coarse of this routine, we
+     must free every single last one of them once we are done with a
+     certain expression. */
   if (s->flags & AST_THROW_AWAY)
-    FREE_LOC (s->loc);
+    avail = 0;
   gen_code_r (s->next);
 }
 

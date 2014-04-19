@@ -149,7 +149,7 @@ maybe_expr:     /* empty */ { $$ = NULL; }
 statement:	';'                             { $$ = NULL; }
 	|	STR STR ';'                     { $$ = make_variable ($1, $2); }
 	|	STR STR '[' expr ']' ';'        { $$ = make_array ($1, $2, $4); }
-	|	STR STR '=' expr ';'            { $$ = make_binary ('=', make_variable ($1, $2), $4); }
+	|	STR STR '=' expr ';'            { $$ = make_binary ('=', make_variable ($1, $2), $4); $$->flags |= AST_THROW_AWAY; }
 	|	expr ';'                        { $$ = $1; $$->flags |= AST_THROW_AWAY; }
 	|	IF '(' expr ')' sub_body        { $$ = make_cond ($3, $5); }
 	|	STR ':' statement               { $$ = ast_cat (make_label ($1), $3); }
