@@ -27,6 +27,7 @@ lex.l						\
 lib.c						\
 lib.h						\
 loc.h						\
+my_printf.h					\
 optimizer.c					\
 parse.y						\
 semantic.c					\

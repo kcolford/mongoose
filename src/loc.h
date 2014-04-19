@@ -72,7 +72,7 @@ print_loc (struct loc *l)
       break;
     case memory_loc:
       if (l->index != NULL)
-	l->string = my_printf ("%d(%s,%s,%d)", l->offset, l->base, 
+	l->string = my_printf ("%d(%s,%s,%d)", l->offset, l->base,
 			       l->index, l->scale);
       else
 	l->string = my_printf ("%d(%s)", l->offset, l->base);

@@ -90,7 +90,7 @@ regis (int a)
   if (a < 0)
     error (1, 0, _("index out of bounds, %d less than zero"), a);
   if (a >= sizeof storage / sizeof *storage)
-    error (1, 0, _("index out of bounds, %d greater than or equal to the maximum %lu"), 
+    error (1, 0, _("index out of bounds, %d greater than or equal to the maximum %lu"),
 	   a, sizeof storage / sizeof *storage);
 #endif
   return storage[a];
@@ -109,7 +109,7 @@ call_regis(int a)
   if (a < 0)
     error (1, 0, _("index out of bounds, %d less than zero"), a);
   if (a >= sizeof storage / sizeof *storage)
-    error (1, 0, _("index out of bounds, %d greater than or equal to the maximum %lu"), 
+    error (1, 0, _("index out of bounds, %d greater than or equal to the maximum %lu"),
 	   a, sizeof storage / sizeof *storage);
 #endif
   return storage[a];
@@ -136,7 +136,7 @@ general_regis(int a)
   if (a < 0)
     error (1, 0, _("index out of bounds, %d less than zero"), a);
   if (a >= sizeof storage / sizeof *storage)
-    error (1, 0, _("index out of bounds, %d greater than or equal to the maximum %lu"), 
+    error (1, 0, _("index out of bounds, %d greater than or equal to the maximum %lu"),
 	   a, sizeof storage / sizeof *storage);
 #endif
   return storage[a];
@@ -291,7 +291,7 @@ gen_code_r (struct ast *s)
 
       /* Generate the body of the function. */
       gen_code_r (s->ops[1]);
-      
+
 #if 0
       assert (avail == 0);
 #endif
