@@ -77,7 +77,6 @@ extern void ast_free (struct ast *);
 #include "config.h"
 
 #include "ast.h"
-#include "compiler.h"
 #include "lib.h"
 #include "xalloc.h"
 

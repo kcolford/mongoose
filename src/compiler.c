@@ -20,6 +20,7 @@ along with Compiler; see the file COPYING.  If not see
 
 #include "config.h"
 
+#include "lib.h"
 #include "compiler.h"
 #include "copy-file.h"
 #include "progname.h"

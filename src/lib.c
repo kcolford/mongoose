@@ -22,7 +22,6 @@ along with Compiler; see the file COPYING.  If not see
 #include "config.h"
 
 #include "ast.h"
-#include "compiler.h"
 #include "lib.h"
 #include "xalloc.h"
 

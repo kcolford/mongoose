@@ -21,11 +21,11 @@ along with Compiler; see the file COPYING.  If not see
 #include "config.h"
 
 #include "ast.h"
+#include "ast_util.h"
 #include "compiler.h"
 #include "lib.h"
 #include "parse.h"
 
-#include <stdlib.h>
 #include <assert.h>
 
 #define FOLD_INTEGER_UNI(OP) do {		\

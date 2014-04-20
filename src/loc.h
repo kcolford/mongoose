@@ -21,7 +21,7 @@ along with Compiler; see the file COPYING.  If not see
 #ifndef LOC_H
 #define LOC_H
 
-#include "my_printf.h"
+#include "lib.h"
 #include "xalloc.h"
 
 struct loc

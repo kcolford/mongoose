@@ -17,6 +17,7 @@ parse.h
 compiler_SOURCES =				\
 ast.c						\
 ast.h						\
+ast_util.h					\
 collect_vars.c					\
 compilation_passes.c				\
 compiler.c					\
@@ -27,7 +28,6 @@ lex.l						\
 lib.c						\
 lib.h						\
 loc.h						\
-my_printf.h					\
 optimizer.c					\
 parse.y						\
 semantic.c					\

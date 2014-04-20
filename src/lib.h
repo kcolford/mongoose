@@ -21,20 +21,34 @@ along with Compiler; see the file COPYING.  If not see
 #ifndef LIB_H
 #define LIB_H
 
-#include "ast.h"
-#include "my_printf.h"
+#include "gettext.h"
 #include "xalloc.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
+#include <error.h>
 
 /* **************************************************************** */
 /* Start of Macros. */
 
 /* String comparision utilities. */
-#define STREQ(X, Y) ((X) != NULL && (Y) != NULL ? strcmp (X, Y) == 0 : (X) == (Y))
-#define STRNEQ(X, Y) ((X) != NULL && (Y) != NULL ? strcmp (X, Y) != 0 : (X) == (Y))
+#define STREQ(X, Y) ((X) == (Y) || (X) != NULL && (Y) != NULL && strcmp (X, Y) == 0)
+#define STRNEQ(X, Y) ((X) != (Y) && (X) != NULL && (Y) != NULL && strcmp (X, Y) != 0)
+
+/* Special macros for making it easier to mark strings for
+   translation. */
+#define _(s) gettext (s)
+#define N_(s) gettext_noop (s)
+
+/* Macro for specially freeing dynamically allocated memory and
+   setting the location to NULL so that it's safe from a
+   double-free. */
+#define FREE(X) do {				\
+    free (X);					\
+    (X) = NULL;					\
+  } while (0)
 
 /* **************************************************************** */
 /* Start of linked in functions. */
@@ -48,6 +62,10 @@ extern char *place_holder (void);
    it to return). */
 extern int safe_system (const char **);
 
+/* This is function that dynamically allocates and returns a string
+   according to a printf-format specifier. */
+extern char *my_printf (const char *, ...);
+
 /* **************************************************************** */
 /* Start of inlined functions. */
 
@@ -57,22 +75,6 @@ static inline char *
 tmpfile_name ()
 {
   return xstrdup (tmpnam (NULL));
-}
-
-/* This concatenates two lists of ASTs. */
-static inline struct ast *
-ast_cat (struct ast *l, struct ast *r)
-{
-  if (l == NULL)
-    return r;
-  else
-    {
-      struct ast *t = l;
-      while (t->next != NULL)
-	t = t->next;
-      t->next = r;
-      return l;
-    }
 }
 
 #endif
