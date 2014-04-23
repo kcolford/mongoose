@@ -20,10 +20,15 @@ along with Compiler; see the file COPYING.  If not see
 
 #include "config.h"
 
+/* Check if the the register string S is allowed to be freed. */
 #define VALID_REGISTER_CHECK(S)						\
   ((S) != NULL								\
    && STREQ ((S), regis (general_regis (avail < 1 ? 0 : avail - 1))))
 
+/* A special hook that must be defined before including loc.h.  It
+   checks if the location that is about to be freed, is dependant on
+   any registers.  If it is, then those registers are freed in the
+   correct manner to so that they can be reused. */
 #define FREE_LOC_HOOK(X) do {				\
     if (IS_REGISTER (X) || IS_MEMORY (X))		\
       {							\
@@ -178,20 +183,11 @@ static int branch_labelno = 0;
   } while (0)
 
 /* This macro makes branching a whole lot easier. */
-#define BRANCH_WITH_CODE_BIN(X, Y) do {				\
-    gen_code_r (s->ops[0]->ops[0]);				\
-    assert (s->ops[0]->ops[0]->loc != NULL);			\
-    gen_code_r (s->ops[0]->ops[1]);				\
-    assert (s->ops[0]->ops[1]->loc != NULL);			\
-    ENSURE_DESTINATION_REGISTER (2, s->ops[0]->ops[0]->loc,	\
-				 s->ops[0]->ops[1]->loc);	\
-    PUT ("\t%s\t%s, %s\n\t%s\t.LB%d\n", (X),			\
-	 print_loc (s->ops[0]->ops[1]->loc),			\
-	 print_loc (s->ops[0]->ops[0]->loc), (Y), n);		\
-    FREE_LOC (s->ops[0]->ops[1]->loc);				\
-    FREE_LOC (s->ops[0]->ops[0]->loc);				\
-    gen_code_r (s->ops[1]);					\
-    PUT (".LB%d:\n", n);					\
+#define BRANCH_WITH_CODE_BIN(X, Y) do {			\
+    PUT ("\t%s\t%s, %s\n\t%s\t.LB%d\n", (X),		\
+	 print_loc (s->ops[0]->ops[1]->loc),		\
+	 print_loc (s->ops[0]->ops[0]->loc), (Y), n);	\
+							\
   } while (0)
 
 /* Wrapper macro around sub macros to decide on which method of
@@ -261,6 +257,8 @@ static int branch_labelno = 0;
       GIVE_REGISTER (Y);			\
   } while (0)
 
+static int branchable_binops[] = { '<', '>', EQ, NE, LE, GE };
+
 static void
 gen_code_r (struct ast *s)
 {
@@ -321,8 +319,16 @@ gen_code_r (struct ast *s)
       ;
       int n;
       n = branch_labelno++;
-      if (s->ops[0]->type == binary_type)
+      if (s->ops[0]->type == binary_type 
+	  && NULL != bsearch (&s->ops[0]->op.binary.op, branchable_binops,
+			      LEN (branchable_binops), sizeof (int), compare))
 	{
+	  gen_code_r (s->ops[0]->ops[0]);
+	  assert (s->ops[0]->ops[0]->loc != NULL);
+	  gen_code_r (s->ops[0]->ops[1]);
+	  assert (s->ops[0]->ops[1]->loc != NULL);
+	  ENSURE_DESTINATION_REGISTER (2, s->ops[0]->ops[0]->loc,
+				       s->ops[0]->ops[1]->loc);
 	  switch (s->ops[0]->op.binary.op)
 	    {
 	    case '<':
@@ -344,12 +350,15 @@ gen_code_r (struct ast *s)
 	      BRANCH_WITH_CODE_BIN ("cmpq", "je");
 	      break;
 	    default:
-	      goto alt_condition;
+	      ERROR (_("Invalid branchable binop"));
 	    }
+	  FREE_LOC (s->ops[0]->ops[1]->loc);
+	  FREE_LOC (s->ops[0]->ops[0]->loc);
+	  gen_code_r (s->ops[1]);
+	  PUT (".LB%d:\n", n);
 	}
       else
 	{
-	alt_condition:
 	  /* When in doubt, the C standard requires that if an
 	     expression evaluates to 0 then it is false, otherwise it
 	     is true. */
@@ -591,6 +600,7 @@ extern char *infile_name;
 int
 gen_code (struct ast *s)
 {
+  qsort (branchable_binops, LEN (branchable_binops), sizeof (int), compare);
   if (setjmp (error_jump))
     return 1;
   PUT ("\t.file\t\"%s\"\n\t.text\n", infile_name);

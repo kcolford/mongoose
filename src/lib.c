@@ -76,3 +76,15 @@ xalloc_die ()
   error (1, ENOMEM, _("out of memory"));
   abort ();
 }
+
+int
+compare (const void *a, const void *b)
+{
+  return *(const int *) a - *(const int *) b;
+}
+
+int
+compares (const void *a, const void *b)
+{
+  return strcmp (*(char * const *) a, *(char * const *) b);
+}
