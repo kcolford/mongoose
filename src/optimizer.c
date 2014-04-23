@@ -64,8 +64,45 @@ optimizer_r (struct ast **ss)
 #define s (*ss)
   if (s == NULL)
     return;
+  optimizer_r (&s->next);
   switch (s->type)
     {
+      /* Fold up repetitive allocations into one allocation. */
+    case variable_type:
+      if (s->next != NULL)
+	{
+	  int folded = 0;
+	  switch (s->next->type)
+	    {
+	    case variable_type: 
+	      if (s->next->op.variable.type == NULL 
+		  && s->next->op.variable.name == NULL)
+		{
+		  s->op.variable.alloc += s->next->op.variable.alloc;
+		  folded = 1;
+		}
+	      break;
+	      
+	    case function_call_type:
+	      if (STREQ (s->next->ops[0]->op.variable.name, "__builtin_alloca")
+		  && s->ops[1]->type == integer_type)
+		{
+		  s->op.variable.alloc += s->next->ops[1]->op.integer.i;
+		  folded = 1;
+		}
+	      break;
+	    }
+	  if (folded)
+	    {
+	      struct ast *t = s->next;
+	      s->next = t->next;
+	      t->next = NULL;
+	      AST_FREE (t);
+	    }
+	}
+      break;
+
+      /* Fold up predictable if-statements. */
     case cond_type:
       optimizer_r (&s->ops[0]);
       optimizer_r (&s->ops[1]);
@@ -85,6 +122,7 @@ optimizer_r (struct ast **ss)
 	}
       break;
 
+      /* Fold up constant expressions. */
     case binary_type:
       optimizer_r (&s->ops[0]);
       optimizer_r (&s->ops[1]);
@@ -109,6 +147,7 @@ optimizer_r (struct ast **ss)
 	}
       break;
 
+      /* Fold up constant expressions. */
     case unary_type:
       optimizer_r (&s->ops[0]);
       if (optimize > 0)
@@ -128,8 +167,6 @@ optimizer_r (struct ast **ss)
       for (j = 0; j < s->num_ops; j++)
 	optimizer_r (&s->ops[j]);
     }
-  if (s != NULL)
-    optimizer_r (&s->next);
 #undef s
 }
 
