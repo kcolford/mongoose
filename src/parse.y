@@ -21,6 +21,8 @@ along with Compiler; see the file COPYING.  If not see
 %error-verbose
 %define parse.lac full
 
+%expect 1
+
 %{
 #include "config.h"
 
@@ -40,6 +42,7 @@ static struct ast *make_dowhileloop (struct ast *, struct ast *);
 static struct ast *make_whileloop (struct ast *, struct ast *);
 static struct ast *make_array (char *, char *, struct ast *);
 static struct ast *make_forloop (struct ast *, struct ast *, struct ast *, struct ast *);
+static struct ast *make_ifelse (struct ast *, struct ast *, struct ast *);
 
 #define YYDEBUG 1
 %}
@@ -153,6 +156,7 @@ statement:	';'                             { $$ = NULL; }
 	|	STR STR '=' expr ';'            { $$ = make_binary ('=', make_variable ($1, $2), $4); $$->flags |= AST_THROW_AWAY; }
 	|	expr ';'                        { $$ = $1; $$->flags |= AST_THROW_AWAY; }
 	|	IF '(' expr ')' sub_body        { $$ = make_cond ($3, $5); }
+	|	IF '(' expr ')' sub_body ELSE sub_body { $$ = make_ifelse ($3, $5, $7); }
 	|	STR ':' statement               { $$ = ast_cat (make_label ($1), $3); }
 	|	GOTO STR ';'                    { $$ = make_jump ($2); }
 	|	WHILE '(' expr ')' sub_body     { $$ = make_whileloop ($3, $5); }
@@ -262,5 +266,15 @@ make_forloop (struct ast *init, struct ast *cond, struct ast *step, struct ast *
   struct ast *out = ast_cat (body, step);
   out = make_whileloop (cond, out);
   out = ast_cat (init, out);
+  return out;
+}
+
+struct ast *
+make_ifelse (struct ast *cond, struct ast *body, struct ast *elsebody)
+{
+  char *t = place_holder (), *tt = xstrdup (t);
+  body = ast_cat (body, make_jump (t));
+  struct ast *out = ast_cat (make_label (tt), elsebody);
+  out = ast_cat (make_cond (cond, body), out);
   return out;
 }
