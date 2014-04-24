@@ -94,9 +94,9 @@ regis (int a)
 #ifndef NDEBUG
   if (a < 0)
     error (1, 0, _("index out of bounds, %d less than zero"), a);
-  if (a >= sizeof storage / sizeof *storage)
+  if (a >= LEN (storage))
     error (1, 0, _("index out of bounds, %d greater than or equal to the maximum %lu"),
-	   a, sizeof storage / sizeof *storage);
+	   a, LEN (storage));
 #endif
   return storage[a];
 }
@@ -113,9 +113,9 @@ call_regis(int a)
 #ifndef NDEBUG
   if (a < 0)
     error (1, 0, _("index out of bounds, %d less than zero"), a);
-  if (a >= sizeof storage / sizeof *storage)
+  if (a >= LEN (storage))
     error (1, 0, _("index out of bounds, %d greater than or equal to the maximum %lu"),
-	   a, sizeof storage / sizeof *storage);
+	   a, LEN (storage));
 #endif
   return storage[a];
 }
@@ -140,18 +140,16 @@ general_regis(int a)
 #ifndef NDEBUG
   if (a < 0)
     error (1, 0, _("index out of bounds, %d less than zero"), a);
-  if (a >= sizeof storage / sizeof *storage)
+  if (a >= LEN (storage))
     error (1, 0, _("index out of bounds, %d greater than or equal to the maximum %lu"),
-	   a, sizeof storage / sizeof *storage);
+	   a, LEN (storage));
 #endif
   return storage[a];
 }
 
 static int avail = 0;
-
 static int str_labelno = 0;
 static char *data_section = NULL;
-
 static int branch_labelno = 0;
 
 #define GIVE_REGISTER_HOW(I, S) do {					\
@@ -175,20 +173,6 @@ static int branch_labelno = 0;
 
 #define GIVE_REGISTER(S)			\
   GIVE_REGISTER_HOW ("mov", (S))
-
-#define SWAP(X, Y) do {				\
-    void *_t = (X);				\
-    (X) = (Y);					\
-    (Y) = _t;					\
-  } while (0)
-
-/* This macro makes branching a whole lot easier. */
-#define BRANCH_WITH_CODE_BIN(X, Y) do {			\
-    PUT ("\t%s\t%s, %s\n\t%s\t.LB%d\n", (X),		\
-	 print_loc (s->ops[0]->ops[1]->loc),		\
-	 print_loc (s->ops[0]->ops[0]->loc), (Y), n);	\
-							\
-  } while (0)
 
 /* Wrapper macro around sub macros to decide on which method of
    register selection is necessary. */
@@ -257,7 +241,20 @@ static int branch_labelno = 0;
       GIVE_REGISTER (Y);			\
   } while (0)
 
-static int branchable_binops[] = { '<', '>', EQ, NE, LE, GE };
+/* Store the construction of the binary operators that work with the
+   branching routine. */
+struct binop_branching
+{
+  int op;
+  const char *check;
+  const char *jump;
+} branchable_binops[] = { 
+  { '<', "cmp", "jnl" },
+  { '>', "cmp", "jng" },
+  { EQ, "cmp", "jne" },
+  { NE, "cmp", "je" },
+  { LE, "cmp", "jnle" },
+  { GE, "cmp", "jnge" } };
 
 static void
 gen_code_r (struct ast *s)
@@ -319,9 +316,10 @@ gen_code_r (struct ast *s)
       ;
       int n;
       n = branch_labelno++;
-      if (s->ops[0]->type == binary_type 
-	  && NULL != bsearch (&s->ops[0]->op.binary.op, branchable_binops,
-			      LEN (branchable_binops), sizeof (int), compare))
+      struct binop_branching *code = s->ops[0]->type != binary_type ? NULL :
+	bsearch (&s->ops[0]->op.binary.op, branchable_binops,
+		 LEN (branchable_binops), sizeof *branchable_binops, compare);
+      if (code != NULL)
 	{
 	  gen_code_r (s->ops[0]->ops[0]);
 	  assert (s->ops[0]->ops[0]->loc != NULL);
@@ -329,29 +327,9 @@ gen_code_r (struct ast *s)
 	  assert (s->ops[0]->ops[1]->loc != NULL);
 	  ENSURE_DESTINATION_REGISTER (2, s->ops[0]->ops[0]->loc,
 				       s->ops[0]->ops[1]->loc);
-	  switch (s->ops[0]->op.binary.op)
-	    {
-	    case '<':
-	      BRANCH_WITH_CODE_BIN ("cmpq", "jnl");
-	      break;
-	    case LE:
-	      BRANCH_WITH_CODE_BIN ("cmpq", "jnle");
-	      break;
-	    case '>':
-	      BRANCH_WITH_CODE_BIN ("cmpq", "jng");
-	      break;
-	    case GE:
-	      BRANCH_WITH_CODE_BIN ("cmpq", "jnge");
-	      break;
-	    case EQ:
-	      BRANCH_WITH_CODE_BIN ("cmpq", "jne");
-	      break;
-	    case NE:
-	      BRANCH_WITH_CODE_BIN ("cmpq", "je");
-	      break;
-	    default:
-	      ERROR (_("Invalid branchable binop"));
-	    }
+	  PUT ("\t%s\t%s, %s\n\t%s\t.LB%d\n", code->check,
+	       print_loc (s->ops[0]->ops[1]->loc),
+	       print_loc (s->ops[0]->ops[0]->loc), code->jump, n);
 	  FREE_LOC (s->ops[0]->ops[1]->loc);
 	  FREE_LOC (s->ops[0]->ops[0]->loc);
 	  gen_code_r (s->ops[1]);
@@ -382,8 +360,8 @@ gen_code_r (struct ast *s)
       break;
 
     case integer_type:
-      assert (s->loc == NULL);
-      MAKE_BASE_LOC (s->loc, literal_loc, my_printf ("%lld", s->op.integer.i));
+      if (s->loc == NULL)
+	MAKE_BASE_LOC (s->loc, literal_loc, my_printf ("%lld", s->op.integer.i));
       break;
 
     case variable_type:
@@ -395,12 +373,16 @@ gen_code_r (struct ast *s)
       break;
 
     case string_type:
-      MAKE_BASE_LOC (s->loc, literal_loc, my_printf (".LS%d", str_labelno++));
-      char *out = my_printf ("%s%s:\n\t.string\t\"%s\"\n", data_section,
-			     s->loc->base, s->op.string.val);
-      FREE (s->op.string.val);
-      FREE (data_section);
-      data_section = out;
+      if (s->loc == NULL)
+	MAKE_BASE_LOC (s->loc, literal_loc, my_printf (".LS%d", str_labelno++));
+      if (s->op.string.val != NULL)
+	{
+	  char *out = my_printf ("%s%s:\n\t.string\t\"%s\"\n", data_section,
+				 s->loc->base, s->op.string.val);
+	  FREE (s->op.string.val);
+	  FREE (data_section);
+	  data_section = out;
+	}
       break;
 
     case binary_type:
@@ -600,7 +582,8 @@ extern char *infile_name;
 int
 gen_code (struct ast *s)
 {
-  qsort (branchable_binops, LEN (branchable_binops), sizeof (int), compare);
+  qsort (branchable_binops, LEN (branchable_binops), 
+	 sizeof *branchable_binops, compare);
   if (setjmp (error_jump))
     return 1;
   PUT ("\t.file\t\"%s\"\n\t.text\n", infile_name);

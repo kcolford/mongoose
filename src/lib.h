@@ -53,6 +53,13 @@ along with Compiler; see the file COPYING.  If not see
 /* Macro for determining the length of an array. */
 #define LEN(X) (sizeof (X) / sizeof *(X))
 
+/* Macro for swapping two pointer values. */
+#define SWAP(X, Y) do {				\
+    void *_t = (X);				\
+    (X) = (Y);					\
+    (Y) = _t;					\
+  } while (0)
+
 /* **************************************************************** */
 /* Start of linked in functions. */
 
@@ -69,7 +76,7 @@ extern int safe_system (const char **);
    according to a printf-format specifier. */
 extern char *my_printf (const char *, ...);
 
-/* This is a comparision function for use with "bsearch" and
+/* These are comparision functions for use with "bsearch" and
    "qsort". */
 extern int compare (const void *, const void *);
 extern int compares (const void *, const void *);

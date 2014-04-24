@@ -84,7 +84,7 @@ optimizer_r (struct ast **ss)
 	      break;
 	      
 	    case function_call_type:
-	      if (STREQ (s->next->ops[0]->op.variable.name, "__builtin_alloca")
+	      if (STREQ (s->next->ops[0]->loc->base, "__builtin_alloca")
 		  && s->ops[1]->type == integer_type)
 		{
 		  s->op.variable.alloc += s->next->ops[1]->op.integer.i;
