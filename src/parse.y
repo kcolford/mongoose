@@ -175,7 +175,7 @@ str:		STRING     { $$ = $1; }
 
 /* These are all the constant expressions. */
 constrval:	INT { $$ = make_integer ($1); }
-	|	str { $$ = make_string ($1); }
+	|	str { $$ = make_unary ('&', make_string ($1)); }
 	;
 
 /* Expressions. */

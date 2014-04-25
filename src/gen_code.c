@@ -375,10 +375,10 @@ gen_code_r (struct ast *s)
 
     case string_type:
       if (s->loc == NULL)
-	MAKE_BASE_LOC (s->loc, literal_loc, my_printf (".LS%d", str_labelno++));
+	MAKE_BASE_LOC (s->loc, symbol_loc, my_printf (".LS%d", str_labelno++));
       if (s->op.string.val != NULL)
 	EXTENDF (data_section, "%s:\n\t.string\t\"%s\"\n",
-		 print_loc (s->loc) + 1, s->op.string.val);
+		 print_loc (s->loc), s->op.string.val);
       break;
 
     case binary_type:
@@ -499,8 +499,12 @@ gen_code_r (struct ast *s)
 	  break;
 
 	case '&':
-	  assert (IS_MEMORY (s->loc));
-	  GIVE_REGISTER_HOW ("lea", s->loc);
+	  if (IS_MEMORY (s->loc))
+	    GIVE_REGISTER_HOW ("lea", s->loc);
+	  else if (IS_SYMBOL (s->loc))
+	    s->loc->kind = literal_loc;
+	  else
+	    assert (0);
 	  break;
 
 	case '-':

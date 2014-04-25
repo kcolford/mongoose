@@ -43,6 +43,7 @@ struct loc
 #define IS_REGISTER(S) ((S) != NULL && ((struct loc *) S)->kind == register_loc)
 #define IS_LITERAL(S) ((S) != NULL && ((struct loc *) S)->kind == literal_loc)
 #define IS_MEMORY(S) ((S) != NULL && ((struct loc *) S)->kind == memory_loc)
+#define IS_SYMBOL(S) ((S) != NULL && ((struct loc *) S)->kind == symbol_loc)
 
 #ifndef FREE_LOC_HOOK
 # define FREE_LOC_HOOK(X) NULL
