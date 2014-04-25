@@ -102,6 +102,7 @@ get_label (char *l)
 
       /* Add the label. */
       p->state[p->state_end].label = xstrdup (l);
+      s->kind = symbol_loc;
       FREE (s->base);
       s->base = my_printf (".LJ%d", curr_labelno++);
       p->state[p->state_end].meaning = loc_dup (s);
@@ -174,6 +175,12 @@ dealias_r (struct ast **ss)
 
     case jump_type:
       s->loc = get_label (s->op.jump.name);
+      assert (s->loc != NULL);
+      break;
+
+    case cond_type:
+      dealias_r (&s->ops[0]);
+      s->loc = get_label (s->op.cond.name);
       assert (s->loc != NULL);
       break;
 

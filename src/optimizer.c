@@ -105,20 +105,23 @@ optimizer_r (struct ast **ss)
       /* Fold up predictable if-statements. */
     case cond_type:
       optimizer_r (&s->ops[0]);
-      optimizer_r (&s->ops[1]);
       if (s->ops[0]->type == integer_type)
 	{
+	  struct ast *t = NULL;
 	  if (s->ops[0]->op.integer.i)
 	    {
-	      AST_FREE (s->ops[0]);
-	      s = ast_cat (s->ops[1], s->next);
+	      t = make_jump (xstrdup (s->op.cond.name));
+	      t->next = s->next;
+	      SWAP (t, s);
+	      t->next = NULL;
 	    }
 	  else
 	    {
-	      AST_FREE (s->ops[0]);
-	      AST_FREE (s->ops[1]);
+	      t = s;
 	      s = s->next;
+	      t->next = NULL;
 	    }
+	  AST_FREE (t);
 	}
       break;
 

@@ -48,6 +48,12 @@ top_level = {
 };
 
 top_level = {
+    type = unsigned;
+    call = boolean_not;
+    size = 1;
+};
+
+top_level = {
     type = "struct ast *";
     call = next;
 };
@@ -78,8 +84,11 @@ types = {
 
 types = {
     name = cond;
+    cont = {
+	type = "char *";
+	call = name;
+    };
     sub = cond;
-    sub = body;
 };
 
 types = {

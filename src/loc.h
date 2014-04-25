@@ -24,9 +24,15 @@ along with Compiler; see the file COPYING.  If not see
 #include "lib.h"
 #include "xalloc.h"
 
+enum loc_code {
+  literal_loc, 
+  memory_loc, 
+  register_loc, 
+  symbol_loc };
+
 struct loc
 {
-  enum { literal_loc, memory_loc, register_loc } kind;
+  enum loc_code kind;
   int offset;
   char *base;
   char *index;
@@ -78,6 +84,9 @@ print_loc (struct loc *l)
 	l->string = my_printf ("%d(%s)", l->offset, l->base);
       break;
     case register_loc:
+      l->string = my_printf ("%s", l->base);
+      break;
+    case symbol_loc:
       l->string = my_printf ("%s", l->base);
       break;
     }

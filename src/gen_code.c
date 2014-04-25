@@ -253,13 +253,14 @@ struct binop_branching
   int op;
   const char *check;
   const char *jump;
+  const char *not;
 } branchable_binops[] = { 
-  { '<', "cmp", "jnl" },
-  { '>', "cmp", "jng" },
-  { EQ, "cmp", "jne" },
-  { NE, "cmp", "je" },
-  { LE, "cmp", "jnle" },
-  { GE, "cmp", "jnge" } };
+  { '<', "cmp", "jl", "jnl" },
+  { '>', "cmp", "jg", "jng" },
+  { EQ, "cmp", "je", "jne" },
+  { NE, "cmp", "jne", "je" },
+  { LE, "cmp", "jle", "jnle" },
+  { GE, "cmp", "jge", "jnge" } };
 
 static void
 gen_code_r (struct ast *s)
@@ -319,8 +320,6 @@ gen_code_r (struct ast *s)
 
     case cond_type:
       ;
-      int n;
-      n = branch_labelno++;
       struct binop_branching *code = s->ops[0]->type != binary_type ? NULL :
 	bsearch (&s->ops[0]->op.binary.op, branchable_binops,
 		 LEN (branchable_binops), sizeof *branchable_binops, compare);
@@ -332,13 +331,12 @@ gen_code_r (struct ast *s)
 	  assert (s->ops[0]->ops[1]->loc != NULL);
 	  ENSURE_DESTINATION_REGISTER (2, s->ops[0]->ops[0]->loc,
 				       s->ops[0]->ops[1]->loc);
-	  PUT ("\t%s\t%s, %s\n\t%s\t.LB%d\n", code->check,
+	  PUT ("\t%s\t%s, %s\n\t%s\t%s\n", code->check,
 	       print_loc (s->ops[0]->ops[1]->loc),
-	       print_loc (s->ops[0]->ops[0]->loc), code->jump, n);
+	       print_loc (s->ops[0]->ops[0]->loc), 
+	       (s->ops[0]->boolean_not ? code->not : code->jump), print_loc (s->loc));
 	  FREE_LOC (s->ops[0]->ops[1]->loc);
 	  FREE_LOC (s->ops[0]->ops[0]->loc);
-	  gen_code_r (s->ops[1]);
-	  PUT (".LB%d:\n", n);
 	}
       else
 	{
@@ -347,21 +345,19 @@ gen_code_r (struct ast *s)
 	     is true. */
 	  gen_code_r (s->ops[0]);
 	  assert (s->ops[0]->loc != NULL);
-	  PUT ("\tcmpq\t%s, $0\n\tjz\t.LB%d\n", print_loc (s->ops[0]->loc), n);
+	  PUT ("\tcmpq\t%s, $0\n\tjz\t%s\n", print_loc (s->ops[0]->loc), print_loc (s->loc));
 	  FREE_LOC (s->ops[0]->loc);
-	  gen_code_r (s->ops[1]);
-	  PUT (".LB%d:\n", n);
 	}
       break;
 
     case label_type:
       assert (s->loc != NULL);
-      PUT ("%s:\n", s->loc->base);
+      PUT ("%s:\n", print_loc (s->loc));
       break;
 
     case jump_type:
       assert (s->loc != NULL);
-      PUT ("\tjmp\t%s\n", s->loc->base);
+      PUT ("\tjmp\t%s\n", print_loc (s->loc));
       break;
 
     case integer_type:

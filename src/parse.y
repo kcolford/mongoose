@@ -38,6 +38,7 @@ along with Compiler; see the file COPYING.  If not see
 int yydebug = 0;
 
 void yyerror (const char *);
+static struct ast *make_ifstatement (struct ast *, struct ast *);
 static struct ast *make_dowhileloop (struct ast *, struct ast *);
 static struct ast *make_whileloop (struct ast *, struct ast *);
 static struct ast *make_array (char *, char *, struct ast *);
@@ -155,7 +156,7 @@ statement:	';'                             { $$ = NULL; }
 	|	STR STR '[' expr ']' ';'        { $$ = make_array ($1, $2, $4); }
 	|	STR STR '=' expr ';'            { $$ = make_binary ('=', make_variable ($1, $2), $4); $$->throw_away = 1; }
 	|	expr ';'                        { $$ = $1; $$->throw_away = 1; }
-	|	IF '(' expr ')' sub_body        { $$ = make_cond ($3, $5); }
+	|	IF '(' expr ')' sub_body        { $$ = make_ifstatement ($3, $5); }
 	|	IF '(' expr ')' sub_body ELSE sub_body { $$ = make_ifelse ($3, $5, $7); }
 	|	STR ':' statement               { $$ = ast_cat (make_label ($1), $3); }
 	|	GOTO STR ';'                    { $$ = make_jump ($2); }
@@ -234,17 +235,25 @@ yyerror (const char *msg)
 }
 
 struct ast *
+make_ifstatement (struct ast *cond, struct ast *body)
+{
+  char *t = place_holder (), *tt = xstrdup (t);
+  cond->boolean_not = 1;
+  return ast_cat (make_cond (t, cond) , ast_cat (body, make_label (tt)));
+}
+
+struct ast *
 make_dowhileloop (struct ast *cond, struct ast *body)
 {
   char *t = place_holder (), *tt = xstrdup (t);
-  return ast_cat (make_label (t), ast_cat (body, make_cond (cond, make_jump (tt))));
+  return ast_cat (make_label (t), ast_cat (body, make_cond (tt, cond)));
 }
 
 struct ast *
 make_whileloop (struct ast *cond, struct ast *body)
 {
   char *t = place_holder (), *tt = xstrdup (t);
-  return ast_cat (make_label (t), make_cond (cond, ast_cat (body, make_jump (tt))));
+  return ast_cat (make_label (t), make_ifstatement (cond, ast_cat (body, make_jump (tt))));
 }
 
 struct ast *
@@ -275,6 +284,6 @@ make_ifelse (struct ast *cond, struct ast *body, struct ast *elsebody)
   char *t = place_holder (), *tt = xstrdup (t);
   body = ast_cat (body, make_jump (t));
   struct ast *out = ast_cat (make_label (tt), elsebody);
-  out = ast_cat (make_cond (cond, body), out);
+  out = ast_cat (make_ifstatement (cond, body), out);
   return out;
 }
