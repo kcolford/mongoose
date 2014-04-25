@@ -377,13 +377,8 @@ gen_code_r (struct ast *s)
       if (s->loc == NULL)
 	MAKE_BASE_LOC (s->loc, literal_loc, my_printf (".LS%d", str_labelno++));
       if (s->op.string.val != NULL)
-	{
-	  char *out = my_printf ("%s%s:\n\t.string\t\"%s\"\n", data_section,
-				 s->loc->base, s->op.string.val);
-	  FREE (s->op.string.val);
-	  FREE (data_section);
-	  data_section = out;
-	}
+	EXTENDF (data_section, "%s:\n\t.string\t\"%s\"\n",
+		 print_loc (s->loc) + 1, s->op.string.val);
       break;
 
     case binary_type:
