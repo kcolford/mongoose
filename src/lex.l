@@ -23,18 +23,23 @@ along with Compiler; see the file COPYING.  If not see
 %{
 #include "config.h"
 
+#include "ast.h"
 #include "compiler.h"
+#include "parse.h"
 #include "xalloc.h"
-  
+
 #include <stdlib.h>
 #include <string.h>
-%}
 
-%x LINE_COMMENT
-%x BLOCK_COMMENT
+char *file_name = NULL;
+int lineno = 0;
+
+%}
 
 %%
 
+ /* As one can see, there are a number of multi-character lexemes that
+    have to be supported. */
 "=="                   { return EQ; }
 "!="                   { return NE; }
 ">="                   { return GE; }
@@ -43,23 +48,79 @@ along with Compiler; see the file COPYING.  If not see
 "<<"                   { return LS; }
 "++"                   { return INC; }
 "--"                   { return DEC; }
+"&&"                   { return AND; }
+"||"                   { return OR; }
+"+="                   { return MUT_ADD; }
+"-="                   { return MUT_SUB; }
+"*="                   { return MUT_MUL; }
+"/="                   { return MUT_DIV; }
+"%="                   { return MUT_MOD; }
+">>="                  { return MUT_RS; }
+"<<="                  { return MUT_LS; }
+"&="                   { return MUT_AND; }
+"|="                   { return MUT_OR; }
+"^="                   { return MUT_XOR; }
 
+ /* These are the handful of keywords that are currently supported. */
 "return"               { return RETURN; }
 "if"                   { return IF; }
 "goto"                 { return GOTO; }
 "while"                { return WHILE; }
+"static"               { return STATIC; }
+"extern"               { return EXTERN; }
+"inline"               { return INLINE; }
+"for"                  { return FOR; }
+"do"                   { return DO; }
+"else"                 { return ELSE; }
+"const"                { return CONST; }
+"struct"               { return STRUCT; }
+"typedef"              { return TYPEDEF; }
+"union"                { return UNION; }
+"enum"                 { return ENUM; }
+"switch"               { return SWITCH; }
+"case"                 { return CASE; }
+"default"              { return DEFAULT; }
+"break"                { return BREAK; }
+"continue"             { return CONTINUE; }
 
-[ \t\r\n]+             ;
--?[0-9]+               { yylval.i = atoi (yytext); return INT; }
+ /* Whitespace is thrown out. */
+[ \t\r]                ;
+
+ /* Different styles of inputting numbers. */
+[-+]?0[0-8]*           { yylval.i = strtoll (yytext, NULL, 8); return INT; }
+[-+]?[1-9][0-9]*       { yylval.i = strtoll (yytext, NULL, 10); return INT; }
+[-+]?0x[0-9a-f]+       { yylval.i = strtoll (yytext, NULL, 16); return INT; }
+[-+]?0x[0-9A-F]+       { yylval.i = strtoll (yytext, NULL, 16); return INT; }
+
+ /* Symbols are copied and passed over to parser to decide their
+    fate. */
 [_a-zA-Z][_a-zA-Z0-9]* { yylval.str = xstrdup (yytext); return STR; }
-\"([^\\\"]|\\[^\"])*\" { yylval.str = xmemdup (yytext + 1, yyleng - 2); return STRING; }
 
-"/*"                   { BEGIN (BLOCK_COMMENT); }
-<BLOCK_COMMENT>.|\n    ;
-<BLOCK_COMMENT>"*/"    { BEGIN (INITIAL); }
+ /* Strings are extracted and passed unformated to the assembler so
+    that it can deal with any escape sequences. */
+\"([^\\\"]|\\[^\"])*\" {
+  yylval.str = xmemdup (yytext + 1, yyleng - 1);
+  yylval.str[yyleng - 2] = '\0';
+  return STRING;
+}
 
-"//"                   { BEGIN (LINE_COMMENT); }
-<LINE_COMMENT>.        ;
-<LINE_COMMENT>\n       { BEGIN (INITIAL); }
+ /* Extract the current line number and file name from the directives
+    left by the C preprocessor. */
+"# "[0-9]+.*           {
+  char *t = alloca (yyleng + 1);
+  strcpy (t, yytext);
+  lineno = strtol (strtok (t, "# \""), NULL, 10);
+  FREE (file_name);
+  file_name = xstrdup (strtok (NULL, "# \""));
+}
 
+ /* Ignore any pragmas found in the source. */
+"#"[ \t]*"pragma".*    ;
+
+ /* Keep track of line numbers. */
+\n                     { lineno++; }
+
+ /* If something didn't fit into any of the above categories, we'll
+    return it to the parser to let it deal with whether it's valid or
+    should throw an error. */
 .                      { return yytext[0]; }

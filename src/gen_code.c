@@ -20,31 +20,48 @@ along with Compiler; see the file COPYING.  If not see
 
 #include "config.h"
 
+#define VALID_REGISTER_CHECK(S)						\
+  ((S) != NULL								\
+   && STREQ ((S), regis (general_regis (avail < 1 ? 0 : avail - 1))))
+
+#define FREE_LOC_HOOK(X) do {				\
+    if (IS_REGISTER (X) || IS_MEMORY (X))		\
+      {							\
+	if (IS_MEMORY (X))				\
+	  {						\
+	    if (VALID_REGISTER_CHECK ((X)->index))	\
+	      avail -= 1;				\
+	  }						\
+	if (VALID_REGISTER_CHECK ((X)->base))		\
+	  avail -= 1;					\
+      }							\
+  } while (0)
+
+#include "ast.h"
 #include "compiler.h"
+#include "lib.h"
+#include "parse.h"
 #include "xalloc.h"
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <setjmp.h>
-#include <errno.h>
-
-#include <error.h>
 
 #include <assert.h>
 
-#define IS_REGISTER(S) ((S) != NULL && *((const char *) S) == '%')
-#define IS_LITERAL(S) ((S) != NULL && *((const char *) S) == '$')
-#define IS_MEMORY(S) ((S) != NULL && !IS_REGISTER (S) && !IS_LITERAL (S))
-
-#define ALLOC_REGISTER(X) do {				\
-    (X) = xstrdup (regis (general_regis (avail++)));	\
+#define MOVE_LOC_WITH(OP, X, Y) do {					\
+    if ((X) != NULL)							\
+      {									\
+	PUT ("\t%s\t%s, %s\n", (OP), print_loc (X), print_loc (Y));	\
+	FREE_LOC (X);							\
+      }									\
+    (X) = (Y);								\
   } while (0)
 
-#define FREE_REGISTER(X) do {			\
-    if (IS_REGISTER (X))			\
-      avail -= 1;				\
-  } while (0);
+#define ALLOC_REGISTER(X) do {				\
+    const char *_d = regis (general_regis (avail++));	\
+    MAKE_BASE_LOC (X, register_loc, xstrdup (_d));	\
+  } while (0)
 
 #define PUT(...) do {				\
     fprintf (outfile, __VA_ARGS__);		\
@@ -62,14 +79,20 @@ jmp_buf error_jump;
     longjmp (error_jump, 1);			\
   } while (0)
 
-const char *
+/* These are the string variants of the registers. */
+static inline const char *
 regis (int a)
 {
   const char *storage[] =
-    { "%rax", "%rbx", "%rcx", "%rdx", "%rdi", "%rsi", "%r8", "%r9", "%r10", 
+    { "%rax", "%rbx", "%rcx", "%rdx", "%rdi", "%rsi", "%r8", "%r9", "%r10",
       "%r11", "%r12", "%r13", "%r14", "%r15" };
-  assert (a >= 0);
-  assert (a < sizeof storage / sizeof *storage);
+#ifndef NDEBUG
+  if (a < 0)
+    error (1, 0, _("index out of bounds, %d less than zero"), a);
+  if (a >= sizeof storage / sizeof *storage)
+    error (1, 0, _("index out of bounds, %d greater than or equal to the maximum %lu"),
+	   a, sizeof storage / sizeof *storage);
+#endif
   return storage[a];
 }
 
@@ -77,109 +100,76 @@ regis (int a)
    through.  Currently, they seriously conflict with the general-use
    registers and a function call in the middle of an expression is
    likely to fail. */
-const int 
+static inline const int
 call_regis(int a)
 {
-  const int storage[] = 
+  const int storage[] =
     { 4, 5, 2, 3, 6, 7 };
-  assert (a >= 0);
-  assert (a < sizeof storage / sizeof *storage);
+#ifndef NDEBUG
+  if (a < 0)
+    error (1, 0, _("index out of bounds, %d less than zero"), a);
+  if (a >= sizeof storage / sizeof *storage)
+    error (1, 0, _("index out of bounds, %d greater than or equal to the maximum %lu"),
+	   a, sizeof storage / sizeof *storage);
+#endif
   return storage[a];
 }
 
 /* These registers are available for use in expression calculation.
    Registers which are needed for special purposes have been left out.
-   These include: %rax, %rdx, and %rcx. 
+   These include: %rax, %rdx, and %rcx.
 
    The idea to make the allocation behave like a stack (and operations
    are done like an RPN calculator) so that we only need to increment
    and decrement the avail variable to check which register we should
    use. */
-const int 
+static inline const int
 general_regis(int a)
 {
-  const int storage[] = 
+  const int storage[] =
     { 1, 8, 9, 10, 11, 12, 13
 #if 1
-      , 7, 6, 3, 2, 5, 4 
+      , 7, 6, 3, 2, 5, 4
 #endif
     };
-  assert (a >= 0);
-  assert (a < sizeof storage / sizeof *storage);
+#ifndef NDEBUG
+  if (a < 0)
+    error (1, 0, _("index out of bounds, %d less than zero"), a);
+  if (a >= sizeof storage / sizeof *storage)
+    error (1, 0, _("index out of bounds, %d greater than or equal to the maximum %lu"),
+	   a, sizeof storage / sizeof *storage);
+#endif
   return storage[a];
 }
 
-int avail = 0;
+static int avail = 0;
 
-struct state_entry
-{
-  char *label;
-  char *meaning;
-};
+static int str_labelno = 0;
+static char *data_section = NULL;
 
-int state_end = 0;
-struct state_entry state[0x10000] = { {NULL, NULL} };
+static int branch_labelno = 0;
 
-int func_allocd = 0;
-int curr_labelno = 1;
+#define GIVE_REGISTER_HOW(I, S) do {					\
+    unsigned _addto_avail = 0;						\
+    struct loc *_t = NULL;						\
+    if (IS_MEMORY (S))							\
+      {									\
+	_addto_avail += 1;						\
+	if (STRNEQ ((S)->base, "%rbp"))					\
+	  MAKE_BASE_LOC (_t, register_loc, xstrdup ((S)->base));	\
+	else if ((S)->index != NULL)					\
+	  MAKE_BASE_LOC (_t, register_loc, xstrdup ((S)->index));	\
+	else								\
+	  _addto_avail -= 1;						\
+      }									\
+    if (_t == NULL)							\
+      ALLOC_REGISTER (_t);						\
+    MOVE_LOC_WITH (I, S, _t);						\
+    avail += _addto_avail;						\
+  } while (0)
 
-char *data_section = NULL;
-
-void
-clear_state ()
-{
-  memset (state, 0, sizeof state);
-  state_end = 0;
-  func_allocd = 0;
-  avail = 0;
-}
-
-void
-add_to_state (char *v, size_t s)
-{
-  func_allocd += s;
-  state[state_end].label = v;
-  state[state_end].meaning = my_printf ("-%d(%%rbp)", func_allocd);
-  ++state_end;
-}
-
-char *
-get_from_state (char *l)
-{
-  int i;
-  for (i = state_end - 1; i >= 0; i--)
-    {
-      assert (state[i].label != NULL);
-      if (strcmp (l, state[i].label) == 0)
-	return state[i].meaning;
-    }
-  return l;
-} 
-
-char *
-get_label (char *l)
-{
-  char *s = get_from_state (l);
-  if (*s != '.')
-    {
-      state[state_end].label = l;
-      state[state_end].meaning = s = my_printf (".L%d", curr_labelno++);
-      ++state_end;
-    }
-  return s;
-}
-
-char *
-give_register_how (const char *i, const char *s)
-{
-  char *r;
-  ALLOC_REGISTER (r);
-  PUT ("\t%s\t%s, %s\n", i, s, r);
-  return r;
-}
-
-#define give_register(s)			\
-  give_register_how ("mov", s)
+#define GIVE_REGISTER(S)			\
+  GIVE_REGISTER_HOW ("mov", (S))
 
 #define SWAP(X, Y) do {				\
     void *_t = (X);				\
@@ -189,25 +179,33 @@ give_register_how (const char *i, const char *s)
 
 /* This macro makes branching a whole lot easier. */
 #define BRANCH_WITH_CODE_BIN(X, Y) do {				\
-    gen_code_r (s->op.cond.cond->op.binary.left);		\
-    gen_code_r (s->op.cond.cond->op.binary.right);		\
-    if (IS_LITERAL (s->op.cond.cond->op.binary.left->loc))	\
-      s->op.cond.cond->op.binary.left->loc =			\
-	give_register (s->op.cond.cond->op.binary.left->loc);	\
-    PUT ("\t%s\t%s, %s\n\t%s\t.L%d\n", (X),			\
-	 s->op.cond.cond->op.binary.right->loc,			\
-	 s->op.cond.cond->op.binary.left->loc, (Y), n);		\
-    FREE_REGISTER (s->op.cond.cond->op.binary.left->loc);	\
-    gen_code_r (s->op.cond.body);				\
-    PUT (".L%d:\n", n);						\
+    gen_code_r (s->ops[0]->ops[0]);				\
+    assert (s->ops[0]->ops[0]->loc != NULL);			\
+    gen_code_r (s->ops[0]->ops[1]);				\
+    assert (s->ops[0]->ops[1]->loc != NULL);			\
+    ENSURE_DESTINATION_REGISTER (2, s->ops[0]->ops[0]->loc,	\
+				 s->ops[0]->ops[1]->loc);	\
+    PUT ("\t%s\t%s, %s\n\t%s\t.LB%d\n", (X),			\
+	 print_loc (s->ops[0]->ops[1]->loc),			\
+	 print_loc (s->ops[0]->ops[0]->loc), (Y), n);		\
+    FREE_LOC (s->ops[0]->ops[1]->loc);				\
+    FREE_LOC (s->ops[0]->ops[0]->loc);				\
+    gen_code_r (s->ops[1]);					\
+    PUT (".LB%d:\n", n);					\
   } while (0)
 
-#define ENSURE_DESTINATION_REGISTER(N, X, Y)	\
-  ENSURE_DESTINATION_REGISTER##N (X, Y)
+/* Wrapper macro around sub macros to decide on which method of
+   register selection is necessary. */
+#define ENSURE_DESTINATION_REGISTER(N, X, Y) do {	\
+    ENSURE_DESTINATION_REGISTER##N (X, Y);		\
+    assert ((X) != NULL);				\
+    assert ((Y) != NULL);				\
+  } while (0)
 
+/* Ensure that that X is in a register. */
 #define ENSURE_DESTINATION_REGISTER_UNI(X) do {	\
     if (!IS_REGISTER (X))			\
-      (X) = give_register (X);			\
+      GIVE_REGISTER (X);			\
   } while (0)
 
 /* Designed for the addition and subtraction operations.  These
@@ -217,90 +215,103 @@ give_register_how (const char *i, const char *s)
 #define ENSURE_DESTINATION_REGISTER1(X, Y) do {	\
     if (!IS_REGISTER (X))			\
       {						\
-	if (!IS_REGISTER (Y))			\
-	  (X) = give_register (X);		\
-	else					\
+	if (IS_REGISTER (Y))			\
 	  SWAP (X, Y);				\
+	else					\
+	  GIVE_REGISTER (X);			\
       }						\
   } while (0)
 
-/* Designed for the multiplication, division, and modulo operations.
-   These require the %rdx register to be 0, the left hand argument to
-   be in %rax and the result will be left in %rax or %rdx depending on
-   the operation. */
+/* Designed to behave exactly as ENSURE_DESTINATION_REGISTER1, but is
+   guaranteed to keep the ordering of its arguments. */
 #define ENSURE_DESTINATION_REGISTER2(X, Y) do {	\
-    ENSURE_DESTINATION_REGISTER1 (X, Y);	\
-    if (!IS_REGISTER (Y))			\
-      (Y) = give_register (Y);			\
+    if (!IS_REGISTER (X))			\
+      {						\
+	if (IS_REGISTER (Y))			\
+	  {					\
+	    struct loc *t = loc_dup (Y);	\
+	    GIVE_REGISTER (Y);			\
+	    MOVE_LOC_WITH ("mov", (X), t);	\
+	  }					\
+	else					\
+	  GIVE_REGISTER (X);			\
+      }						\
   } while (0)
 
 /* Designed for use with the right and left shift operators.  These
    require the right-hand argument to either be and immediate value or
    placed in the %cl register. */
-#define ENSURE_DESTINATION_REGISTER3(X, Y) do {	\
-    if (!IS_LITERAL (Y))			\
-      {						\
-	PUT ("\tmov\t%s, %%rcx\n", (Y));	\
-	(Y) = "%cl";				\
-      }						\
-    if (IS_LITERAL (X))				\
-      (X) = give_register (X);			\
+#define ENSURE_DESTINATION_REGISTER3(X, Y) do {		\
+    if (!IS_LITERAL (Y))				\
+      {							\
+	struct loc *_l;					\
+	MAKE_BASE_LOC (_l, register_loc, "%rcx");	\
+	MOVE_LOC_WITH ("mov", (Y), _l);			\
+	(Y)->base = xstrdup ("%cl");			\
+      }							\
+    if (IS_LITERAL (X))					\
+      GIVE_REGISTER (X);				\
   } while (0)
 
-void
+/* Designed for when both X and Y must be registers but cannot have
+   their arguments swapped. */
+#define ENSURE_DESTINATION_REGISTER4(X, Y) do {	\
+    ENSURE_DESTINATION_REGISTER2 (X, Y);	\
+    if (!IS_REGISTER (Y))			\
+      GIVE_REGISTER (Y);			\
+  } while (0)
+
+static void
 gen_code_r (struct ast *s)
 {
   if (s == NULL)
     return;
   switch (s->type)
     {
-    case block_type:
-      gen_code_r (s->op.block.val);
-      gen_code_r (s->op.block.next);
-      break;
-
     case function_type:
-      /* We need a clean state for the function's variables. */
-      clear_state ();
-
       /* Enter the .text section and declare this symbol as global. */
       PUT ("\t.global\t%s\n", s->op.function.name);
       PUT ("%s:\n", s->op.function.name);
 
       /* Set up the stack frame. */
       PUT ("\tpush\t%%rbp\n\tmov\t%%rsp, %%rbp\n");
-      
+
       /* Walk over the list of arguments and push them into the
 	 stack. */
       struct ast *i;
       int argnum = 0;
-      for (i = s->op.function.args; i != NULL; i = i->op.block.next)
+      for (i = s->ops[0]; i != NULL; i = i->next)
 	{
-	  struct ast *v = i->op.block.val;
-	  add_to_state (v->op.variable.name, 8);
-	  PUT ("\tsub\t$8, %%rsp\n");
-	  PUT ("\tmov\t%s, %s\n", regis(call_regis(argnum)), 
-	       get_from_state (v->op.variable.name));
+	  assert (i->type == variable_type);
+	  PUT ("\tsub\t$%d, %%rsp\n", i->op.variable.alloc);
+	  assert (i->loc != NULL);
+	  PUT ("\tmov\t%s, %s\n", regis(call_regis(argnum)), print_loc (i->loc));
 	  argnum++;
 	}
 
       /* Generate the body of the function. */
-      gen_code_r (s->op.function.body);
+      gen_code_r (s->ops[1]);
+
+#if 0
+      assert (avail == 0);
+#endif
 #if 0
       /* Generate a second function epilogue just in case a
 	 return-statement wasn't included in the input source.  This
 	 can be toggled for testing. */
       PUT ("\tmov\t%%rbp, %%rsp\n\tpop\t%%rbp\n\tret\n\n");
 #endif
-      clear_state ();
       break;
 
     case ret_type:
       /* Move the return value into the %rax register. */
-      if (s->op.ret.val != NULL)
+      if (s->ops[0] != NULL)
 	{
-	  gen_code_r (s->op.ret.val);
-	  PUT ("\tmov\t%s, %%rax\n", s->op.ret.val->loc);
+	  gen_code_r (s->ops[0]);
+	  assert (s->ops[0]->loc != NULL);
+	  struct loc *ret;
+	  MAKE_BASE_LOC (ret, register_loc, xstrdup ("%rax"));
+	  MOVE_LOC_WITH ("mov", s->ops[0]->loc, ret);
 	}
       /* Function footer. */
       PUT ("\tmov\t%%rbp, %%rsp\n\tpop\t%%rbp\n\tret\n");
@@ -309,28 +320,28 @@ gen_code_r (struct ast *s)
     case cond_type:
       ;
       int n;
-      n = curr_labelno++;
-      if (s->op.cond.cond->type == binary_type)
+      n = branch_labelno++;
+      if (s->ops[0]->type == binary_type)
 	{
-	  switch (s->op.cond.cond->op.binary.op)
+	  switch (s->ops[0]->op.binary.op)
 	    {
 	    case '<':
-	      BRANCH_WITH_CODE_BIN ("cmp", "jnl");
+	      BRANCH_WITH_CODE_BIN ("cmpq", "jnl");
 	      break;
 	    case LE:
-	      BRANCH_WITH_CODE_BIN ("cmp", "jnle");
+	      BRANCH_WITH_CODE_BIN ("cmpq", "jnle");
 	      break;
 	    case '>':
-	      BRANCH_WITH_CODE_BIN ("cmp", "jng");
+	      BRANCH_WITH_CODE_BIN ("cmpq", "jng");
 	      break;
 	    case GE:
-	      BRANCH_WITH_CODE_BIN ("cmp", "jnge");
+	      BRANCH_WITH_CODE_BIN ("cmpq", "jnge");
 	      break;
 	    case EQ:
-	      BRANCH_WITH_CODE_BIN ("cmp", "jne");
+	      BRANCH_WITH_CODE_BIN ("cmpq", "jne");
 	      break;
 	    case NE:
-	      BRANCH_WITH_CODE_BIN ("cmp", "je");
+	      BRANCH_WITH_CODE_BIN ("cmpq", "je");
 	      break;
 	    default:
 	      goto alt_condition;
@@ -342,49 +353,56 @@ gen_code_r (struct ast *s)
 	  /* When in doubt, the C standard requires that if an
 	     expression evaluates to 0 then it is false, otherwise it
 	     is true. */
-	  gen_code_r (s->op.cond.cond);
-	  PUT ("\tcmp\t%s, $0\n", s->op.cond.cond->loc);
-	  FREE_REGISTER (s->op.cond.cond->loc);
-	  PUT ("\tjz\t.L%d\n", n);
-	  gen_code_r (s->op.cond.body);
-	  PUT (".L%d:\n", n);
+	  gen_code_r (s->ops[0]);
+	  assert (s->ops[0]->loc != NULL);
+	  PUT ("\tcmpq\t%s, $0\n\tjz\t.LB%d\n", print_loc (s->ops[0]->loc), n);
+	  FREE_LOC (s->ops[0]->loc);
+	  gen_code_r (s->ops[1]);
+	  PUT (".LB%d:\n", n);
 	}
       break;
 
     case label_type:
-      PUT ("%s:\n", get_label (s->op.label.name));
-      gen_code_r (s->op.label.stuff);
+      assert (s->loc != NULL);
+      PUT ("%s:\n", s->loc->base);
       break;
 
     case jump_type:
-      PUT ("\tjmp\t%s\n", get_label (s->op.jump.name));
+      assert (s->loc != NULL);
+      PUT ("\tjmp\t%s\n", s->loc->base);
       break;
 
     case integer_type:
-      s->loc = my_printf ("$%lld", s->op.integer.i);
+      assert (s->loc == NULL);
+      MAKE_BASE_LOC (s->loc, literal_loc, my_printf ("%lld", s->op.integer.i));
       break;
 
     case variable_type:
-      if (s->op.variable.type != NULL)
-	{
-	  add_to_state (s->op.variable.name, 8);
-	  PUT ("\tsub\t$8, %%rsp\n");
-	}
-      s->loc = get_from_state (s->op.variable.name);
+      /* The stack position of the variable has already been
+	 determined by a previous pass, but we still have to emit an
+	 instruction if any memory has to be allocated. */
+      if (s->op.variable.alloc != 0)
+	PUT ("\tsub\t$%d, %%rsp\n", s->op.variable.alloc);
       break;
 
     case string_type:
-      s->loc = my_printf ("$.L%d", curr_labelno++);
-      char *out = my_printf ("%s:\n\t.string\t\"%s\"\n", s->loc + 1, 
-			     s->op.string.val);
-      data_section = my_strcat (data_section, out);
+      MAKE_BASE_LOC (s->loc, literal_loc, my_printf (".LS%d", str_labelno++));
+      char *out = my_printf ("%s%s:\n\t.string\t\"%s\"\n", data_section,
+			     s->loc->base, s->op.string.val);
+      FREE (s->op.string.val);
+      FREE (data_section);
+      data_section = out;
       break;
 
     case binary_type:
-      gen_code_r (s->op.binary.left);
-      gen_code_r (s->op.binary.right);
-      s->loc = s->op.binary.left->loc;
-      struct ast *from = s->op.binary.right;
+      gen_code_r (s->ops[0]);
+      assert (s->ops[0]->loc != NULL);
+      gen_code_r (s->ops[1]);
+      assert (s->ops[1]->loc != NULL);
+      s->loc = loc_dup (s->ops[0]->loc);
+      struct ast _from, *from = &_from;
+      from->loc = loc_dup (s->ops[1]->loc);
+      struct loc *l;
       switch (s->op.binary.op)
 	{
 	case '=':
@@ -392,175 +410,193 @@ gen_code_r (struct ast *s)
 	     register/immediate, if that's not the case, then we have
 	     to move the source operand into a register first. */
 	  if (IS_MEMORY (from->loc))
-	    from->loc = give_register (from->loc);
-	  PUT ("\tmovq\t%s, %s\n", from->loc, s->loc);
+	    GIVE_REGISTER (from->loc);
+	  assert (IS_MEMORY (s->loc));
+	  PUT ("\tmovq\t%s, %s\n", print_loc (from->loc), print_loc (s->loc));
 	  break;
 
 	case '&':
 	  ENSURE_DESTINATION_REGISTER (1, s->loc, from->loc);
-	  PUT ("\tand\t%s, %s\n", from->loc, s->loc);
+	  PUT ("\tand\t%s, %s\n", print_loc (from->loc), print_loc (s->loc));
 	  break;
 
 	case '|':
 	  ENSURE_DESTINATION_REGISTER (1, s->loc, from->loc);
-	  PUT ("\tor\t%s, %s\n", from->loc, s->loc);
+	  PUT ("\tor\t%s, %s\n", print_loc (from->loc), print_loc (s->loc));
 	  break;
 
 	case '^':
 	  ENSURE_DESTINATION_REGISTER (1, s->loc, from->loc);
-	  PUT ("\txor\t%s, %s\n", from->loc, s->loc);
+	  PUT ("\txor\t%s, %s\n", print_loc (from->loc), print_loc (s->loc));
 	  break;
 
 	case '+':
 	  ENSURE_DESTINATION_REGISTER (1, s->loc, from->loc);
-	  PUT ("\tadd\t%s, %s\n", from->loc, s->loc);
+	  PUT ("\tadd\t%s, %s\n", print_loc (from->loc), print_loc (s->loc));
 	  break;
 
 	case '-':
-	  ENSURE_DESTINATION_REGISTER (1, s->loc, from->loc);
-	  PUT ("\tsub\t%s, %s\n", from->loc, s->loc);
-	  if (from != s->op.binary.right)
-	    PUT ("\tneg\t%s\n", s->loc);
+	  ENSURE_DESTINATION_REGISTER (2, s->loc, from->loc);
+	  PUT ("\tsub\t%s, %s\n", print_loc (from->loc), print_loc (s->loc));
 	  break;
 
 	case '*':
-	  ENSURE_DESTINATION_REGISTER (1, s->loc, from->loc);
-	  PUT ("\tmov\t%s, %%rax\n\timul\t%s\n\tmov\t%%rax, %s\n", 
-	       from->loc, s->loc, s->loc);
+	  MAKE_BASE_LOC (l, register_loc, xstrdup ("%rax"));
+	  MOVE_LOC_WITH ("mov", s->loc, l);
+	  PUT ("\tmov\t$0, %%rdx\n");
+	  if (IS_LITERAL (from->loc))
+	    GIVE_REGISTER (from->loc);
+	  PUT ("\timulq\t%s\n", print_loc (from->loc));
+	  FREE_LOC (from->loc);
+	  GIVE_REGISTER (s->loc);
 	  break;
 
 	case '/':
-	  PUT ("\tmov\t%s, %%rax\n\tmov\t$0, %%rdx\n", s->loc);
-	  ENSURE_DESTINATION_REGISTER (2, s->loc, from->loc);
-	  PUT ("\tidiv\t%s\n\tmov\t%%rax, %s\n", from->loc, s->loc);
+	  MAKE_BASE_LOC (l, register_loc, xstrdup ("%rax"));
+	  MOVE_LOC_WITH ("mov", s->loc, l);
+	  PUT ("\tmov\t$0, %%rdx\n");
+	  if (IS_LITERAL (from->loc))
+	    GIVE_REGISTER (from->loc);
+	  PUT ("\tidivq\t%s\n", print_loc (from->loc));
+	  FREE_LOC (from->loc);
+	  GIVE_REGISTER (s->loc);
 	  break;
 
 	case '%':
-	  PUT ("\tmov\t%s, %%rax\n\tmov\t$0, %%rdx\n", s->loc);
-	  ENSURE_DESTINATION_REGISTER (2, s->loc, from->loc);
-	  PUT ("\tidiv\t%s\n\tmov\t%%rdx, %s\n", from->loc, s->loc);
+	  MAKE_BASE_LOC (l, register_loc, "%rax");
+	  MOVE_LOC_WITH ("mov", s->loc, l);
+	  PUT ("\tmov\t$0, %%rdx\n");
+	  if (IS_LITERAL (from->loc))
+	    GIVE_REGISTER (from->loc);
+	  PUT ("\tidivq\t%s\n", print_loc (from->loc));
+	  FREE_LOC (from->loc);
+	  s->loc->base = xstrdup ("%rdx");
+	  GIVE_REGISTER (s->loc);
 	  break;
 
 	case RS:
 	  ENSURE_DESTINATION_REGISTER (3, s->loc, from->loc);
-	  PUT ("\tshr\t%s, %s\n", from->loc, s->loc);
-	  from->loc = ""; 	/* Do this so that we don't free a
-				   register when we haven't allocated
-				   one. */
+	  PUT ("\tshr\t%s, %s\n", print_loc (from->loc), print_loc (s->loc));
 	  break;
 
 	case LS:
 	  ENSURE_DESTINATION_REGISTER (3, s->loc, from->loc);
-	  PUT ("\tshl\t%s, %s\n", from->loc, s->loc);
-	  from->loc = ""; 	/* Do this so that we don't free a
-				   register when we haven't allocated
-				   one. */
+	  PUT ("\tshl\t%s, %s\n", print_loc (from->loc), print_loc (s->loc));
 	  break;
 
 	case '[':
-	  ERROR (_("Not Implemented: '['"));
-	  assert (IS_MEMORY (s->loc));
-
-	  /* TODO: Type checking semantics will also be necessary to
-	           distinguish between an automaticly allocated array
-	           and a pointer. */
-
-	  /* TODO: Implement array indexing using the
-	           `$offset(%base,%index,$scale)' semantics.  This will
-	           require the use of regexp searching in all likely
-	           hood, unless we can alter the location tracking
-	           technique. */
+	  assert (!IS_LITERAL (s->loc));
+	  ENSURE_DESTINATION_REGISTER (4, s->loc, from->loc);
+	  s->loc->kind = memory_loc;
+	  s->loc->index = from->loc->base;
+	  s->loc->scale = 8;
+	  from->loc->base = NULL;
 	  break;
 
 	default:
-	  ERROR (_("Invalid binary operator op-code: %d\n"), 
+	  ERROR (_("Invalid binary operator op-code: %d"),
 		 s->op.binary.op);
 	}
       /* Release the previously allocated register. */
-      FREE_REGISTER (from->loc);
+      FREE_LOC (from->loc);
       break;
 
     case unary_type:
-      gen_code_r (s->op.unary.arg);
-      s->loc = s->op.unary.arg->loc;
-      switch (s->op.unary.op)
+      gen_code_r (s->ops[0]);
+      s->loc = loc_dup (s->ops[0]->loc);
+      switch (s->op.unary.op & ~AST_UNARY_PREFIX)
 	{
 	case '*':
 	  ENSURE_DESTINATION_REGISTER_UNI (s->loc);
-	  s->loc = my_printf ("(%s)", s->loc);
+	  s->loc->kind = memory_loc;
 	  break;
 
 	case '&':
-	  assert (!IS_REGISTER (s->loc));
-#if 1
-	  assert (!IS_LITERAL (s->loc));
-#else
-	  if (*s->loc == '$')
-	    s->loc = s->loc + 1;
-	  else
-#endif
-	    s->loc = give_register_how ("lea", s->loc);
+	  assert (IS_MEMORY (s->loc));
+	  GIVE_REGISTER_HOW ("lea", s->loc);
 	  break;
 
 	case '-':
 	  ENSURE_DESTINATION_REGISTER_UNI (s->loc);
-	  PUT ("\tnegq\t%s\n", s->loc);
+	  PUT ("\tnegq\t%s\n", print_loc (s->loc));
+	  break;
+
+	case INC:
+	  if (!(s->op.unary.op & AST_UNARY_PREFIX))
+	    GIVE_REGISTER (s->loc);
+	  PUT ("\tincq\t%s\n", print_loc (s->ops[0]->loc));
+	  break;
+
+	case DEC:
+	  if (!(s->op.unary.op & AST_UNARY_PREFIX))
+	    GIVE_REGISTER (s->loc);
+	  PUT ("\tdecq\t%s\n", print_loc (s->ops[0]->loc));
 	  break;
 
 	default:
-	  ERROR (_("Invalid unary operator opcode: %d\n"), s->op.unary.op);
+	  ERROR (_("Invalid unary operator opcode: %d"), s->op.unary.op);
 	}
+      assert (s->loc != NULL);
       break;
-
-    case crement_type:
-      gen_code_r (s->op.crement.val);
-      s->loc = s->op.crement.val->loc;
-      if (!s->op.crement.isprefix)
-	s->loc = give_register (s->loc);
-      if (s->op.crement.isincrease)
-	PUT ("\tinc\t%s\n", s->op.crement.val->loc);
-      else
-	PUT ("\tdec\t%s\n", s->op.crement.val->loc);
-      break;	      
 
     case function_call_type:
-      ;
-      /* TODO: Don't clobber other registers when making a function
-	       call. */
-      int a = 0;
-      for (i = s->op.function_call.args; i != NULL; i = i->op.block.next)
-	gen_code_r (i->op.block.val);
-      for (i = s->op.function_call.args; i != NULL; i = i->op.block.next)
+      /* Certain functions are considered builtin and thus require
+	 special treatment. */
+      if (STREQ (s->ops[0]->loc->base, "__builtin_alloca"))
 	{
-	  PUT ("\tmov\t%s, %s\n", i->op.block.val->loc, regis(call_regis(a++)));
-	  FREE_REGISTER (i->op.block.val->loc);
+	  gen_code_r (s->ops[1]);
+	  PUT ("\tsub\t%s, %%rsp\n", print_loc (s->ops[1]->loc));
+	  FREE_LOC (s->ops[1]->loc);
+	  MAKE_BASE_LOC (s->loc, register_loc, xstrdup ("%rsp"));
 	}
-      assert (s->op.function_call.name->type == variable_type);
-      PUT ("\tmov\t$0, %%rax\n\tcall\t%s\n", s->op.function_call.name->op.variable.name);
-      s->loc = "%rax";
-      s->loc = give_register (s->loc);
-      break;
-
-    case statement_type:
-      gen_code_r (s->op.statement.val);
-      FREE_REGISTER (s->op.statement.val->loc);
+      else
+	{
+	  /* TODO: Don't clobber other registers when making a function
+	     call. */
+	  int a = 0;
+	  gen_code_r (s->ops[1]);
+	  for (i = s->ops[1]; i != NULL; i = i->next)
+	    {
+	      assert (i->loc != NULL);
+	      struct loc *call;
+	      MAKE_BASE_LOC (call, register_loc, xstrdup (regis(call_regis(a++))));
+	      MOVE_LOC_WITH ("mov", i->loc, call);
+	    }
+	  assert (s->ops[0]->type == variable_type);
+	  PUT ("\tmov\t$0, %%rax\n\tcall\t%s\n", s->ops[0]->loc->base);
+	  FREE_LOC (s->ops[0]->loc);
+	  MAKE_BASE_LOC (s->loc, register_loc, xstrdup ("%rax"));
+	}
+      if (!(s->flags & AST_THROW_AWAY))
+	GIVE_REGISTER (s->loc);
       break;
 
     default:
-      ERROR (_("Invalid AST type %d"), s->type);
+      ;
+      int j;
+      for (j = 0; j < s->num_ops; j++)
+	gen_code_r (s->ops[j]);
     }
+  /* Since registers are lost during the coarse of this routine, we
+     must free every single last one of them once we are done with a
+     certain expression. */
+  if (s->flags & AST_THROW_AWAY)
+    avail = 0;
+  gen_code_r (s->next);
 }
 
+extern char *infile_name;
+
 /* Top level entry point to the code generation phase. */
-int 
+int
 gen_code (struct ast *s)
 {
   if (setjmp (error_jump))
     return 1;
-  PUT ("\t.text\n");
+  PUT ("\t.file\t\"%s\"\n\t.text\n", infile_name);
   data_section = xstrdup ("\t.data\n");
   gen_code_r (s);
   PUT ("%s", data_section);
-  free (data_section);
+  FREE (data_section);
   return 0;
 }

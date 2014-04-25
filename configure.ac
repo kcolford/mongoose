@@ -35,7 +35,7 @@ AS_IF([test $cross_compiling = no], [
 
 # Checks for header files.
 AC_FUNC_ALLOCA
-AC_CHECK_HEADERS([inttypes.h libintl.h malloc.h stddef.h stdlib.h string.h unistd.h])
+AC_CHECK_HEADERS([inttypes.h libintl.h locale.h malloc.h stddef.h stdlib.h string.h unistd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_INT16_T
@@ -52,9 +52,9 @@ AC_FUNC_ERROR_AT_LINE
 AC_FUNC_FORK
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-AC_CHECK_FUNCS([vasprintf atexit memset])
+AC_CHECK_FUNCS([atexit memset setlocale strchr strtol vasprintf])
 
-AC_DEFINE([COPYRIGHT_YEAR], [m4_esyscmd([date +%Y])], 
+AC_DEFINE([COPYRIGHT_YEAR], [m4_esyscmd([date +%Y])],
           [year in copyright message])
 
 AM_GNU_GETTEXT_VERSION([0.18.1])

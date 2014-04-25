@@ -17,14 +17,21 @@ parse.h
 compiler_SOURCES =				\
 ast.c						\
 ast.h						\
+collect_vars.c					\
+compilation_passes.c				\
 compiler.c					\
 compiler.h					\
+dealias.c					\
 gen_code.c					\
 lex.l						\
 lib.c						\
+lib.h						\
+loc.h						\
+my_printf.h					\
 optimizer.c					\
 parse.y						\
-semantic.c
+semantic.c					\
+unit.c
 
 compiler_LDADD = $(top_builddir)/lib/lib$(PACKAGE).la $(LTLIBINTL) $(LIB_ACL)
 

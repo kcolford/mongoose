@@ -20,17 +20,37 @@ along with Compiler; see the file COPYING.  If not see
 
 #include "config.h"
 
+#include "ast.h"
 #include "compiler.h"
+#include "parse.h"
 
-#if 0
-struct state
+#define ERROR(VAL, ...) do {			\
+    if (!(VAL))					\
+      {						\
+	error (0, 0, __VA_ARGS__);		\
+	return 1;				\
+      }						\
+  } while (0)
+
+
+static inline int
+is_lval (struct ast *s)
 {
-  char *label;
-  char *meaning;
-};
+  switch (s->type)
+    {
+    case binary_type:
+      return s->op.binary.op == '[';
+    case unary_type:
+      return s->op.unary.op == '*';
+    case variable_type:
+      return 1;
+    default:
+      return 0;
+    }
+}
 
-struct state var_info[0x10000] = { {NULL, NULL} };
-int var_info_off = 0;
+#define CHECK_LVAL(VAL)							\
+  ERROR (is_lval (VAL), _("Syntax Error, operand is not an lval"))
 
 int
 semantic (struct ast *s)
@@ -40,23 +60,20 @@ semantic (struct ast *s)
     return ret;
   switch (s->type)
     {
-    case block_type:
-      ret = ret || semantic (s->op.block.val);
-      ret = ret || semantic (s->op.block.next);
+    case binary_type:
+      if (s->op.binary.op == '=')
+	CHECK_LVAL (s->ops[0]);
       break;
 
-    case function_type:
+    case unary_type:
+      if (s->op.binary.op & ~AST_UNARY_PREFIX == INC
+	  || s->op.binary.op & ~AST_UNARY_PREFIX == DEC)
+	CHECK_LVAL (s->ops[0]);
       break;
     }
+  int i;
+  for (i = 0; i < s->num_ops; i++)
+    ret = ret || semantic (s->ops[i]);
+  ret = ret || semantic (s->next);
   return ret;
 }
-
-#else
-
-int
-semantic (struct ast *s)
-{
-  return 0;
-}
-
-#endif

@@ -1,0 +1,22 @@
+#!/bin/sh
+
+src='
+int test2 (int b) {
+    return b + 1;
+}
+
+int main () {
+    printf ("%d\n", test2 (3));
+    return 0;
+}
+
+'
+
+ret=0
+srcfile=file.c
+echo "$src" > $srcfile
+
+. ./tester.sh
+
+rm $srcfile
+exit $ret

@@ -20,56 +20,59 @@ You should have received a copy of the GNU General Public License
 along with Compiler; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>.*/
 
-types = {
-    name = block;
-    cont = { 
-	type = "struct ast *";
-	call = val; 
-    };
-    cont = { 
-	type = "struct ast *";
-	call = next; 
-    };
+added_code = "
+#include \"loc.h\"
+#include <stddef.h>
+
+#define AST_THROW_AWAY 0x1
+
+#define AST_UNARY_PREFIX    0x20000
+
+";
+
+top_level = {
+    type = "struct loc *";
+    call = loc;
 };
 
-types = { 
+top_level = {
+    type = int;
+    call = flags;
+};
+
+top_level = {
+    type = "struct ast *";
+    call = next;
+};
+
+types = {
+    name = block;
+    sub = val;
+};
+
+types = {
+    name = ret;
+    sub = val;
+};
+
+types = {
     name = function;
-    cont = { 
+    cont = {
 	type = "char *";
-	call = type; 
+	call = type;
     };
     cont = {
 	type = "char *";
 	call = name;
     };
-    cont = {
-	type = "struct ast *";
-	call = args;
-    };
-    cont = {
-	type = "struct ast *";
-	call = body;
-    };
-};
-
-types = {
-    name = ret;
-    cont = {
-	type = "struct ast *";
-	call = val;
-    };
+    sub = args;
+    sub = body;
 };
 
 types = {
     name = cond;
-    cont = {
-	type = "struct ast *";
-	call = cond;
-    };
-    cont = {
-	type = "struct ast *";
-	call = body;
-    };
+    sub = cond;
+    sub = body;
 };
 
 types = {
@@ -77,10 +80,6 @@ types = {
     cont = {
 	type = "char *";
 	call = name;
-    };
-    cont = {
-	type = "struct ast *";
-	call = stuff;
     };
 };
 
@@ -118,21 +117,9 @@ types = {
 	type = "char *";
 	call = name;
     };
-};
-
-types = {
-    name = array;
-    cont = {
-	type = "char *";
-	call = type;
-    };
-    cont = {
-	type = "char *";
-	call = name;
-    };
-    cont = {
-	type = "long long";
-	call = len;
+    extra = {
+	type = int;
+	call = alloc;
     };
 };
 
@@ -142,14 +129,8 @@ types = {
 	type = int;
 	call = op;
     };
-    cont = {
-	type = "struct ast *";
-	call = left;
-    };
-    cont = {
-	type = "struct ast *";
-	call = right;
-    };
+    sub = left;
+    sub = right;
 };
 
 types = {
@@ -158,56 +139,11 @@ types = {
 	type = int;
 	call = op;
     };
-    cont = {
-	type = "struct ast *";
-	call = arg;
-    };
+    sub = arg;
 };
 
 types = {
     name = function_call;
-    cont = {
-	type = "struct ast *";
-	call = name;
-    };
-    cont = {
-	type = "struct ast *";
-	call = args;
-    };
-};
-
-types = {
-    name = statement;
-    cont = {
-	type = "struct ast *";
-	call = val;
-    };
-};
-
-types = {
-    name = move;
-    cont = {
-	type = "char *";
-	call = from;
-    };
-    cont = {
-	type = "char *";
-	call = to;
-    };
-};
-
-types = {
-    name = crement;
-    cont = {
-	type = int;
-	call = isprefix;
-    };
-    cont = {
-	type = int;
-	call = isincrease;
-    };
-    cont = {
-	type = "struct ast *";
-	call = val;
-    };
+    sub = name;
+    sub = args;
 };

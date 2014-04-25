@@ -22,27 +22,63 @@ along with Compiler; see the file COPYING.  If not see
 #define COMPILER_H
 
 #include "ast.h"
-#include "parse.h"
+
+#include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <errno.h>
+#include <error.h>
 
 #include "gettext.h"
 
+/* Special macros for making it easier to mark strings for
+   translation. */
 #define _(s) gettext (s)
 #define N_(s) gettext_noop (s)
 
-extern FILE *yyin;
-extern FILE *outfile;
-extern int optimize;
-extern int debug;
+extern FILE *yyin;		/* The input stream for the lexer. */
+extern FILE *outfile;		/* The output stream for the gen_code
+				   routine. */
 
+extern char *file_name;		/* The current file name as determined
+				   by the lexer.  This is always
+				   either NULL or a dynamically
+				   allocated string. */
+extern int lineno;		/* The current line number as
+				   determined by the lexer. */
+
+extern int optimize;		/* A flag describing the optimization
+				   levels that each phase must adhere
+				   to. */
+extern int debug;		/* A flag that if true says that all
+				   assembly will be echoed to
+				   stdout. */
+
+/* **************************************************************** */
+/* These are the compilation passes that manipulate the AST and verify
+   its correctness.  They all signal an error through their return
+   values so that the parser can identify where the problem occured.
+   A return value of 0 means that it successfully completed the pass,
+   while any other return value indicates error. */
+
+/* The code generation routine. */
 extern int gen_code (struct ast *);
+
+/* The optimizer. */
 extern int optimizer (struct ast **);
+
+/* Collect all variables to the start of the function. */
+extern int collect_vars (struct ast *);
+
+/* The pass that translates all aliases into what they really mean. */
+extern int dealias (struct ast **);
+
+/* The pass that verifies the integrity of the AST and that it
+   satisfies the semantics of the C language. */
 extern int semantic (struct ast *);
 
-extern char *my_strcat (char *, char *);
-extern char *place_holder (void);
-extern char *my_printf (const char *, ...);
-extern char *tmpfile_name (void);
+/* This runs all the above routines in order and collects their return
+   values. */
+extern int run_compilation_passes (struct ast **);
 
 #endif

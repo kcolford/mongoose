@@ -1,21 +1,26 @@
-#!/bin/sh
 
-srcfile=$1
 prog=`mktemp`
 
-compiler -o $prog $srcfile || exit 1
-chmod u+x $prog
+if [ x"$COMPILER" = x ]; then
+    exit 77
+fi
+
+$COMPILER -o $prog $srcfile || ret=1
 myout=`mktemp`
-$prog > $myout || { rm $myout $prog; exit 1; }
+if [ -x $prog ]; then
+    $prog > $myout || ret=1
+else
+    ret=1
+fi
 
 nativeout=`mktemp`
-$CC -o $prog $srcfile 2> /dev/null
-$prog > $nativeout
-
-if cmp -s $myout $nativeout; then
-    rm $myout $nativeout $prog
-    exit 0
+$CC -o $prog $srcfile -lm 2> /dev/null
+if [ -x $prog ]; then
+    $prog > $nativeout || ret=1
 else
-    rm $myout $nativeout $prog
-    exit 1
+    ret=1
 fi
+
+cmp -s $myout $nativeout || ret=1
+
+rm $myout $nativeout $prog

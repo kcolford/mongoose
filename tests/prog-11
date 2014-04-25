@@ -1,0 +1,18 @@
+#!/bin/sh
+
+srcfile=file.c
+cat - > $srcfile <<EOF
+int main ()
+{
+  int a_ptr = malloc (8);
+  *a_ptr = 45;
+  printf ("%d\n", *a_ptr);
+  free (a_ptr);
+  return 0;
+}
+EOF
+
+ret=0
+. ./tester.sh
+rm $srcfile
+exit $ret

@@ -19,11 +19,15 @@ along with Compiler; see the file COPYING.  If not see
 <http://www.gnu.org/licenses/>. */
 
 %error-verbose
+%define parse.lac full
 
 %{
 #include "config.h"
 
+#include "ast.h"
 #include "compiler.h"
+#include "lib.h"
+#include "xalloc.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -31,6 +35,10 @@ along with Compiler; see the file COPYING.  If not see
 int yydebug = 0;
 
 void yyerror (const char *);
+static struct ast *make_dowhileloop (struct ast *, struct ast *);
+static struct ast *make_whileloop (struct ast *, struct ast *);
+static struct ast *make_array (char *, char *, struct ast *);
+static struct ast *make_forloop (struct ast *, struct ast *, struct ast *, struct ast *);
 
 #define YYDEBUG 1
 %}
@@ -41,6 +49,23 @@ void yyerror (const char *);
 %token IF "if"
 %token GOTO "goto"
 %token WHILE "while"
+%token STATIC "static"
+%token EXTERN "extern"
+%token INLINE "inline"
+%token FOR "for"
+%token DO "do"
+%token ELSE "else"
+%token CONST "const"
+%token STRUCT "struct"
+%token TYPEDEF "typedef"
+%token UNION "union"
+%token ENUM "enum"
+%token SWITCH "switch"
+%token CASE "case"
+%token DEFAULT "default"
+%token BREAK "break"
+%token CONTINUE "continue"
+
 %token EQ "=="
 %token NE "!="
 %token LE "<="
@@ -69,6 +94,7 @@ void yyerror (const char *);
 %token <str> STR STRING
 %type <str> str
 
+%left ','
 %right '=' MUT_ADD MUT_SUB MUT_MUL MUT_DIV MUT_MOD MUT_RS MUT_LS MUT_AND MUT_OR MUT_XOR
 %left OR
 %left AND
@@ -81,49 +107,64 @@ void yyerror (const char *);
 %left '+' '-'
 %left '*' '/' '%'
 %right '!' '~' INC DEC SIZEOF
-%left '(' ')' '[' ']' '.'
+%nonassoc '(' ')' '[' ']' '.'
 
 %union { struct ast *ast_val; }
-%type <ast_val> file def defargs body statement constrval lval rval callargs
+%type <ast_val> body callargs constrval def defargs expr file maybe_expr scoped_body statement sub_body
 
 %%
 
-input:		file END { if (semantic ($1) || optimizer (&$1) || gen_code ($1)) YYERROR; }
+input:		file END { if (run_compilation_passes (&$1)) YYERROR; }
 	;
 
 file:		/* empty */   { $$ = NULL; }
-	|	def file      { $$ = make_block ($1, $2); }
+	|	def file      { $$ = ast_cat ($1, $2); }
 	;
 
 /* Function definitions. */
-def:		STR STR '(' defargs ')' '{' body '}' { $$ = make_function ($1, $2, $4, $7); }
-	|	STR STR '('         ')' '{' body '}' { $$ = make_function ($1, $2, NULL, $6); }
+def:		STR STR '(' defargs ')' scoped_body { $$ = make_function ($1, $2, $4, $6); }
+	|	STR STR '('         ')' scoped_body { $$ = make_function ($1, $2, NULL, $5); }
 	;
 
-defargs:	STR STR             { $$ = make_block (make_variable ($1, $2), NULL); }
-	|	STR STR ',' defargs { $$ = make_block (make_variable ($1, $2), $4); }
+defargs:	STR STR             { $$ = make_variable ($1, $2); }
+	|	defargs ',' defargs { $$ = ast_cat ($1, $3); }
 	;
 
 body:		/* empty */         { $$ = NULL; }
-	|	statement body      { $$ = make_block ($1, $2); }
+	|	statement body      { $$ = ast_cat ($1, $2); }
 	;
+
+scoped_body:    '{' body '}' { $$ = make_block ($2); }
+        ;
+
+sub_body:       scoped_body { $$ = $1; }
+	|	statement   { $$ = $1; }
+        ;
+
+maybe_expr:     /* empty */ { $$ = NULL; }
+	|	expr        { $$ = $1; }
+        ;
 
 /* Code statements. */
 statement:	';'                             { $$ = NULL; }
-	|	rval ';'                        { $$ = make_statement ($1); }
-	|	IF '(' rval ')' statement       { $$ = make_cond ($3, $5); }
-	|	IF '(' rval ')' '{' body '}'    { $$ = make_cond ($3, $6); }
-	|	STR ':' statement               { $$ = make_label ($1, $3); }
+	|	STR STR ';'                     { $$ = make_variable ($1, $2); }
+	|	STR STR '[' expr ']' ';'        { $$ = make_array ($1, $2, $4); }
+	|	STR STR '=' expr ';'            { $$ = make_binary ('=', make_variable ($1, $2), $4); $$->flags |= AST_THROW_AWAY; }
+	|	expr ';'                        { $$ = $1; $$->flags |= AST_THROW_AWAY; }
+	|	IF '(' expr ')' sub_body        { $$ = make_cond ($3, $5); }
+	|	STR ':' statement               { $$ = ast_cat (make_label ($1), $3); }
 	|	GOTO STR ';'                    { $$ = make_jump ($2); }
-	|	WHILE '(' rval ')' statement    { $$ = make_whileloop ($3, $5); }
-	|	WHILE '(' rval ')' '{' body '}' { $$ = make_whileloop ($3, $6); }
+	|	WHILE '(' expr ')' sub_body     { $$ = make_whileloop ($3, $5); }
+	|	DO sub_body WHILE '(' expr ')' ';' { $$ = make_dowhileloop ($5, $2); }
+	|	FOR '(' maybe_expr ';' expr ';' maybe_expr ')' sub_body { $$ = make_forloop ($3, $5, $7, $9); }
+	|	FOR '(' maybe_expr ';' ';' maybe_expr ')' sub_body { $$ = make_forloop ($3, make_integer (1), $6, $8); }
 	|	RETURN ';'                      { $$ = make_ret (NULL); }
-	|	RETURN rval ';'                 { $$ = make_ret ($2); }
+	|	RETURN expr ';'                 { $$ = make_ret ($2); }
 	;
 
 /* Adjacent strings are concatenated together. */
 str:		STRING     { $$ = $1; }
-	|	str STRING { $$ = my_strcat ($1, $2); }
+	|	str STRING { $$ = my_printf ("%s%s", $1, $2); FREE ($1); FREE ($2); }
 	;
 
 /* These are all the constant expressions. */
@@ -131,54 +172,94 @@ constrval:	INT { $$ = make_integer ($1); }
 	|	str { $$ = make_string ($1); }
 	;
 
-/* Expressions that can be written to. */
-lval:		STR STR              { $$ = make_variable ($1, $2); }
-	|	STR STR '[' INT ']'  { $$ = make_array ($1, $2, $4); }
-	|	STR                  { $$ = make_variable (NULL, $1); }
-	|	rval '[' rval ']'    { $$ = make_binary ('[', $1, $3); }
-	|	'*'rval %prec SIZEOF { $$ = make_unary ('*', $2); }
-	;
-
-/* Expressions that can be read from. */
-rval:		STR '(' ')'           { $$ = make_function_call (make_variable (NULL, $1), NULL); }
-	|	STR '(' callargs ')'  { $$ = make_function_call (make_variable (NULL, $1), $3); }
-	|	lval '=' rval         { $$ = make_binary ('=', $1, $3); }
-	|	rval '<' rval         { $$ = make_binary ('<', $1, $3); }
-	|	rval '>' rval         { $$ = make_binary ('>', $1, $3); }
-	|	rval '&' rval         { $$ = make_binary ('&', $1, $3); }
-	|	rval '|' rval         { $$ = make_binary ('|', $1, $3); }
-	|	rval '^' rval         { $$ = make_binary ('^', $1, $3); }
-	|	rval '+' rval         { $$ = make_binary ('+', $1, $3); }
-	|	rval '-' rval         { $$ = make_binary ('-', $1, $3); }
-	|	rval '*' rval         { $$ = make_binary ('*', $1, $3); }
-	|	rval '/' rval         { $$ = make_binary ('/', $1, $3); }
-	|	rval '%' rval         { $$ = make_binary ('%', $1, $3); }
-	|	rval EQ rval          { $$ = make_binary (EQ, $1, $3); }
-	|	rval NE rval          { $$ = make_binary (NE, $1, $3); }
-	|	rval LE rval          { $$ = make_binary (LE, $1, $3); }
-	|	rval GE rval          { $$ = make_binary (GE, $1, $3); }
-	|	rval RS rval          { $$ = make_binary (RS, $1, $3); }
-	|	rval LS rval          { $$ = make_binary (LS, $1, $3); }
-	|	'&'lval %prec SIZEOF  { $$ = make_unary ('&', $2); }
-	|	lval INC              { $$ = make_crement (0, 1, $1); }
-	|	lval DEC              { $$ = make_crement (0, 0, $1); }
-	|	INC lval              { $$ = make_crement (1, 1, $2); }
-	|	DEC lval              { $$ = make_crement (1, 0, $2); }
-	|	'-'rval %prec SIZEOF  { $$ = make_unary ('-', $2); }
-	|	'(' rval ')'          { $$ = $2; }
-	|	lval                  { $$ = $1; }
+/* Expressions. */
+expr:		STR                   { $$ = make_variable (NULL, $1); }
+	|	expr '(' ')'          { $$ = make_function_call ($1, NULL); }
+	|	expr '(' callargs ')' { $$ = make_function_call ($1, $3); }
+	|	expr '=' expr         { $$ = make_binary ('=', $1, $3); }
+	|	expr MUT_ADD expr     { $$ = make_binary ('=', $1, make_binary ('+', ast_dup ($1), $3)); }
+	|	expr MUT_SUB expr     { $$ = make_binary ('=', $1, make_binary ('-', ast_dup ($1), $3)); }
+	|	expr MUT_MUL expr     { $$ = make_binary ('=', $1, make_binary ('*', ast_dup ($1), $3)); }
+	|	expr MUT_DIV expr     { $$ = make_binary ('=', $1, make_binary ('/', ast_dup ($1), $3)); }
+	|	expr MUT_MOD expr     { $$ = make_binary ('=', $1, make_binary ('%', ast_dup ($1), $3)); }
+	|	expr MUT_LS expr      { $$ = make_binary ('=', $1, make_binary (LS, ast_dup ($1), $3)); }
+	|	expr MUT_RS expr      { $$ = make_binary ('=', $1, make_binary (RS, ast_dup ($1), $3)); }
+	|	expr MUT_AND expr     { $$ = make_binary ('=', $1, make_binary ('&', ast_dup ($1), $3)); }
+	|	expr MUT_OR expr      { $$ = make_binary ('=', $1, make_binary ('|', ast_dup ($1), $3)); }
+	|	expr MUT_XOR expr     { $$ = make_binary ('=', $1, make_binary ('^', ast_dup ($1), $3)); }
+	|	expr '<' expr         { $$ = make_binary ('<', $1, $3); }
+	|	expr '>' expr         { $$ = make_binary ('>', $1, $3); }
+	|	expr '&' expr         { $$ = make_binary ('&', $1, $3); }
+	|	expr '|' expr         { $$ = make_binary ('|', $1, $3); }
+	|	expr '^' expr         { $$ = make_binary ('^', $1, $3); }
+	|	expr '+' expr         { $$ = make_binary ('+', $1, $3); }
+	|	expr '-' expr         { $$ = make_binary ('-', $1, $3); }
+	|	expr '*' expr         { $$ = make_binary ('*', $1, $3); }
+	|	expr '/' expr         { $$ = make_binary ('/', $1, $3); }
+	|	expr '%' expr         { $$ = make_binary ('%', $1, $3); }
+	|	expr '[' expr ']'     { $$ = make_binary ('[', $1, $3); }
+	|	expr EQ expr          { $$ = make_binary (EQ, $1, $3); }
+	|	expr NE expr          { $$ = make_binary (NE, $1, $3); }
+	|	expr LE expr          { $$ = make_binary (LE, $1, $3); }
+	|	expr GE expr          { $$ = make_binary (GE, $1, $3); }
+	|	expr RS expr          { $$ = make_binary (RS, $1, $3); }
+	|	expr LS expr          { $$ = make_binary (LS, $1, $3); }
+	|	'&'expr %prec SIZEOF  { $$ = make_unary ('&', $2); }
+	|	'*'expr %prec SIZEOF  { $$ = make_unary ('*', $2); }
+	|	expr INC              { $$ = make_unary (INC, $1); }
+	|	expr DEC              { $$ = make_unary (DEC, $1); }
+	|	INC expr              { $$ = make_unary (AST_UNARY_PREFIX | INC, $2); }
+	|	DEC expr              { $$ = make_unary (AST_UNARY_PREFIX | DEC, $2); }
+	|	'-'expr %prec SIZEOF  { $$ = make_unary ('-', $2); }
+	|	'(' expr ')'          { $$ = $2; }
 	|	constrval             { $$ = $1; }
 	;
 
 /* Function call arguments. */
-callargs:	rval              { $$ = make_block ($1, NULL); }
-	|	rval ',' callargs { $$ = make_block ($1, $3); }
+callargs:	expr                  { $$ = $1; }
+	|	callargs ',' callargs { $$ = ast_cat ($1, $3); }
 	;
 
 %%
 
 void
-yyerror (const char *s)
+yyerror (const char *msg)
 {
-  fprintf (stderr, "%s\n", s);
+  error_at_line (0, 0, file_name, lineno, "%s", msg);
+}
+
+struct ast *
+make_dowhileloop (struct ast *cond, struct ast *body)
+{
+  char *t = place_holder (), *tt = xstrdup (t);
+  return ast_cat (make_label (t), ast_cat (body, make_cond (cond, make_jump (tt))));
+}
+
+struct ast *
+make_whileloop (struct ast *cond, struct ast *body)
+{
+  char *t = place_holder (), *tt = xstrdup (t);
+  return ast_cat (make_label (t), make_cond (cond, ast_cat (body, make_jump (tt))));
+}
+
+struct ast *
+make_array (char *type, char *name, struct ast *size)
+{
+  struct ast *func = make_variable (NULL, xstrdup ("__builtin_alloca"));
+  size = make_binary ('*', size, make_integer (8));
+  func = make_function_call (func, size);
+  char *newtype = my_printf ("%s *", type);
+  FREE (type);
+  return make_binary ('=', make_variable (newtype, name), func);
+}
+
+struct ast *
+make_forloop (struct ast *init, struct ast *cond, struct ast *step, struct ast *body)
+{
+  step->flags |= AST_THROW_AWAY;
+  init->flags |= AST_THROW_AWAY;
+  struct ast *out = ast_cat (body, step);
+  out = make_whileloop (cond, out);
+  out = ast_cat (init, out);
+  return out;
 }
