@@ -77,11 +77,12 @@ print_loc (struct loc *l)
       l->string = my_printf ("$%s", l->base);
       break;
     case memory_loc:
+      if (l->offset != 0)
+	EXTENDF (l->string, "%d", l->offset);
+      EXTENDF (l->string, "(%s", l->base);
       if (l->index != NULL)
-	l->string = my_printf ("%d(%s,%s,%d)", l->offset, l->base,
-			       l->index, l->scale);
-      else
-	l->string = my_printf ("%d(%s)", l->offset, l->base);
+	EXTENDF (l->string, ",%s,%d", l->index, l->scale);
+      EXTENDF (l->string, "%s", ")");
       break;
     case register_loc:
       l->string = my_printf ("%s", l->base);

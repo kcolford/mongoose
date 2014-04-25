@@ -60,6 +60,14 @@ along with Compiler; see the file COPYING.  If not see
     (Y) = _t;					\
   } while (0)
 
+/* Macro for extending a dynamically allocated string by the format
+   specifier given. */
+#define EXTENDF(X, Y, ...) do {						\
+    char *_v = (X);							\
+    (X) = my_printf ("%s" Y, ((X) != NULL ? (X) : ""), __VA_ARGS__);	\
+    FREE (_v);								\
+  } while (0)
+
 /* **************************************************************** */
 /* Start of linked in functions. */
 
