@@ -66,8 +66,7 @@ semantic (struct ast *s)
       break;
 
     case unary_type:
-      if (s->op.binary.op & ~AST_UNARY_PREFIX == INC
-	  || s->op.binary.op & ~AST_UNARY_PREFIX == DEC)
+      if (s->op.binary.op == INC || s->op.binary.op == DEC)
 	CHECK_LVAL (s->ops[0]);
       break;
     }

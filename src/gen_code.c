@@ -54,6 +54,8 @@ along with Compiler; see the file COPYING.  If not see
 
 #include <assert.h>
 
+#define USE_REGISTER_CHECKING 1
+
 #define MOVE_LOC_WITH(OP, X, Y) do {					\
     if ((X) != NULL)							\
       {									\
@@ -91,7 +93,7 @@ regis (int a)
   const char *storage[] =
     { "%rax", "%rbx", "%rcx", "%rdx", "%rdi", "%rsi", "%r8", "%r9", "%r10",
       "%r11", "%r12", "%r13", "%r14", "%r15" };
-#ifndef NDEBUG
+#if USE_REGISTER_CHECKING
   if (a < 0)
     error (1, 0, _("index out of bounds, %d less than zero"), a);
   if (a >= LEN (storage))
@@ -110,7 +112,7 @@ call_regis(int a)
 {
   const int storage[] =
     { 4, 5, 2, 3, 6, 7 };
-#ifndef NDEBUG
+#if USE_REGISTER_CHECKING
   if (a < 0)
     error (1, 0, _("index out of bounds, %d less than zero"), a);
   if (a >= LEN (storage))
@@ -137,7 +139,7 @@ general_regis(int a)
       , 7, 6, 3, 2, 5, 4
 #endif
     };
-#ifndef NDEBUG
+#if USE_REGISTER_CHECKING
   if (a < 0)
     error (1, 0, _("index out of bounds, %d less than zero"), a);
   if (a >= LEN (storage))
@@ -152,6 +154,9 @@ static int str_labelno = 0;
 static char *data_section = NULL;
 static int branch_labelno = 0;
 
+/* Macro to allocate a register to a location while also checking to
+   see if it can reuse any of the locations that it is about to
+   free. */
 #define GIVE_REGISTER_HOW(I, S) do {					\
     unsigned _addto_avail = 0;						\
     struct loc *_t = NULL;						\
@@ -495,7 +500,7 @@ gen_code_r (struct ast *s)
     case unary_type:
       gen_code_r (s->ops[0]);
       s->loc = loc_dup (s->ops[0]->loc);
-      switch (s->op.unary.op & ~AST_UNARY_PREFIX)
+      switch (s->op.unary.op)
 	{
 	case '*':
 	  ENSURE_DESTINATION_REGISTER_UNI (s->loc);
@@ -513,13 +518,13 @@ gen_code_r (struct ast *s)
 	  break;
 
 	case INC:
-	  if (!(s->op.unary.op & AST_UNARY_PREFIX))
+	  if (!s->unary_prefix)
 	    GIVE_REGISTER (s->loc);
 	  PUT ("\tincq\t%s\n", print_loc (s->ops[0]->loc));
 	  break;
 
 	case DEC:
-	  if (!(s->op.unary.op & AST_UNARY_PREFIX))
+	  if (!s->unary_prefix)
 	    GIVE_REGISTER (s->loc);
 	  PUT ("\tdecq\t%s\n", print_loc (s->ops[0]->loc));
 	  break;
@@ -558,8 +563,7 @@ gen_code_r (struct ast *s)
 	  FREE_LOC (s->ops[0]->loc);
 	  MAKE_BASE_LOC (s->loc, register_loc, xstrdup ("%rax"));
 	}
-      if (!(s->flags & AST_THROW_AWAY))
-	GIVE_REGISTER (s->loc);
+      GIVE_REGISTER (s->loc);
       break;
 
     default:
@@ -571,7 +575,7 @@ gen_code_r (struct ast *s)
   /* Since registers are lost during the coarse of this routine, we
      must free every single last one of them once we are done with a
      certain expression. */
-  if (s->flags & AST_THROW_AWAY)
+  if (s->throw_away)
     avail = 0;
   gen_code_r (s->next);
 }

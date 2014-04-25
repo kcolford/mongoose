@@ -153,8 +153,8 @@ maybe_expr:     /* empty */ { $$ = NULL; }
 statement:	';'                             { $$ = NULL; }
 	|	STR STR ';'                     { $$ = make_variable ($1, $2); }
 	|	STR STR '[' expr ']' ';'        { $$ = make_array ($1, $2, $4); }
-	|	STR STR '=' expr ';'            { $$ = make_binary ('=', make_variable ($1, $2), $4); $$->flags |= AST_THROW_AWAY; }
-	|	expr ';'                        { $$ = $1; $$->flags |= AST_THROW_AWAY; }
+	|	STR STR '=' expr ';'            { $$ = make_binary ('=', make_variable ($1, $2), $4); $$->throw_away = 1; }
+	|	expr ';'                        { $$ = $1; $$->throw_away = 1; }
 	|	IF '(' expr ')' sub_body        { $$ = make_cond ($3, $5); }
 	|	IF '(' expr ')' sub_body ELSE sub_body { $$ = make_ifelse ($3, $5, $7); }
 	|	STR ':' statement               { $$ = ast_cat (make_label ($1), $3); }
@@ -213,8 +213,8 @@ expr:		STR                   { $$ = make_variable (NULL, $1); }
 	|	'*'expr %prec SIZEOF  { $$ = make_unary ('*', $2); }
 	|	expr INC              { $$ = make_unary (INC, $1); }
 	|	expr DEC              { $$ = make_unary (DEC, $1); }
-	|	INC expr              { $$ = make_unary (AST_UNARY_PREFIX | INC, $2); }
-	|	DEC expr              { $$ = make_unary (AST_UNARY_PREFIX | DEC, $2); }
+	|	INC expr              { $$ = make_unary (INC, $2); $$->unary_prefix = 1; }
+	|	DEC expr              { $$ = make_unary (DEC, $2); $$->unary_prefix = 1; }
 	|	'-'expr %prec SIZEOF  { $$ = make_unary ('-', $2); }
 	|	'(' expr ')'          { $$ = $2; }
 	|	constrval             { $$ = $1; }
@@ -261,8 +261,8 @@ make_array (char *type, char *name, struct ast *size)
 struct ast *
 make_forloop (struct ast *init, struct ast *cond, struct ast *step, struct ast *body)
 {
-  step->flags |= AST_THROW_AWAY;
-  init->flags |= AST_THROW_AWAY;
+  step->throw_away = 1;
+  init->throw_away = 1;
   struct ast *out = ast_cat (body, step);
   out = make_whileloop (cond, out);
   out = ast_cat (init, out);

@@ -31,12 +31,15 @@ along with Compiler; see the file COPYING.  If not see
 
 [+added_code+]
 
+enum ast_code {
+  [+ FOR types ',
+  ' +][+name+]_type[+ ENDFOR types +]
+};
+
 struct ast
 {
-  enum { [+ FOR types ',
-         ' +][+name+]_type[+ ENDFOR types +] } type;
   [+ FOR top_level +]
-  [+type+] [+call+];
+  [+type+] [+call+][+ IF (exist? "size") +]: [+size+][+ ENDIF +];
   [+ ENDFOR top_level +];
   union
   {
@@ -88,9 +91,10 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
 	       [+ IF (and (exist? "cont") (exist? "sub")) +], [+ ENDIF +]
 	       [+ FOR sub ', ' +]struct ast *[+sub+][+ ENDFOR sub +])
 {
-  struct ast template = { [+name+]_type[+ FOR top_level +], ([+type+]) 0[+ ENDFOR +],
+  struct ast template = { [+ FOR top_level +]([+type+]) 0, [+ ENDFOR +]
 			  {0}, [+ (count "sub") +], NULL };
   struct ast *out = xmemdup (&template, sizeof *out + sizeof out->ops[0] * ([+ (count "sub") +] - 1));
+  out->type = [+name+]_type;
   [+ FOR extra +]
     out->op.[+name+].[+call+] = ([+type+]) 0;
   [+ ENDFOR extra +];

@@ -23,12 +23,12 @@ along with Compiler; see the file COPYING.  If not see
 added_code = "
 #include \"loc.h\"
 #include <stddef.h>
-
-#define AST_THROW_AWAY 0x1
-
-#define AST_UNARY_PREFIX    0x20000
-
 ";
+
+top_level = {
+    type = "enum ast_code";
+    call = type;
+};
 
 top_level = {
     type = "struct loc *";
@@ -36,8 +36,15 @@ top_level = {
 };
 
 top_level = {
-    type = int;
-    call = flags;
+    type = unsigned;
+    call = throw_away;
+    size = 1;
+};
+
+top_level = {
+    type = unsigned;
+    call = unary_prefix;
+    size = 1;
 };
 
 top_level = {
