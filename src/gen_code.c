@@ -28,7 +28,7 @@ along with Compiler; see the file COPYING.  If not see
 /* A special hook that must be defined before including loc.h.  It
    checks if the location that is about to be freed, is dependant on
    any registers.  If it is, then those registers are freed in the
-   correct manner to so that they can be reused. */
+   correct manner too so that they can be reused. */
 #define FREE_LOC_HOOK(X) do {				\
     if (IS_REGISTER (X) || IS_MEMORY (X))		\
       {							\
@@ -80,8 +80,7 @@ along with Compiler; see the file COPYING.  If not see
    an error value.  This allows us to continue the program as we
    desire. */
 jmp_buf error_jump;
-#define ERROR(...)				\
-  do {						\
+#define ERROR(...) do {				\
     error (0, errno, __VA_ARGS__);		\
     longjmp (error_jump, 1);			\
   } while (0)
@@ -281,16 +280,6 @@ gen_code_r (struct ast *s)
 
       /* Generate the body of the function. */
       gen_code_r (s->ops[1]);
-
-#if 0
-      assert (avail == 0);
-#endif
-#if 0
-      /* Generate a second function epilogue just in case a
-	 return-statement wasn't included in the input source.  This
-	 can be toggled for testing. */
-      PUT ("\tmov\t%%rbp, %%rsp\n\tpop\t%%rbp\n\tret\n\n");
-#endif
       break;
 
     case ret_type:

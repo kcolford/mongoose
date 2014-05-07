@@ -52,6 +52,8 @@ is_lval (struct ast *s)
 #define CHECK_LVAL(VAL)							\
   ERROR (is_lval (VAL), _("Syntax Error, operand is not an lval"))
 
+static int check_return = 0;
+
 int
 semantic (struct ast *s)
 {
@@ -60,6 +62,14 @@ semantic (struct ast *s)
     return ret;
   switch (s->type)
     {
+    case function_type:
+      check_return = 1;
+      break;
+
+    case ret_type:
+      check_return = 0;
+      break;
+
     case binary_type:
       if (s->op.binary.op == '=')
 	CHECK_LVAL (s->ops[0]);
@@ -72,7 +82,14 @@ semantic (struct ast *s)
     }
   int i;
   for (i = 0; i < s->num_ops; i++)
-    ret = ret || semantic (s->ops[i]);
+    {
+      int return_save = check_return;
+      check_return = 0;
+      ret = ret || semantic (s->ops[i]);
+      check_return = return_save;
+    }
+  if (s->next == NULL && check_return)
+      s->next = make_ret (NULL);
   ret = ret || semantic (s->next);
   return ret;
 }
