@@ -62,9 +62,10 @@ struct ast
 };
 
 [+ FOR types +]
-extern struct ast *make_[+name+] ([+ FOR cont ', ' +][+type+][+ ENDFOR cont +]
-				  [+ IF (and (exist? "cont") (exist? "sub")) +], [+ ENDIF +]
-				  [+ FOR sub ', ' +]struct ast *[+ ENDFOR sub +]);
+extern struct ast *make_[+name+]
+([+ FOR cont ', ' +][+type+][+ ENDFOR cont +]
+ [+ IF (and (exist? "cont") (exist? "sub")) +], [+ ENDIF +]
+ [+ FOR sub ', ' +]struct ast *[+ ENDFOR sub +]);
 [+ ENDFOR types +]
 
 extern struct ast *ast_dup (const struct ast *);
@@ -93,7 +94,8 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
 {
   struct ast template = { [+ FOR top_level +]([+type+]) 0, [+ ENDFOR +]
 			  {0}, [+ (count "sub") +], NULL };
-  struct ast *out = xmemdup (&template, sizeof *out + sizeof out->ops[0] * ([+ (count "sub") +] - 1));
+  struct ast *out = xmemdup (&template, sizeof *out + 
+			     sizeof out->ops[0] * ([+ (count "sub") +] - 1));
   out->type = [+name+]_type;
   [+ FOR extra +]
     out->op.[+name+].[+call+] = ([+type+]) 0;
@@ -113,7 +115,8 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
 struct ast *
 ast_dup (const struct ast *s)
 {
-  struct ast *out = xmemdup (s, sizeof *s + sizeof s->ops[0] * (s->num_ops - 1));
+  struct ast *out = xmemdup (s, sizeof *s + 
+			     sizeof s->ops[0] * (s->num_ops - 1));
   [+ FOR top_level +]
     [+ IF (== "char *" (get "type")) +]
     USE_RETURN (out->[+call+], xstrdup);

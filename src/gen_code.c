@@ -94,11 +94,7 @@ regis (int a)
     { "%rax", "%rbx", "%rcx", "%rdx", "%rdi", "%rsi", "%r8", "%r9", "%r10",
       "%r11", "%r12", "%r13", "%r14", "%r15" };
 #if USE_REGISTER_CHECKING
-  if (a < 0)
-    error (1, 0, _("index out of bounds, %d less than zero"), a);
-  if (a >= LEN (storage))
-    error (1, 0, _("index out of bounds, %d greater than or equal to the maximum %lu"),
-	   a, LEN (storage));
+  CHECK_BOUNDS (storage, a);
 #endif
   return storage[a];
 }
@@ -113,11 +109,7 @@ call_regis(int a)
   const int storage[] =
     { 4, 5, 2, 3, 6, 7 };
 #if USE_REGISTER_CHECKING
-  if (a < 0)
-    error (1, 0, _("index out of bounds, %d less than zero"), a);
-  if (a >= LEN (storage))
-    error (1, 0, _("index out of bounds, %d greater than or equal to the maximum %lu"),
-	   a, LEN (storage));
+  CHECK_BOUNDS (storage, a);
 #endif
   return storage[a];
 }
@@ -140,11 +132,7 @@ general_regis(int a)
 #endif
     };
 #if USE_REGISTER_CHECKING
-  if (a < 0)
-    error (1, 0, _("index out of bounds, %d less than zero"), a);
-  if (a >= LEN (storage))
-    error (1, 0, _("index out of bounds, %d greater than or equal to the maximum %lu"),
-	   a, LEN (storage));
+  CHECK_BOUNDS (storage, a);
 #endif
   return storage[a];
 }
@@ -286,7 +274,8 @@ gen_code_r (struct ast *s)
 	  assert (i->type == variable_type);
 	  PUT ("\tsub\t$%d, %%rsp\n", i->op.variable.alloc);
 	  assert (i->loc != NULL);
-	  PUT ("\tmov\t%s, %s\n", regis(call_regis(argnum)), print_loc (i->loc));
+	  PUT ("\tmov\t%s, %s\n", regis(call_regis(argnum)), 
+	       print_loc (i->loc));
 	  argnum++;
 	}
 
@@ -322,7 +311,8 @@ gen_code_r (struct ast *s)
       ;
       struct binop_branching *code = s->ops[0]->type != binary_type ? NULL :
 	bsearch (&s->ops[0]->op.binary.op, branchable_binops,
-		 LEN (branchable_binops), sizeof *branchable_binops, compare);
+		 LEN (branchable_binops), sizeof *branchable_binops, 
+		 compare);
       if (code != NULL)
 	{
 	  gen_code_r (s->ops[0]->ops[0]);
@@ -334,7 +324,8 @@ gen_code_r (struct ast *s)
 	  PUT ("\t%s\t%s, %s\n\t%s\t%s\n", code->check,
 	       print_loc (s->ops[0]->ops[1]->loc),
 	       print_loc (s->ops[0]->ops[0]->loc), 
-	       (s->ops[0]->boolean_not ? code->not : code->jump), print_loc (s->loc));
+	       (s->ops[0]->boolean_not ? code->not : code->jump), 
+	       print_loc (s->loc));
 	  FREE_LOC (s->ops[0]->ops[1]->loc);
 	  FREE_LOC (s->ops[0]->ops[0]->loc);
 	}
@@ -345,7 +336,8 @@ gen_code_r (struct ast *s)
 	     is true. */
 	  gen_code_r (s->ops[0]);
 	  assert (s->ops[0]->loc != NULL);
-	  PUT ("\tcmpq\t%s, $0\n\tjz\t%s\n", print_loc (s->ops[0]->loc), print_loc (s->loc));
+	  PUT ("\tcmpq\t%s, $0\n\tjz\t%s\n", print_loc (s->ops[0]->loc), 
+	       print_loc (s->loc));
 	  FREE_LOC (s->ops[0]->loc);
 	}
       break;
@@ -362,7 +354,8 @@ gen_code_r (struct ast *s)
 
     case integer_type:
       if (s->loc == NULL)
-	MAKE_BASE_LOC (s->loc, literal_loc, my_printf ("%lld", s->op.integer.i));
+	MAKE_BASE_LOC (s->loc, literal_loc, 
+		       my_printf ("%lld", s->op.integer.i));
       break;
 
     case variable_type:
@@ -375,7 +368,8 @@ gen_code_r (struct ast *s)
 
     case string_type:
       if (s->loc == NULL)
-	MAKE_BASE_LOC (s->loc, symbol_loc, my_printf (".LS%d", str_labelno++));
+	MAKE_BASE_LOC (s->loc, symbol_loc, 
+		       my_printf (".LS%d", str_labelno++));
       if (s->op.string.val != NULL)
 	EXTENDF (data_section, "%s:\n\t.string\t\"%s\"\n",
 		 print_loc (s->loc), s->op.string.val);
@@ -399,7 +393,8 @@ gen_code_r (struct ast *s)
 	  if (IS_MEMORY (from->loc))
 	    GIVE_REGISTER (from->loc);
 	  assert (IS_MEMORY (s->loc));
-	  PUT ("\tmovq\t%s, %s\n", print_loc (from->loc), print_loc (s->loc));
+	  PUT ("\tmovq\t%s, %s\n", print_loc (from->loc), 
+	       print_loc (s->loc));
 	  break;
 
 	case '&':
@@ -428,24 +423,26 @@ gen_code_r (struct ast *s)
 	  break;
 
 	case '*':
-	  MAKE_BASE_LOC (l, register_loc, xstrdup ("%rax"));
+	  MAKE_BASE_LOC (l, register_loc, "%rax");
 	  MOVE_LOC_WITH ("mov", s->loc, l);
 	  PUT ("\tmov\t$0, %%rdx\n");
 	  if (IS_LITERAL (from->loc))
 	    GIVE_REGISTER (from->loc);
 	  PUT ("\timulq\t%s\n", print_loc (from->loc));
 	  FREE_LOC (from->loc);
+	  s->loc->base = xstrdup ("%rax");
 	  GIVE_REGISTER (s->loc);
 	  break;
 
 	case '/':
-	  MAKE_BASE_LOC (l, register_loc, xstrdup ("%rax"));
+	  MAKE_BASE_LOC (l, register_loc, "%rax");
 	  MOVE_LOC_WITH ("mov", s->loc, l);
 	  PUT ("\tmov\t$0, %%rdx\n");
 	  if (IS_LITERAL (from->loc))
 	    GIVE_REGISTER (from->loc);
 	  PUT ("\tidivq\t%s\n", print_loc (from->loc));
 	  FREE_LOC (from->loc);
+	  s->loc->base = xstrdup ("%rax");
 	  GIVE_REGISTER (s->loc);
 	  break;
 
@@ -550,7 +547,8 @@ gen_code_r (struct ast *s)
 	    {
 	      assert (i->loc != NULL);
 	      struct loc *call;
-	      MAKE_BASE_LOC (call, register_loc, xstrdup (regis(call_regis(a++))));
+	      MAKE_BASE_LOC (call, register_loc, 
+			     xstrdup (regis(call_regis(a++))));
 	      MOVE_LOC_WITH ("mov", i->loc, call);
 	    }
 	  assert (s->ops[0]->type == variable_type);

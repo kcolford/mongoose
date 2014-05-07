@@ -34,8 +34,10 @@ along with Compiler; see the file COPYING.  If not see
 /* Start of Macros. */
 
 /* String comparision utilities. */
-#define STREQ(X, Y) ((X) == (Y) || (X) != NULL && (Y) != NULL && strcmp (X, Y) == 0)
-#define STRNEQ(X, Y) ((X) != (Y) && (X) != NULL && (Y) != NULL && strcmp (X, Y) != 0)
+#define STREQ(X, Y) ((X) == (Y) || (X) != NULL && (Y) != NULL	\
+		     && strcmp (X, Y) == 0)
+#define STRNEQ(X, Y) ((X) != (Y) && (X) != NULL && (Y) != NULL	\
+		      && strcmp (X, Y) != 0)
 
 /* Special macros for making it easier to mark strings for
    translation. */
@@ -66,6 +68,16 @@ along with Compiler; see the file COPYING.  If not see
     char *_v = (X);							\
     (X) = my_printf ("%s" Y, ((X) != NULL ? (X) : ""), __VA_ARGS__);	\
     FREE (_v);								\
+  } while (0)
+
+/* Macro for checking that a particular value is within the bounds
+   specified. */
+#define CHECK_BOUNDS(ARRAY, N) do {					\
+    if (a < 0)								\
+      error (1, 0, _("index out of bounds, %d less than zero"), a);	\
+    if (a >= LEN (ARRAY))						\
+      error (1, 0, _("index out of bounds, %d greater than or equal "	\
+		     "to the maximum %lu"), a, LEN (storage));		\
   } while (0)
 
 /* **************************************************************** */
