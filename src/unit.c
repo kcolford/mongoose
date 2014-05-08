@@ -23,6 +23,7 @@ along with Compiler; see the file COPYING.  If not see
 
 #include "compiler.h"
 #include "copy-file.h"
+#include "fatal-signal.h"
 #include "lib.h"
 #include "xalloc.h"
 
@@ -108,6 +109,7 @@ run_unit ()
 {
   name = infile_name;
   atexit (del_name);
+  at_fatal_signal (del_name);
 
 #define CHECK(C, S)						\
     do {							\
