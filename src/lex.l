@@ -31,9 +31,6 @@ along with Compiler; see the file COPYING.  If not see
 #include <stdlib.h>
 #include <string.h>
 
-char *file_name = NULL;
-int lineno = 0;
-
 %}
 
 %%

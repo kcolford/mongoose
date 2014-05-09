@@ -27,6 +27,11 @@ extern FILE *yyin;		/* The input stream for the lexer. */
 extern FILE *outfile;		/* The output stream for the gen_code
 				   routine. */
 
+extern char *infile_name;	/* The current input file as
+				   determined by the command line. */
+extern char *outfile_name; 	/* The current output file as
+				   determined by the command line. */
+
 extern char *file_name;		/* The current file name as determined
 				   by the lexer.  This is always
 				   either NULL or a dynamically
@@ -37,9 +42,16 @@ extern int lineno;		/* The current line number as
 extern int optimize;		/* A flag describing the optimization
 				   levels that each phase must adhere
 				   to. */
+extern int yydebug;		/* A flag that if true will cause the
+				   Yacc parser to issue debugging
+				   output. */
 extern int debug;		/* A flag that if true says that all
 				   assembly will be echoed to
 				   stdout. */
+
+extern char stop;		/* A character that defines how far
+				   the compiler should go during its
+				   compilation routines. */
 
 /* **************************************************************** */
 /* These are the compilation passes that manipulate the AST and verify
@@ -69,5 +81,16 @@ extern int semantic (struct ast *);
 /* This runs all the above routines in order and collects their return
    values. */
 extern int run_compilation_passes (struct ast **);
+
+/* **************************************************************** */
+/* These routines are for the general purpose use of managing the
+   compiler. */
+
+/* This initializes the global variables. */
+extern void vars_init (void);
+
+/* This is the one routine that the triggers the entire compilation
+   unit to run. */
+extern void run_unit (void);
 
 #endif

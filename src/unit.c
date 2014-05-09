@@ -31,11 +31,8 @@ along with Compiler; see the file COPYING.  If not see
 #include <string.h>
 #include <assert.h>
 
-FILE *outfile = NULL;
-char *name = NULL;
-char stop = 0;
-extern char *infile_name;
-extern char *outfile_name;
+static char *name = NULL;
+
 extern int yyparse (void);
 
 static void

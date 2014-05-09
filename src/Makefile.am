@@ -31,7 +31,8 @@ loc.h						\
 optimizer.c					\
 parse.y						\
 semantic.c					\
-unit.c
+unit.c						\
+vars.c
 
 compiler_LDADD = $(top_builddir)/lib/lib$(PACKAGE).la $(LTLIBINTL) $(LIB_ACL)
 

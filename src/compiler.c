@@ -34,16 +34,6 @@ along with Compiler; see the file COPYING.  If not see
 
 #include <assert.h>
 
-int optimize = 0;
-int debug = 0;
-
-char *infile_name = NULL;
-char *outfile_name = NULL;
-
-extern int yydebug;
-extern char stop;
-extern void run_unit (void);
-
 const char *argp_program_version = PACKAGE_STRING;
 const char *argp_program_bug_address = PACKAGE_BUGREPORT;
 
@@ -171,10 +161,10 @@ int main (int argc, char *argv[])
   assert (test != NULL);
 #endif
 
+  vars_init ();
+
   struct argp args = { opts, arg_parse, N_("FILE"), doc };
   argp_parse (&args, argc, argv, 0, NULL, NULL);
-
-  assert (infile_name != NULL);
 
   run_unit ();
 
