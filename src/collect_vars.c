@@ -50,7 +50,7 @@ collect_vars_r (struct ast *s)
       if (s->op.variable.alloc != 0)
 	{
 	  assert (s->op.variable.type != NULL);
-	  vars = make_variable (xstrdup (s->op.variable.type), 
+	  vars = make_variable (xstrdup (s->op.variable.type),
 				xstrdup (s->op.variable.name));
 	  vars->op.variable.alloc = s->op.variable.alloc;
 	  s->op.variable.alloc = 0;

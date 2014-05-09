@@ -25,9 +25,9 @@ along with Compiler; see the file COPYING.  If not see
 #include "xalloc.h"
 
 enum loc_code {
-  literal_loc, 
-  memory_loc, 
-  register_loc, 
+  literal_loc,
+  memory_loc,
+  register_loc,
   symbol_loc };
 
 struct loc

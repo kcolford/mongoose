@@ -74,15 +74,15 @@ optimizer_r (struct ast **ss)
 	  int folded = 0;
 	  switch (s->next->type)
 	    {
-	    case variable_type: 
-	      if (s->next->op.variable.type == NULL 
+	    case variable_type:
+	      if (s->next->op.variable.type == NULL
 		  && s->next->op.variable.name == NULL)
 		{
 		  s->op.variable.alloc += s->next->op.variable.alloc;
 		  folded = 1;
 		}
 	      break;
-	      
+
 	    case function_call_type:
 	      if (STREQ (s->next->ops[0]->loc->base, "__builtin_alloca")
 		  && s->ops[1]->type == integer_type)

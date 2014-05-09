@@ -94,7 +94,7 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
 {
   struct ast template = { [+ FOR top_level +]([+type+]) 0, [+ ENDFOR +]
 			  {0}, [+ (count "sub") +], NULL };
-  struct ast *out = xmemdup (&template, sizeof *out + 
+  struct ast *out = xmemdup (&template, sizeof *out +
 			     sizeof out->ops[0] * ([+ (count "sub") +] - 1));
   out->type = [+name+]_type;
   [+ FOR extra +]
@@ -115,7 +115,7 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
 struct ast *
 ast_dup (const struct ast *s)
 {
-  struct ast *out = xmemdup (s, sizeof *s + 
+  struct ast *out = xmemdup (s, sizeof *s +
 			     sizeof s->ops[0] * (s->num_ops - 1));
   [+ FOR top_level +]
     [+ IF (== "char *" (get "type")) +]

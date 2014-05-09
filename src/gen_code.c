@@ -20,7 +20,7 @@ along with Compiler; see the file COPYING.  If not see
 
 #include "config.h"
 
-/* Check if the the register string S is allowed to be freed. */
+/* Check if the register string S is allowed to be freed. */
 #define VALID_REGISTER_CHECK(S)						\
   ((S) != NULL								\
    && STREQ ((S), regis (general_regis (avail < 1 ? 0 : avail - 1))))
@@ -241,7 +241,7 @@ struct binop_branching
   const char *check;
   const char *jump;
   const char *not;
-} branchable_binops[] = { 
+} branchable_binops[] = {
   { '<', "cmp", "jl", "jnl" },
   { '>', "cmp", "jg", "jng" },
   { EQ, "cmp", "je", "jne" },
@@ -273,7 +273,7 @@ gen_code_r (struct ast *s)
 	  assert (i->type == variable_type);
 	  PUT ("\tsub\t$%d, %%rsp\n", i->op.variable.alloc);
 	  assert (i->loc != NULL);
-	  PUT ("\tmov\t%s, %s\n", regis(call_regis(argnum)), 
+	  PUT ("\tmov\t%s, %s\n", regis(call_regis(argnum)),
 	       print_loc (i->loc));
 	  argnum++;
 	}
@@ -300,7 +300,7 @@ gen_code_r (struct ast *s)
       ;
       struct binop_branching *code = s->ops[0]->type != binary_type ? NULL :
 	bsearch (&s->ops[0]->op.binary.op, branchable_binops,
-		 LEN (branchable_binops), sizeof *branchable_binops, 
+		 LEN (branchable_binops), sizeof *branchable_binops,
 		 compare);
       if (code != NULL)
 	{
@@ -312,8 +312,8 @@ gen_code_r (struct ast *s)
 				       s->ops[0]->ops[1]->loc);
 	  PUT ("\t%s\t%s, %s\n\t%s\t%s\n", code->check,
 	       print_loc (s->ops[0]->ops[1]->loc),
-	       print_loc (s->ops[0]->ops[0]->loc), 
-	       (s->ops[0]->boolean_not ? code->not : code->jump), 
+	       print_loc (s->ops[0]->ops[0]->loc),
+	       (s->ops[0]->boolean_not ? code->not : code->jump),
 	       print_loc (s->loc));
 	  FREE_LOC (s->ops[0]->ops[1]->loc);
 	  FREE_LOC (s->ops[0]->ops[0]->loc);
@@ -325,7 +325,7 @@ gen_code_r (struct ast *s)
 	     is true. */
 	  gen_code_r (s->ops[0]);
 	  assert (s->ops[0]->loc != NULL);
-	  PUT ("\tcmpq\t%s, $0\n\tjz\t%s\n", print_loc (s->ops[0]->loc), 
+	  PUT ("\tcmpq\t%s, $0\n\tjz\t%s\n", print_loc (s->ops[0]->loc),
 	       print_loc (s->loc));
 	  FREE_LOC (s->ops[0]->loc);
 	}
@@ -343,7 +343,7 @@ gen_code_r (struct ast *s)
 
     case integer_type:
       if (s->loc == NULL)
-	MAKE_BASE_LOC (s->loc, literal_loc, 
+	MAKE_BASE_LOC (s->loc, literal_loc,
 		       my_printf ("%lld", s->op.integer.i));
       break;
 
@@ -357,7 +357,7 @@ gen_code_r (struct ast *s)
 
     case string_type:
       if (s->loc == NULL)
-	MAKE_BASE_LOC (s->loc, symbol_loc, 
+	MAKE_BASE_LOC (s->loc, symbol_loc,
 		       my_printf (".LS%d", str_labelno++));
       if (s->op.string.val != NULL)
 	EXTENDF (data_section, "%s:\n\t.string\t\"%s\"\n",
@@ -382,7 +382,7 @@ gen_code_r (struct ast *s)
 	  if (IS_MEMORY (from->loc))
 	    GIVE_REGISTER (from->loc);
 	  assert (IS_MEMORY (s->loc));
-	  PUT ("\tmovq\t%s, %s\n", print_loc (from->loc), 
+	  PUT ("\tmovq\t%s, %s\n", print_loc (from->loc),
 	       print_loc (s->loc));
 	  break;
 
@@ -536,7 +536,7 @@ gen_code_r (struct ast *s)
 	    {
 	      assert (i->loc != NULL);
 	      struct loc *call;
-	      MAKE_BASE_LOC (call, register_loc, 
+	      MAKE_BASE_LOC (call, register_loc,
 			     xstrdup (regis(call_regis(a++))));
 	      MOVE_LOC_WITH ("mov", i->loc, call);
 	    }
@@ -568,7 +568,7 @@ extern char *infile_name;
 int
 gen_code (struct ast *s)
 {
-  qsort (branchable_binops, LEN (branchable_binops), 
+  qsort (branchable_binops, LEN (branchable_binops),
 	 sizeof *branchable_binops, compare);
   if (setjmp (error_jump))
     return 1;
