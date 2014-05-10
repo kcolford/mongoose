@@ -103,6 +103,8 @@ free_tmpfiles ()
 char *
 tmpfile_name ()
 {
+  /* If this is the first time that this routine is run, set up the
+     list and add the destructors to the cleanup functions. */
   if (tmpfiles == NULL)
     {
       tmpfiles = gl_list_create_empty (GL_ARRAY_LIST, NULL, NULL,
@@ -111,6 +113,8 @@ tmpfile_name ()
       at_fatal_signal (free_tmpfiles);
     }
 
+  /* Add an entry to the end of the array, this will then be
+     replaced. */
   gl_list_add_last (tmpfiles, NULL);
   char *out = NULL;
 
@@ -121,6 +125,9 @@ tmpfile_name ()
       out = xstrdup (tmpnam (NULL));
       gl_list_set_at (tmpfiles, gl_list_size (tmpfiles) - 1, out);
       errno = 0;
+      /* Create the file so that it can't be opened by another process
+	 or if it is, it will cause us to go and select a new
+	 file name. */
       int t = creat (out, S_IRWXU);
       if (t >= 0)
 	close (t);

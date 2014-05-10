@@ -36,12 +36,6 @@ extern int yyparse (void);
 void
 run_unit ()
 {
-  /* If an output file name wasn't specified, then we need to
-     determine one from the name of the source file.  If that can't be
-     done though, we just set it to "a.out". */
-  if (outfile_name == NULL)
-    outfile_name = "a.out";
-
   gl_list_t name = NULL;
   if (stop == 0)
     name = gl_list_create_empty (GL_ARRAY_LIST, NULL, NULL, NULL, 1);
@@ -84,19 +78,43 @@ run_unit ()
 	    error (1, 0, _("assembler failed"));
 	  in = out;
 	}
+
       if (stop == 0)
 	gl_list_add_last (name, in);
       else
 	{
-	  char *out = xstrdup (_in);
-	  out[strlen (out) - 1] = stop;
+	  /* If the output file wasn't specified, we'll decide on one
+	     by changing the extension of the input file.*/
+	  char *out;
+	  if (outfile_name == NULL)
+	    {
+	      out = xstrdup (_in);
+	      out[strlen (out) - 1] = stop;
+	    }
+	  else
+	    out = outfile_name;
 
+	  /* The reason that we wait until now to set up the output
+	     file is that one of the programs could clobber the output
+	     file, but then fail.  This would break any Makefiles due
+	     to new timestamps being applied and the file having
+	     corrupt data. */
 	  copy_file_preserving (in, out);
 	}
     }
 
+  /* If an output file name wasn't specified, then we need to
+     determine one from the name of the source file.  If that can't be
+     done though, we just set it to "a.out". */
+  if (outfile_name == NULL)
+    outfile_name = "a.out";
+
   if (stop == 0)
     {
+      /* TODO: The GCC seems to link in some additional object files
+	 that we can't duplicate or get the program working without.
+	 We have to use the GCC to link our programs for the time
+	 being. */
       const char *ldargs_template[] =
 	{ "/usr/bin/gcc", "-o", outfile_name };
 
