@@ -11,7 +11,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
 AC_USE_SYSTEM_EXTENSIONS
-AM_INIT_AUTOMAKE([foreign silent-rules color-tests])
+AM_INIT_AUTOMAKE([foreign silent-rules color-tests dist-xz])
 LT_INIT
 
 # Checks for programs.
