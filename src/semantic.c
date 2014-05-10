@@ -55,7 +55,7 @@ is_lval (struct ast *s)
 static int check_return = 0;
 
 int
-semantic (struct ast *s)
+semantic_r (struct ast *s)
 {
   int ret = 0;
   if (s == NULL)
@@ -85,11 +85,19 @@ semantic (struct ast *s)
     {
       int return_save = check_return;
       check_return = 0;
-      ret = ret || semantic (s->ops[i]);
+      ret = ret || semantic_r (s->ops[i]);
       check_return = return_save;
     }
   if (s->next == NULL && check_return)
       s->next = make_ret (NULL);
-  ret = ret || semantic (s->next);
+  ret = ret || semantic_r (s->next);
   return ret;
+}
+
+int
+semantic (struct ast *s)
+{
+  check_return = 0;
+  
+  return semantic_r (s);
 }

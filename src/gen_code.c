@@ -566,6 +566,11 @@ gen_code_r (struct ast *s)
 int
 gen_code (struct ast *s)
 {
+  avail = 0;
+  str_labelno = 0;
+  data_section = NULL;
+  branch_labelno = 0;
+
   qsort (branchable_binops, LEN (branchable_binops),
 	 sizeof *branchable_binops, compare);
   if (setjmp (error_jump))

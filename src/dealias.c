@@ -196,6 +196,12 @@ dealias_r (struct ast **ss)
 int
 dealias (struct ast **ss)
 {
+  /* Nullify the global vars. */
+  memset (&absolute_top, 0, sizeof absolute_top);
+  state = &absolute_top;
+  func_allocd = 0;
+  curr_labelno = 1;
+
   dealias_r (ss);
   return 0;
 }
