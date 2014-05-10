@@ -20,9 +20,10 @@ along with Compiler; see the file COPYING.  If not see
 
 #include "config.h"
 
-#include "lib.h"
 #include "compiler.h"
 #include "copy-file.h"
+#include "gl_xlist.h"
+#include "lib.h"
 #include "progname.h"
 
 #include <stdlib.h>
@@ -129,7 +130,7 @@ arg_parse (int key, char *arg, struct argp_state *state)
       break;
 
     case ARGP_KEY_ARG:
-      infile_name = arg;
+      gl_list_add_last (infile_name, arg);
       break;
 
     case ARGP_KEY_NO_ARGS:

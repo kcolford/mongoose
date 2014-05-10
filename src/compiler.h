@@ -21,15 +21,17 @@ along with Compiler; see the file COPYING.  If not see
 #ifndef COMPILER_H
 #define COMPILER_H
 
+#include "gl_xlist.h"
+
 #include <stdio.h>
 
 extern FILE *yyin;		/* The input stream for the lexer. */
 extern FILE *outfile;		/* The output stream for the gen_code
 				   routine. */
 
-extern char *infile_name;	/* The current input file as
+extern gl_list_t infile_name;	/* The current input file as
 				   determined by the command line. */
-extern char *outfile_name; 	/* The current output file as
+extern char *outfile_name;	/* The current output file as
 				   determined by the command line. */
 
 extern char *file_name;		/* The current file name as determined

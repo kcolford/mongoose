@@ -562,8 +562,6 @@ gen_code_r (struct ast *s)
   gen_code_r (s->next);
 }
 
-extern char *infile_name;
-
 /* Top level entry point to the code generation phase. */
 int
 gen_code (struct ast *s)
@@ -572,7 +570,6 @@ gen_code (struct ast *s)
 	 sizeof *branchable_binops, compare);
   if (setjmp (error_jump))
     return 1;
-  PUT ("\t.file\t\"%s\"\n\t.text\n", infile_name);
   data_section = xstrdup ("\t.data\n");
   gen_code_r (s);
   PUT ("%s", data_section);

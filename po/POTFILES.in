@@ -4,6 +4,7 @@ src/gen_code.c
 src/lib.c
 src/lib.h
 src/semantic.c
+src/unit.c
 
 # Gnulib source files
 lib/argp.h

@@ -96,20 +96,13 @@ extern int safe_system (const char **);
    according to a printf-format specifier. */
 extern char *my_printf (const char *, ...);
 
+/* This creates an appropriate file name that can be used as a
+   temporary file. */
+extern char *tmpfile_name ();
+
 /* These are comparision functions for use with "bsearch" and
    "qsort". */
 extern int compare (const void *, const void *);
 extern int compares (const void *, const void *);
-
-/* **************************************************************** */
-/* Start of inlined functions. */
-
-/* This creates an appropriate file name that can be used as a
-   temporary file. */
-static inline char *
-tmpfile_name ()
-{
-  return xstrdup (tmpnam (NULL));
-}
 
 #endif

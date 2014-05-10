@@ -22,6 +22,9 @@ along with Compiler; see the file COPYING.  If not see
 #include "config.h"
 
 #include "ast.h"
+#include "fatal-signal.h"
+#include "gl_xlist.h"
+#include "gl_array_list.h"
 #include "lib.h"
 #include "xalloc.h"
 
@@ -29,6 +32,7 @@ along with Compiler; see the file COPYING.  If not see
 #include <stdarg.h>
 #include <string.h>
 
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/wait.h>
 
@@ -75,6 +79,55 @@ xalloc_die ()
 {
   error (1, ENOMEM, _("out of memory"));
   abort ();
+}
+
+static gl_list_t tmpfiles = NULL;
+
+static void
+del_tmpfile (const void *_name)
+{
+  char *name = (char *) _name;
+  if (name != NULL)
+    unlink (name);
+  free (name);
+}
+
+static void
+free_tmpfiles ()
+{
+  if (tmpfiles != NULL)
+    gl_list_free (tmpfiles);
+  tmpfiles = NULL;
+}
+
+char *
+tmpfile_name ()
+{
+  if (tmpfiles == NULL)
+    {
+      tmpfiles = gl_list_create_empty (GL_ARRAY_LIST, NULL, NULL,
+				       del_tmpfile, 1);
+      atexit (free_tmpfiles);
+      at_fatal_signal (free_tmpfiles);
+    }
+
+  gl_list_add_last (tmpfiles, NULL);
+  char *out = NULL;
+
+  int t = 0;
+  do
+    {
+      FREE (out);
+      out = xstrdup (tmpnam (NULL));
+      gl_list_set_at (tmpfiles, gl_list_size (tmpfiles) - 1, out);
+      errno = 0;
+      int t = creat (out, S_IRWXU);
+      if (t >= 0)
+	close (t);
+    }
+  while (errno == EEXIST);
+
+  return out;
 }
 
 int

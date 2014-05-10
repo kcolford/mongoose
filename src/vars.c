@@ -22,6 +22,7 @@ along with Compiler; see the file COPYING.  If not see
 #include "config.h"
 
 #include "compiler.h"
+#include "gl_array_list.h"
 
 FILE *outfile = NULL;
 char stop = 0;
@@ -29,7 +30,7 @@ char stop = 0;
 int optimize = 0;
 int debug = 0;
 
-char *infile_name = NULL;
+gl_list_t infile_name = NULL;
 char *outfile_name = NULL;
 
 char *file_name = NULL;
@@ -38,5 +39,5 @@ int lineno = 0;
 void
 vars_init ()
 {
-  ;
+  infile_name = gl_list_create_empty (GL_ARRAY_LIST, NULL, NULL, NULL, 1);
 }

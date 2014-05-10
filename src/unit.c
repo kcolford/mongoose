@@ -23,131 +23,100 @@ along with Compiler; see the file COPYING.  If not see
 
 #include "compiler.h"
 #include "copy-file.h"
-#include "fatal-signal.h"
+#include "gl_array_list.h"
+#include "gl_xlist.h"
 #include "lib.h"
 #include "xalloc.h"
 
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
-
-static char *name = NULL;
 
 extern int yyparse (void);
-
-static void
-del_name ()
-{
-  if (name != NULL && STRNEQ (name, infile_name))
-    {
-      unlink (name);
-      FREE (name);
-    }
-}
-
-static inline char *
-preprocess (const char *in)
-{
-  char *out = tmpfile_name ();
-  /* TODO: This is the GCC's preprocessor which we hope to replace
-           with our own. */
-  const char *args[] = { "/usr/bin/cpp", in, out, NULL };
-  if (safe_system (args))
-    return NULL;
-  else
-    return out;
-}
-
-static inline char *
-compile (const char *in)
-{
-  if (in ==  NULL)
-    return NULL;
-  yyin = fopen (in, "r");
-  char *out = tmpfile_name ();
-  outfile = fopen (out, "w");
-  int i = yyparse ();
-  fclose (yyin);
-  fclose (outfile);
-  if (i)
-    return NULL;
-  else
-    return out;
-}
-
-static inline char *
-assemble (const char *in)
-{
-  char *out = tmpfile_name ();
-  const char *args[] = { "/usr/bin/as", "-o", out, in, NULL };
-  if (safe_system (args))
-    return NULL;
-  else
-    return out;
-}
-
-static inline char *
-linker (const char *in)
-{
-  char *out = tmpfile_name ();
-  /* TODO: Hopefully we can move away from having to use the GCC to
-           link our programs, but it seems to link in some other
-           object files that we can't duplicate yet.  Once we can
-           create our own, we will replace this with "ld". */
-  const char *args[] = { "/usr/bin/gcc", "-o", out, in, "-lm", NULL };
-  if (safe_system (args))
-    return NULL;
-  else
-    return out;
-}
 
 void
 run_unit ()
 {
-  name = infile_name;
-  atexit (del_name);
-  at_fatal_signal (del_name);
-
-#define CHECK(C, S)						\
-    do {							\
-      char *r = (C) (name);					\
-      del_name ();						\
-      name = r;							\
-      if (r == NULL)						\
-	exit (EXIT_FAILURE);					\
-    } while (0);						\
-    if (stop == (S))						\
-      break;							\
-
-  switch (name[strlen (name) - 1])
-    {
-    case 'c':
-      CHECK (preprocess, 'i');
-    case 'i':
-      CHECK (compile, 's');
-    case 's':
-      CHECK (assemble, 'o');
-    case 'o':
-    default:
-      CHECK (linker, 0);
-    }
-
-#undef CHECK
-
   /* If an output file name wasn't specified, then we need to
      determine one from the name of the source file.  If that can't be
      done though, we just set it to "a.out". */
   if (outfile_name == NULL)
+    outfile_name = "a.out";
+
+  gl_list_t name = NULL;
+  if (stop == 0)
+    name = gl_list_create_empty (GL_ARRAY_LIST, NULL, NULL, NULL, 1);
+
+  int i;
+  for (i = 0; i < gl_list_size (infile_name); i++)
     {
-      if (stop != 0)
+      const char *in = gl_list_get_at (infile_name, i), *_in = in;
+      char *out;
+      switch (in[strlen (in) - 1])
 	{
-	  assert (strchr ("iso", stop) != NULL);
-	  outfile_name = xstrdup (infile_name);
-	  outfile_name[strlen (outfile_name) - 1] = stop;
+	case 'c':
+	  out = tmpfile_name ();
+	  /* TODO: This is the GCC's preprocessor which we hope to replace
+	     with our own. */
+	  const char *cppargs[] =
+	    { "/usr/bin/cpp", in, out, NULL };
+	  if (safe_system (cppargs))
+	    error (1, 0, _("preprocessor failed"));
+	  in = out;
+
+	case 'i':
+	  if (stop == 'i')
+	    break;
+	  out = tmpfile_name ();
+	  outfile = fopen (out, "w");
+	  yyin = fopen (in, "r");
+	  yyparse ();
+	  fclose (outfile);
+	  fclose (yyin);
+	  in = out;
+
+	case 's':
+	  if (stop == 's')
+	    break;
+	  out = tmpfile_name ();
+	  const char *asargs[] =
+	    { "/usr/bin/as", "-o", out, in, NULL };
+	  if (safe_system (asargs))
+	    error (1, 0, _("assembler failed"));
+	  in = out;
 	}
+      if (stop == 0)
+	gl_list_add_last (name, in);
       else
-	outfile_name = "a.out";
+	{
+	  char *out = xstrdup (_in);
+	  out[strlen (out) - 1] = stop;
+
+	  copy_file_preserving (in, out);
+	}
     }
 
-  copy_file_preserving (name, outfile_name);
+  if (stop == 0)
+    {
+      const char *ldargs_template[] =
+	{ "/usr/bin/gcc", "-o", outfile_name };
+
+      const char **ldargs = xnmalloc (LEN (ldargs_template) +
+				      gl_list_size (name) + 2,
+				      sizeof *ldargs);
+
+      memcpy (ldargs, ldargs_template, sizeof ldargs_template);
+
+      const char **ldargsptr = ldargs + LEN (ldargs_template);
+      int i;
+      for (i = 0; i < gl_list_size (name); i++)
+	*ldargsptr++ = gl_list_get_at (name, i);
+      *ldargsptr++ = "-lm";
+      *ldargsptr++ = NULL;
+
+      if (safe_system (ldargs))
+	error (1, 0, _("linker failed"));
+
+      FREE (ldargs);
+      gl_list_free (name);
+    }
 }
