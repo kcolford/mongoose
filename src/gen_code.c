@@ -50,7 +50,6 @@ along with Compiler; see the file COPYING.  If not see
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <setjmp.h>
 
 #include <assert.h>
 
@@ -74,15 +73,6 @@ along with Compiler; see the file COPYING.  If not see
     fprintf (outfile, __VA_ARGS__);		\
     if (debug)					\
       fprintf (stderr, __VA_ARGS__);		\
-  } while (0)
-
-/* In case of error, fail and then jump out to the top level to return
-   an error value.  This allows us to continue the program as we
-   desire. */
-jmp_buf error_jump;
-#define ERROR(...) do {				\
-    error (0, errno, __VA_ARGS__);		\
-    longjmp (error_jump, 1);			\
   } while (0)
 
 /* These are the string variants of the registers. */
@@ -467,7 +457,7 @@ gen_code_r (struct ast *s)
 	  break;
 
 	default:
-	  ERROR (_("Invalid binary operator op-code: %d"),
+	  error (1, 0, _("Invalid binary operator op-code: %d"),
 		 s->op.binary.op);
 	}
       /* Release the previously allocated register. */
@@ -511,7 +501,8 @@ gen_code_r (struct ast *s)
 	  break;
 
 	default:
-	  ERROR (_("Invalid unary operator opcode: %d"), s->op.unary.op);
+	  error (1, 0, _("Invalid unary operator opcode: %d"),
+		 s->op.unary.op);
 	}
       assert (s->loc != NULL);
       break;
@@ -573,8 +564,6 @@ gen_code (struct ast *s)
 
   qsort (branchable_binops, LEN (branchable_binops),
 	 sizeof *branchable_binops, compare);
-  if (setjmp (error_jump))
-    return 1;
   data_section = xstrdup ("\t.data\n");
   gen_code_r (s);
   PUT ("%s", data_section);
