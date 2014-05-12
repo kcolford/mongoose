@@ -69,11 +69,10 @@ extern struct ast *make_[+name+]
 [+ ENDFOR types +]
 
 extern struct ast *ast_dup (const struct ast *);
-extern void ast_free (struct ast *);
+extern struct ast *ast_free (struct ast *);
 
 #define AST_FREE(S) do {			\
-    ast_free (S);				\
-    (S) = NULL;					\
+    (S) = ast_free (S);				\
   } while (0)
 
 #endif
@@ -81,6 +80,7 @@ extern void ast_free (struct ast *);
 #include "config.h"
 
 #include "ast.h"
+#include "ast_util.h"
 #include "lib.h"
 #include "xalloc.h"
 
@@ -110,13 +110,21 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
 }
 [+ ENDFOR types +]
 
-#define USE_RETURN(X, F) if ((X) != NULL) (X) = F (X)
+#define USE_RETURN(X, F) do { if ((X) != NULL) (X) = F (X); } while (0)
 
 struct ast *
 ast_dup (const struct ast *s)
 {
+  if (s == NULL)
+    return NULL;
+
+#if USE_REFCOUNT
+  s->refs++;
+  return s;
+#else
   struct ast *out = xmemdup (s, sizeof *s +
 			     sizeof s->ops[0] * (s->num_ops - 1));
+
   [+ FOR top_level +]
     [+ IF (== "char *" (get "type")) +]
     USE_RETURN (out->[+call+], xstrdup);
@@ -126,6 +134,7 @@ ast_dup (const struct ast *s)
     USE_RETURN (out->[+call+], loc_dup);
   [+ ENDIF +]
     [+ ENDFOR top_level+];
+
   switch (out->type)
     {
       [+ FOR types +]
@@ -138,17 +147,28 @@ ast_dup (const struct ast *s)
 	break;
       [+ ENDFOR types+]
     }
+
   int i;
   for (i = 0; i < out->num_ops; i++)
     USE_RETURN (out->ops[i], ast_dup);
   return out;
+#endif	/* USE_REFCOUNT */
 }
 
-void
+struct ast *
 ast_free (struct ast *s)
 {
   if (s == NULL)
-    return;
+    return NULL;
+
+#if USE_REFCOUNT
+  if (s->refs != 0)
+    {
+      s->refs--;
+      return s;
+    }
+#endif
+
   [+ FOR top_level +]
     [+ IF (== "char *" (get "type")) +]
     FREE (s->[+call+]);
@@ -158,6 +178,7 @@ ast_free (struct ast *s)
     FREE_LOC (s->[+call+]);
   [+ ENDIF +]
     [+ ENDFOR top_level +];
+
   switch (s->type)
     {
       [+ FOR types +]
@@ -170,10 +191,19 @@ ast_free (struct ast *s)
 	break;
       [+ ENDFOR types +]
 	}
+
   int i;
   for (i = 0; i < s->num_ops; i++)
     AST_FREE (s->ops[i]);
+
   FREE (s);
+  return NULL;
 }
 
 [+ ESAC +]
+
+/* Hey Emacs!
+Local Variables:
+mode: c
+End:
+*/

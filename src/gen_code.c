@@ -457,7 +457,7 @@ gen_code_r (struct ast *s)
 	  break;
 
 	default:
-	  error (1, 0, _("Invalid binary operator op-code: %d"),
+	  error (1, 0, _("invalid binary operator op-code: %d"),
 		 s->op.binary.op);
 	}
       /* Release the previously allocated register. */
@@ -501,7 +501,7 @@ gen_code_r (struct ast *s)
 	  break;
 
 	default:
-	  error (1, 0, _("Invalid unary operator opcode: %d"),
+	  error (1, 0, _("invalid unary operator opcode: %d"),
 		 s->op.unary.op);
 	}
       assert (s->loc != NULL);
