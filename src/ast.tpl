@@ -31,15 +31,24 @@ along with Compiler; see the file COPYING.  If not see
 
 [+added_code+]
 
+/**
+ * Data type that lists off all of the different kinds of ASTs.
+ * 
+ */
 enum ast_code {
   [+ FOR types ',
-  ' +][+name+]_type[+ ENDFOR types +]
+  ' +][+name+]_type /**< [+doc+] */[+ ENDFOR types +]
 };
 
+/**
+ * The AST structure that the compiler uses for its intermediate
+ * representation.
+ * 
+ */
 struct ast
 {
   [+ FOR top_level +]
-  [+type+] [+call+][+ IF (exist? "size") +]: [+size+][+ ENDIF +];
+  [+type+] [+call+][+ IF (exist? "size") +]: [+size+][+ ENDIF +]; /**< [+doc+] */
   [+ ENDFOR top_level +];
   union
   {
@@ -48,17 +57,19 @@ struct ast
     struct
     {
       [+ FOR cont +]
-      [+type+] [+call+];
+      [+type+] [+call+];	/**< [+doc+] */
       [+ ENDFOR cont +]
       [+ FOR extra +]
-      [+type+] [+call+];
+      [+type+] [+call+];	/**< [+doc+] */
       [+ ENDFOR extra +]
-    } [+name+];
+    } [+name+];			/**< [+doc+] */
     [+ ENDIF +]
     [+ ENDFOR types +]
-  } op;
-  const int num_ops;
-  struct ast *ops[1];
+  } op;				/**< Wrapper around the anonymous
+				   union. */
+  const int num_ops;		/**< Number of variable ops. */
+  struct ast *ops[1];		/**< Variable length array that stores
+				   any number of ops. */
 };
 
 [+ FOR types +]
@@ -68,9 +79,29 @@ extern struct ast *make_[+name+]
  [+ FOR sub ', ' +]struct ast *[+ ENDFOR sub +]);
 [+ ENDFOR types +]
 
-extern struct ast *ast_dup (const struct ast *);
-extern struct ast *ast_free (struct ast *);
+/** 
+ * Create a duplicate of the AST structure s.
+ * 
+ * @param s AST to duplicate.
+ * 
+ * @return The copy of s.
+ */
+extern struct ast *ast_dup (const struct ast *s);
 
+/** 
+ * Free the ASt s.
+ * 
+ * @param s The AST to free.
+ * 
+ * @return NULL
+ */
+extern struct ast *ast_free (struct ast *s);
+
+/** 
+ * Free an AST structure and overwrite it with NULL.
+ * 
+ * @param S AST to free.
+ */
 #define AST_FREE(S) do {			\
     (S) = ast_free (S);				\
   } while (0)
@@ -110,6 +141,15 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
 }
 [+ ENDFOR types +]
 
+/** 
+ * Mutate a variable X according to the function F.
+ *
+ * Take the return value from the function F applied to X (so long as
+ * X is not NULL) and then store it back in to X.
+ * 
+ * @param X The variable to mutate.
+ * @param F The function to use.
+ */
 #define USE_RETURN(X, F) do { if ((X) != NULL) (X) = F (X); } while (0)
 
 struct ast *

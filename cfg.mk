@@ -1,5 +1,5 @@
 FILES_IN_VC = $(shell ./build-aux/vc-list-files)
-GENERATED_FILES_IN_VC = bootstrap COPYING
+GENERATED_FILES_IN_VC = bootstrap COPYING doc.cfg.in
 WRITTEN_FILES = $(filter-out $(GENERATED_FILES_IN_VC) cfg.mk, $(FILES_IN_VC))
 
 COMPILER_ENV =

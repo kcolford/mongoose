@@ -1,22 +1,29 @@
-/* This is the parser for the program.
-
-Copyright (C) 2014 Kieran Colford
-
-This file is part of Compiler.
-
-Compiler is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
-
-Compiler is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Compiler; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>. */
+/**
+ * @file   parse.y
+ * @author Kieran Colford <kieran@kieran-Aspire-E1-431>
+ * @date   Sun May 18 18:08:23 2014
+ * 
+ * @brief  This is the parser for the program.
+ * 
+ * Copyright (C) 2014 Kieran Colford
+ *
+ * This file is part of Compiler.
+ *
+ * Compiler is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Compiler is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with Compiler; see the file COPYING.  If not see
+ * <http://www.gnu.org/licenses/>.
+ *
+ */
 
 %error-verbose
 %define parse.lac full
@@ -228,6 +235,17 @@ callargs:	expr                  { $$ = $1; }
 
 %%
 
+static void
+no_op (void)
+{
+  ;
+}
+
+/** 
+ * Print error message with current file name and line number.
+ * 
+ * @param msg Error message to be displayed.
+ */
 void
 yyerror (const char *msg)
 {

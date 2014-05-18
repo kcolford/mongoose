@@ -25,6 +25,8 @@ AC_PROG_RANLIB
 
 AM_MISSING_PROG([AUTOGEN], [autogen])
 
+AM_MISSING_PROG([DOXYGEN], [doxygen])
+
 AS_IF([test $cross_compiling = no], [
   AM_MISSING_PROG([HELP2MAN], [help2man])
 ], [
@@ -58,7 +60,8 @@ AC_DEFINE([COPYRIGHT_YEAR], [m4_esyscmd([date +%Y])],
 AM_GNU_GETTEXT_VERSION([0.18.1])
 AM_GNU_GETTEXT([external])
 
-AC_CONFIG_FILES([Makefile
+AC_CONFIG_FILES([doc.cfg
+		 Makefile
 		 lib/Makefile
 		 man/Makefile
 		 po/Makefile.in
