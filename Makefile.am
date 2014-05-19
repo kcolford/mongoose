@@ -1,6 +1,6 @@
 SUBDIRS = lib src man tests po
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = m4/gnulib-cache.m4 .version COPYING README doc.cfg.in
+EXTRA_DIST = m4/gnulib-cache.m4 .version COPYING README.md doc.cfg.in
 BUILT_SOURCES = .version
 
 doc: doc.cfg
