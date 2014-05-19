@@ -26,6 +26,8 @@ AC_PROG_RANLIB
 AM_MISSING_PROG([AUTOGEN], [autogen])
 
 AM_MISSING_PROG([DOXYGEN], [doxygen])
+AX_COMPARE_VERSION([1.8], [le], [`$DOXYGEN -v`],, [AC_MSG_WARN(
+[you need Doxygen version 1.8 or higher to generate the documentation.])])
 
 AS_IF([test $cross_compiling = no], [
   AM_MISSING_PROG([HELP2MAN], [help2man])
