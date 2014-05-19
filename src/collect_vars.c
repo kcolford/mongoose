@@ -1,7 +1,6 @@
 /**
  * @file   collect_vars.c
  * @author Kieran Colford <colfordk@gmail.com>
- * @date   Mon May 19 11:02:15 2014
  * 
  * @brief This is compiler pass that collects all the variable
  * declarations at the top of the function.

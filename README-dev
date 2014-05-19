@@ -12,6 +12,7 @@ installed programs,
   Automake
   Bash
   Bison
+  Doxygen
   GCC
   GIT
   Help2man
@@ -25,7 +26,7 @@ The first step to working on Compiler is to run the bootstrap script
 like this,
 
         $ ./bootstrap
-	$ ./configure -C CFLAGS='-g'
+	$ ./configure
 	$ make
 
 With this done, you can now start working on the project proper.
@@ -33,15 +34,15 @@ With this done, you can now start working on the project proper.
 What To Do
 ----------
 
-If you can't think of something to work on, there is a convenient
-make-command set up to help you out,
+If you don't know how Compiler works, read through the documentation.
+It has all been generated with Doxygen and thus should be easy to
+generate read through.
 
-        $ make todo-list
+If you can't think of something to work on, see the Doxygen generated
+Todo List.
 
-This will print out all the places where developers have left comments
-indicating where work needs to be done.
-
-If you can't find anything
+Alternatively, you can work on Compiler's general documentation in the
+README and README-dev.
 
 Translators
 -----------

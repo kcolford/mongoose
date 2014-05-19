@@ -1,7 +1,6 @@
 /**
  * @file   loc.h
  * @author Kieran Colford <colfordk@gmail.com>
- * @date   Mon May 19 11:33:49 2014
  * 
  * @brief  This is the location tracking structure.
  * 

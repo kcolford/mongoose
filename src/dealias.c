@@ -1,7 +1,6 @@
 /**
  * @file   dealias.c
  * @author Kieran Colford <colfordk@gmail.com>
- * @date   Mon May 19 11:30:15 2014
  * 
  * @brief This is the routine that translates variable names, etc. to
  * what they really mean.

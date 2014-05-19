@@ -3,9 +3,9 @@ ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = m4/gnulib-cache.m4 .version COPYING README doc.cfg.in
 BUILT_SOURCES = .version
 
-html: doc.cfg
-	$(DOXYGEN) $<
-.PHONY: html
+doc: doc.cfg
+	$(AM_V_GEN)$(DOXYGEN) $<
+.PHONY: doc
 
 .version:
 	$(AM_V_GEN)echo $(VERSION) > $@

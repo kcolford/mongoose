@@ -1,7 +1,6 @@
 /**
  * @file   ast_util.h
  * @author Kieran Colford <colfordk@gmail.com>
- * @date   Mon May 19 11:07:40 2014
  * 
  * @brief  A series of utility functions for use with the AST.
  * 

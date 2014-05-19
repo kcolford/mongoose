@@ -1,7 +1,6 @@
 /**
  * @file   compiler.c
  * @author Kieran Colford <colfordk@gmail.com>
- * @date   Mon May 19 11:23:31 2014
  * 
  * @brief  This is the main driver for the program.
  * 

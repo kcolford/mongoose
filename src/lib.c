@@ -1,7 +1,6 @@
 /**
  * @file   lib.c
  * @author Kieran Colford <colfordk@gmail.com>
- * @date   Mon May 19 11:32:45 2014
  * 
  * @brief This is a utility library that holds generic functions/APIs
  * that aren't offered by the C library.

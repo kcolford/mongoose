@@ -1,7 +1,6 @@
 /**
  * @file   optimizer.c
  * @author Kieran Colford <colfordk@gmail.com>
- * @date   Mon May 19 10:54:11 2014
  * 
  * @brief  This is the optimizer.
  * 

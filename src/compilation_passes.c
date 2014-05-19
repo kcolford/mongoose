@@ -1,7 +1,6 @@
 /**
  * @file   compilation_passes.c
  * @author Kieran Colford <colfordk@gmail.com>
- * @date   Mon May 19 11:22:34 2014
  * 
  * @brief This is the routine that runs all the different passes in
  * the correct order.

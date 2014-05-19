@@ -1,7 +1,6 @@
 /**
  * @file   vars.c
  * @author Kieran Colford <colfordk@gmail.com>
- * @date   Mon May 19 11:40:08 2014
  * 
  * @brief This object file stores all the global variables used
  * throughout the program that require external linkage.

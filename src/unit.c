@@ -1,7 +1,6 @@
 /**
  * @file   unit.c
  * @author Kieran Colford <colfordk@gmail.com>
- * @date   Mon May 19 11:36:29 2014
  * 
  * @brief These are the routines that select which phase of the
  * compiler to run.

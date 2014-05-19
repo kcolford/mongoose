@@ -1,7 +1,6 @@
 /**
- * @file   parse.y
+ * @file   
  * @author Kieran Colford <colfordk@gmail.com>
- * @date   Sun May 18 18:08:23 2014
  * 
  * @brief  This is the parser for the program.
  * 

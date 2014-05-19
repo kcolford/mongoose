@@ -1,7 +1,6 @@
 /**
  * @file   semantic.c
  * @author Kieran Colford <colfordk@gmail.com>
- * @date   Mon May 19 11:35:05 2014
  * 
  * @brief  This is the semantic analizer.
  * 

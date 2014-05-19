@@ -1,7 +1,6 @@
 /**
  * @file   gen_code.c
  * @author Kieran Colford <colfordk@gmail.com>
- * @date   Sun May 18 19:06:20 2014
  * 
  * @brief  This is the code generation routine of the compiler.
  * 

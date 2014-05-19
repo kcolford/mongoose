@@ -16,14 +16,12 @@ man: $(srcdir)/src/compiler.c $(srcdir)/.version
 copyright:
 	@env UPDATE_COPYRIGHT_HOLDER="Kieran Colford" $(MAKE) update-copyright
 
-todo-list:
-	@grep -n 'TODO' $(WRITTEN_FILES) | sed -e 's/:[ \t]\+/: /'
-	@grep -n 'FIXME' $(WRITTEN_FILES) | sed -e 's/:[ \t]\+/: /'
-	@grep -n 'XXX' $(WRITTEN_FILES) | sed -e 's/:[ \t]\+/: /'
+remove-dates:
+	@sed -i -e '/@date/d' $(WRITTEN_FILES)
 
 count:
 	@echo
 	@echo 'Line Counts'
 	@wc -l $(WRITTEN_FILES) cfg.mk
 
-.PHONY: copyright count man todo-list
+.PHONY: copyright count man remove-dates
