@@ -1,22 +1,29 @@
-/* This is the optimizer.
-
-Copyright (C) 2014 Kieran Colford
-
-This file is part of Compiler.
-
-Compiler is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
-
-Compiler is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Compiler; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>. */
+/**
+ * @file   optimizer.c
+ * @author Kieran Colford <colfordk@gmail.com>
+ * @date   Mon May 19 10:54:11 2014
+ * 
+ * @brief  This is the optimizer.
+ * 
+ * Copyright (C) 2014 Kieran Colford
+ *
+ * This file is part of Compiler.
+ *
+ * Compiler is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Compiler is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with Compiler; see the file COPYING.  If not see
+ * <http://www.gnu.org/licenses/>.
+ *
+ */
 
 #include "config.h"
 
@@ -28,6 +35,11 @@ along with Compiler; see the file COPYING.  If not see
 
 #include <assert.h>
 
+/** 
+ * Fold a unary operator on a constant integer into a single integer.
+ * 
+ * @param OP The operator to fold on.
+ */
 #define FOLD_INTEGER_UNI(OP) do {		\
     if (s->ops[0]->type == integer_type)	\
       {						\
@@ -37,8 +49,12 @@ along with Compiler; see the file COPYING.  If not see
       }						\
   } while (0)
 
-/* Fold up expressions involving constant integer expressions into a
-   single constant integer. */
+/** 
+ * Fold up expressions involving constant integer expressions into a
+ * single constant integer.
+ * 
+ * @param OP The operator to fold on.
+ */
 #define FOLD_INTEGER_BIN(OP) do {		\
     if (s->ops[0]->type == integer_type &&	\
 	s->ops[1]->type == integer_type)	\
@@ -50,13 +66,23 @@ along with Compiler; see the file COPYING.  If not see
       }						\
   } while (0)
 
-/* Convience macro for declaring how to fold up each binary
-   operator. */
+/*  */
+/** 
+ * Convience macro for declaring how to fold up each binary operator.
+ * 
+ * @param CASE 
+ * @param OP 
+ */
 #define FOLD_INT_BIN(CASE, OP)			\
   case CASE:					\
   FOLD_INTEGER_BIN (OP);			\
   break
 
+/** 
+ * Recursive version of the optimizer.
+ * 
+ * @param ss Reference to an AST pointer.
+ */
 static void
 optimizer_r (struct ast **ss)
 {

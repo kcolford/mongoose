@@ -1,34 +1,51 @@
-/* This is the code generation routine of the compiler.
-
-Copyright (C) 2014 Kieran Colford
-
-This file is part of Compiler.
-
-Compiler is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
-
-Compiler is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Compiler; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>. */
+/**
+ * @file   gen_code.c
+ * @author Kieran Colford <colfordk@gmail.com>
+ * @date   Sun May 18 19:06:20 2014
+ * 
+ * @brief  This is the code generation routine of the compiler.
+ * 
+ * Copyright (C) 2014 Kieran Colford
+ *
+ * This file is part of Compiler.
+ *
+ * Compiler is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Compiler is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with Compiler; see the file COPYING.  If not see
+ * <http://www.gnu.org/licenses/>.
+ *
+ */
 
 #include "config.h"
 
-/* Check if the register string S is allowed to be freed. */
+/** 
+ * Check if the register string S is allowed to be freed.
+ * 
+ * @param S A string representation of a register.
+ * 
+ * @return true if S can be freed, false otherwise.
+ */
 #define VALID_REGISTER_CHECK(S)						\
   ((S) != NULL								\
    && STREQ ((S), regis (general_regis (avail < 1 ? 0 : avail - 1))))
 
-/* A special hook that must be defined before including loc.h.  It
-   checks if the location that is about to be freed, is dependant on
-   any registers.  If it is, then those registers are freed in the
-   correct manner too so that they can be reused. */
+/**
+ * A special hook that must be defined before including loc.h.  It
+ * checks if the location that is about to be freed, is dependant on
+ * any registers.  If it is, then those registers are freed in the
+ * correct manner too so that they can be reused.
+ * 
+ * @param X The location to be freed.
+ */
 #define FREE_LOC_HOOK(X) do {				\
     if (IS_REGISTER (X) || IS_MEMORY (X))		\
       {							\
@@ -55,6 +72,14 @@ along with Compiler; see the file COPYING.  If not see
 
 #define USE_REGISTER_CHECKING 1
 
+/** 
+ * Emit code to move the data stored in location X to location Y using
+ * the operator OP.
+ * 
+ * @param OP Operation to move the data.
+ * @param X Source operand.
+ * @param Y Destionation operand.
+ */
 #define MOVE_LOC_WITH(OP, X, Y) do {					\
     if ((X) != NULL)							\
       {									\
@@ -64,18 +89,33 @@ along with Compiler; see the file COPYING.  If not see
     (X) = (Y);								\
   } while (0)
 
+/** 
+ * Allocate a register in the variable X.
+ * 
+ * @param X Variable to recieve a register.
+ */
 #define ALLOC_REGISTER(X) do {				\
     const char *_d = regis (general_regis (avail++));	\
     MAKE_BASE_LOC (X, register_loc, xstrdup (_d));	\
   } while (0)
 
+/** 
+ * Emit the code specified in the format string.
+ * 
+ */
 #define PUT(...) do {				\
     fprintf (outfile, __VA_ARGS__);		\
     if (debug)					\
       fprintf (stderr, __VA_ARGS__);		\
   } while (0)
 
-/* These are the string variants of the registers. */
+/** 
+ * Get the string variant of a register index.
+ * 
+ * @param a Index to turn into a string.
+ * 
+ * @return String version of register.
+ */
 static inline const char *
 regis (int a)
 {
@@ -88,10 +128,18 @@ regis (int a)
   return storage[a];
 }
 
-/* These are the order of registers that function arguments are passed
-   through.  Currently, they seriously conflict with the general-use
-   registers and a function call in the middle of an expression is
-   likely to fail. */
+/** 
+ * Yield registers in the order that a function call requires them.
+ * 
+ * These are the order of registers that function arguments are passed
+ * through.  Currently, they seriously conflict with the general-use
+ * registers and a function call in the middle of an expression is
+ * likely to fail.
+ * 
+ * @param a Argument number.
+ * 
+ * @return The ath function call register index.
+ */
 static inline const int
 call_regis(int a)
 {
@@ -103,14 +151,20 @@ call_regis(int a)
   return storage[a];
 }
 
-/* These registers are available for use in expression calculation.
-   Registers which are needed for special purposes have been left out.
-   These include: %rax, %rdx, and %rcx.
-
-   The idea to make the allocation behave like a stack (and operations
-   are done like an RPN calculator) so that we only need to increment
-   and decrement the avail variable to check which register we should
-   use. */
+/** 
+ * These registers are available for use in expression calculation.
+ * Registers which are needed for special purposes have been left out.
+ * These include: %rax, %rdx, and %rcx.
+ *
+ * The idea to make the allocation behave like a stack (and operations
+ * are done like an RPN calculator) so that we only need to increment
+ * and decrement the avail variable to check which register we should
+ * use.
+ * 
+ * @param a 
+ * 
+ * @return 
+ */
 static inline const int
 general_regis(int a)
 {
@@ -126,14 +180,25 @@ general_regis(int a)
   return storage[a];
 }
 
-static int avail = 0;
-static int str_labelno = 0;
-static char *data_section = NULL;
-static int branch_labelno = 0;
+static int avail = 0;		/**< Top of available register
+				   stack. */
+static int str_labelno = 0;	/**< Current label number for strings
+				   in the data section. */
+static char *data_section = NULL; /**< The data section. */
+static int branch_labelno = 0;	/**< Current label number for branch
+				   destinations in the text
+				   section. */
 
-/* Macro to allocate a register to a location while also checking to
-   see if it can reuse any of the locations that it is about to
-   free. */
+/** 
+ * Macro to allocate a register to a location while also checking to
+ * see if it can reuse any of the locations that it is about to free.
+ *
+ * This macro will preserve the data found in S and simply apply the
+ * operator I to it.
+ * 
+ * @param I The instruction to use.
+ * @param S The variable to be moved into a register.
+ */
 #define GIVE_REGISTER_HOW(I, S) do {					\
     unsigned _addto_avail = 0;						\
     struct loc *_t = NULL;						\
@@ -153,27 +218,46 @@ static int branch_labelno = 0;
     avail += _addto_avail;						\
   } while (0)
 
+/** 
+ * Give a register to location S preserving its data by moving it to
+ * the new location.
+ *
+ * @see GIVE_REGISTER_HOW
+ * 
+ * @param S The location to receive a register.
+ */
 #define GIVE_REGISTER(S)			\
   GIVE_REGISTER_HOW ("mov", (S))
 
-/* Wrapper macro around sub macros to decide on which method of
-   register selection is necessary. */
+/** 
+ * Wrapper macro around sub macros to decide on which method of
+ * register selection is necessary.
+ * 
+ * @param N Method to use.
+ * @param X First location.
+ * @param Y Section location.
+ */
 #define ENSURE_DESTINATION_REGISTER(N, X, Y) do {	\
     ENSURE_DESTINATION_REGISTER##N (X, Y);		\
     assert ((X) != NULL);				\
     assert ((Y) != NULL);				\
   } while (0)
 
-/* Ensure that that X is in a register. */
+/**
+ * Ensure that that X is in a register. 
+ *
+ */
 #define ENSURE_DESTINATION_REGISTER_UNI(X) do {	\
     if (!IS_REGISTER (X))			\
       GIVE_REGISTER (X);			\
   } while (0)
 
-/* Designed for the addition and subtraction operations.  These
-   require one of the destination/source operands to be in a register
-   while the other can be memory or (if it's the source operand) an
-   immediate. */
+/**
+ * Designed for the addition and subtraction operations.  These
+ * require one of the destination/source operands to be in a register
+ * while the other can be memory or (if it's the source operand) an
+ * immediate. 
+ */
 #define ENSURE_DESTINATION_REGISTER1(X, Y) do {	\
     if (!IS_REGISTER (X))			\
       {						\
@@ -184,8 +268,10 @@ static int branch_labelno = 0;
       }						\
   } while (0)
 
-/* Designed to behave exactly as ENSURE_DESTINATION_REGISTER1, but is
-   guaranteed to keep the ordering of its arguments. */
+/**
+ * Designed to behave exactly as ENSURE_DESTINATION_REGISTER1, but is
+ * guaranteed to keep the ordering of its arguments.
+ */
 #define ENSURE_DESTINATION_REGISTER2(X, Y) do {	\
     if (!IS_REGISTER (X))			\
       {						\
@@ -200,9 +286,11 @@ static int branch_labelno = 0;
       }						\
   } while (0)
 
-/* Designed for use with the right and left shift operators.  These
-   require the right-hand argument to either be and immediate value or
-   placed in the %cl register. */
+/**
+ * Designed for use with the right and left shift operators.  These
+ * require the right-hand argument to either be and immediate value or
+ * placed in the %cl register. 
+ */
 #define ENSURE_DESTINATION_REGISTER3(X, Y) do {		\
     if (!IS_LITERAL (Y))				\
       {							\
@@ -215,16 +303,20 @@ static int branch_labelno = 0;
       GIVE_REGISTER (X);				\
   } while (0)
 
-/* Designed for when both X and Y must be registers but cannot have
-   their arguments swapped. */
+/**
+ * Designed for when both X and Y must be registers but cannot have
+ * their arguments swapped.
+ */
 #define ENSURE_DESTINATION_REGISTER4(X, Y) do {	\
     ENSURE_DESTINATION_REGISTER2 (X, Y);	\
     if (!IS_REGISTER (Y))			\
       GIVE_REGISTER (Y);			\
   } while (0)
 
-/* Store the construction of the binary operators that work with the
-   branching routine. */
+/** 
+ * Store the construction of the binary operators that work with the
+ * branching routine. 
+ */
 struct binop_branching
 {
   int op;
@@ -239,6 +331,11 @@ struct binop_branching
   { LE, "cmp", "jle", "jnle" },
   { GE, "cmp", "jge", "jnge" } };
 
+/** 
+ * Recursive version of @c gen_code.
+ * 
+ * @param s The AST to operate on.
+ */
 static void
 gen_code_r (struct ast *s)
 {
@@ -553,7 +650,9 @@ gen_code_r (struct ast *s)
   gen_code_r (s->next);
 }
 
-/* Top level entry point to the code generation phase. */
+/**
+ * Top level entry point to the code generation phase. 
+ */
 int
 gen_code (struct ast *s)
 {

@@ -1,6 +1,6 @@
 /**
  * @file   lib.h
- * @author Kieran Colford <kieran@kieran-Aspire-E1-431>
+ * @author Kieran Colford <colfordk@gmail.com>
  * @date   Sun May 18 18:01:03 2014
  * 
  * @brief  This is the header file for generic routines.

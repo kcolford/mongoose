@@ -1,23 +1,30 @@
-/* This is the routine that translates variable names, etc. to what
-   they really mean.
-
-Copyright (C) 2014 Kieran Colford
-
-This file is part of Compiler.
-
-Compiler is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
-
-Compiler is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Compiler; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>. */
+/**
+ * @file   dealias.c
+ * @author Kieran Colford <colfordk@gmail.com>
+ * @date   Mon May 19 11:30:15 2014
+ * 
+ * @brief This is the routine that translates variable names, etc. to
+ * what they really mean.
+ * 
+ * Copyright (C) 2014 Kieran Colford
+ *
+ * This file is part of Compiler.
+ *
+ * Compiler is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Compiler is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with Compiler; see the file COPYING.  If not see
+ * <http://www.gnu.org/licenses/>.
+ * 
+ */
 
 #include "config.h"
 
@@ -51,8 +58,10 @@ static struct state_stack *state = &absolute_top;
 static int func_allocd = 0;
 static int curr_labelno = 1;
 
-/* Add a variable to the state, noting the amount of memory that is
-   allocated to it. */
+/**
+ * Add a variable to the state, noting the amount of memory that is
+ * allocated to it.
+ */
 static inline void
 add_to_state (const char *v, size_t s)
 {
@@ -65,9 +74,11 @@ add_to_state (const char *v, size_t s)
   state->state_end++;
 }
 
-/* Linearly search the state array for an entry with the same key as
-   l.  If one can't be found, then it is an externally linked in
-   symbol and is simply returned as is. */
+/**
+ * Linearly search the state array for an entry with the same key as
+ * l.  If one can't be found, then it is an externally linked in
+ * symbol and is simply returned as is. 
+ */
 static inline struct loc *
 get_from_state (char *l)
 {
@@ -87,8 +98,10 @@ get_from_state (char *l)
   return s;
 }
 
-/* A similar routine as above, but if a symbol meaning can't be found
-   then create one and return it. */
+/**
+ * A similar routine as above, but if a symbol meaning can't be found
+ * then create one and return it.
+ */
 static inline struct loc *
 get_label (char *l)
 {

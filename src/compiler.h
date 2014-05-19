@@ -1,6 +1,6 @@
 /**
  * @file   compiler.h
- * @author Kieran Colford <kieran@kieran-Aspire-E1-431>
+ * @author Kieran Colford <colfordk@gmail.com>
  * @date   Sun May 18 17:43:44 2014
  * 
  * @brief  This is the main header file for Compiler.

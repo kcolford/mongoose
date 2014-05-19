@@ -1,23 +1,30 @@
-/* These are the routines that select which phase of the compiler to
-   run.
-
-Copyright (C) 2014 Kieran Colford
-
-This file is part of Compiler.
-
-Compiler is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
-
-Compiler is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Compiler; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>. */
+/**
+ * @file   unit.c
+ * @author Kieran Colford <colfordk@gmail.com>
+ * @date   Mon May 19 11:36:29 2014
+ * 
+ * @brief These are the routines that select which phase of the
+ * compiler to run.
+ * 
+ * Copyright (C) 2014 Kieran Colford
+ *
+ * This file is part of Compiler.
+ *
+ * Compiler is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Compiler is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with Compiler; see the file COPYING.  If not see
+ * <http://www.gnu.org/licenses/>.
+ * 
+ */
 
 #include "config.h"
 
@@ -49,8 +56,8 @@ run_unit ()
 	{
 	case 'c':
 	  out = tmpfile_name ();
-	  /* TODO: This is the GCC's preprocessor which we hope to replace
-	     with our own. */
+	  /** @todo This is the GCC's preprocessor which we hope to
+	     replace with our own. */
 	  const char *cppargs[] =
 	    { "/usr/bin/cpp", in, out, NULL };
 	  if (safe_system (cppargs))
@@ -111,10 +118,10 @@ run_unit ()
 
   if (stop == 0)
     {
-      /* TODO: The GCC seems to link in some additional object files
-	 that we can't duplicate or get the program working without.
-	 We have to use the GCC to link our programs for the time
-	 being. */
+      /** @todo The GCC seems to link in some additional object files
+	  that we can't duplicate or get the program working without.
+	  We have to use the GCC to link our programs for the time
+	  being. */
       const char *ldargs_template[] =
 	{ "/usr/bin/gcc", "-o", outfile_name };
 

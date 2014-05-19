@@ -1,26 +1,33 @@
-/* This is compiler pass that collects all the variable declarations
-   at the top of the function.
-
-Copyright (C) 2014 Kieran Colford
-
-This file is part of Compiler.
-
-Compiler is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
-
-Compiler is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Compiler; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>. */
-
-/* This pass should be run after the dealias pass so that we preserve
-   the scoping of variables. */
+/**
+ * @file   collect_vars.c
+ * @author Kieran Colford <colfordk@gmail.com>
+ * @date   Mon May 19 11:02:15 2014
+ * 
+ * @brief This is compiler pass that collects all the variable
+ * declarations at the top of the function.
+ * 
+ * Copyright (C) 2014 Kieran Colford
+ *
+ * This file is part of Compiler.
+ *
+ * Compiler is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Compiler is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with Compiler; see the file COPYING.  If not see
+ * <http://www.gnu.org/licenses/>.
+ * 
+ * @note This pass should be run after the dealias pass so that we
+ * preserve the scoping of variables.
+ *
+ */
 
 #include "config.h"
 
@@ -32,6 +39,14 @@ along with Compiler; see the file COPYING.  If not see
 
 #include <assert.h>
 
+/** 
+ * Recursive version of @c collect_vars.
+ * 
+ * @param s Input structure.
+ * 
+ * @return Concatenation of just the allocation routines that have
+ * been collected.
+ */
 static struct ast *
 collect_vars_r (struct ast *s)
 {

@@ -4,10 +4,8 @@ EXTRA_DIST = m4/gnulib-cache.m4 .version COPYING README doc.cfg.in
 BUILT_SOURCES = .version
 
 html: doc.cfg
-	$(AM_V_GEN)$(DOXYGEN) $<
-
-doc: html
-.PHONY: doc
+	$(DOXYGEN) $<
+.PHONY: html
 
 .version:
 	$(AM_V_GEN)echo $(VERSION) > $@
