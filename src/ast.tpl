@@ -80,6 +80,16 @@ struct ast
 };
 
 [+ FOR types +]
+/**
+ * Create an instance of the AST using the type: @c [+name+]_type.
+ *
+ * [+doc+]
+ *
+[+ IF (exist? "cont") +] * @see ast::[+name+]
+[+ ENDIF +] * @see [+name+]_type
+ * 
+ * @return A pointer to an AST of type @c [+name+]_type.
+ */
 extern struct ast *make_[+name+]
 ([+ FOR cont ', ' +][+type+][+ ENDFOR cont +]
  [+ IF (and (exist? "cont") (exist? "sub")) +], [+ ENDIF +]
@@ -91,12 +101,12 @@ extern struct ast *make_[+name+]
  * 
  * @param s AST to duplicate.
  * 
- * @return The copy of s.
+ * @return The copy of @c s.
  */
 extern struct ast *ast_dup (const struct ast *s);
 
 /** 
- * Free the ASt s.
+ * Free the AST @c s.
  * 
  * @param s The AST to free.
  * 
