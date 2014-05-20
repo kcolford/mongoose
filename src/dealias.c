@@ -50,6 +50,26 @@ struct state_entry
 				   state_entry::label becomes. */
 };
 
+static inline struct state_entry *
+create_entry (const char *label, struct loc *meaning)
+{
+  struct state_entry *out = xmalloc (sizeof *out);
+  out->label = xstrdup (label);
+  out->meaning = meaning;
+  return out;
+}
+
+static inline void
+free_entry (struct state_entry *s)
+{
+  if (s != NULL)
+    return;
+  FREE (s->label);
+  FREE_LOC (s->meaning);
+  FREE (s);
+}
+
+
 /**
  * This is a stack like structure that stores a record of each mapping
  * from variable name to location.
@@ -65,7 +85,7 @@ struct state_stack
 {
   struct state_stack *prev;	/**< The previous state. */
   int state_end;
-  struct state_entry state[0x10000];
+  struct state_entry *state[0x10000];
 };
 
 static inline struct state_stack *
@@ -83,10 +103,7 @@ free_state (struct state_stack *s)
     return NULL;
   int i;
   for (i = 0; i < s->state_end; i++)
-    {
-      FREE (s->state[i].label);
-      FREE_LOC (s->state[i].meaning);
-    }
+    free_entry (s->state[i]);
   struct state_stack *t = s->prev;
   FREE (s);
   return t;
@@ -114,12 +131,10 @@ static inline void
 add_to_state (const char *v, size_t s)
 {
   func_allocd += s;
-  state->state[state->state_end].label = xstrdup (v);
   struct loc *l;
   MAKE_BASE_LOC (l, memory_loc, xstrdup ("%rbp"));
   l->offset = -func_allocd;
-  state->state[state->state_end].meaning = l;
-  state->state_end++;
+  state->state[state->state_end++] = create_entry (v, l);
 }
 
 /**
@@ -145,9 +160,9 @@ get_from_state (char *l)
       int i;
       for (i = p->state_end - 1; i >= 0; i--)
 	{
-	  assert (p->state[i].label != NULL);
-	  if (STREQ (l, p->state[i].label))
-	    return loc_dup (p->state[i].meaning);
+	  assert (p->state[i]->label != NULL);
+	  if (STREQ (l, p->state[i]->label))
+	    return loc_dup (p->state[i]->meaning);
 	}
     }
   struct loc *s;
@@ -173,12 +188,10 @@ get_label (char *l)
 	p = p->prev;
 
       /* Add the label. */
-      p->state[p->state_end].label = xstrdup (l);
       s->kind = symbol_loc;
       FREE (s->base);
       s->base = my_printf (".LJ%d", curr_labelno++);
-      p->state[p->state_end].meaning = loc_dup (s);
-      p->state_end++;
+      p->state[p->state_end++] = create_entry (l, loc_dup (s));
     }
   return s;
 }
