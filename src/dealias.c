@@ -38,28 +38,77 @@
 #include <stdbool.h>
 #include <assert.h>
 
+/**
+ * An entry in the state table.
+ * 
+ */
+
 struct state_entry
 {
-  char *label;
-  struct loc *meaning;
+  char *label;			/**< The label. */
+  struct loc *meaning;		/**< The location that
+				   state_entry::label becomes. */
 };
+
+/**
+ * This is a stack like structure that stores a record of each mapping
+ * from variable name to location.
+ * 
+ * @todo Our implementation only allows 0x10000 variable names per
+ * scope and allocates space for that many variable names every time
+ * it enters a new scope level.  This should be fixed to make the
+ * variable name array more dynamic.
+ * 
+ */
 
 struct state_stack
 {
-  struct state_stack *prev;
+  struct state_stack *prev;	/**< The previous state. */
   int state_end;
   struct state_entry state[0x10000];
 };
 
-static struct state_stack absolute_top = { NULL, 0 };
-static struct state_stack *state = &absolute_top;
+static inline struct state_stack *
+create_state (struct state_stack *p)
+{
+  struct state_stack *s = xzalloc (sizeof *s);
+  s->prev = p;
+  return s;
+}
 
-static int func_allocd = 0;
-static int curr_labelno = 1;
+static inline struct state_stack *
+free_state (struct state_stack *s)
+{
+  if (s == NULL)
+    return NULL;
+  int i;
+  for (i = 0; i < s->state_end; i++)
+    {
+      FREE (s->state[i].label);
+      FREE_LOC (s->state[i].meaning);
+    }
+  struct state_stack *t = s->prev;
+  FREE (s);
+  return t;
+}
+
+static struct state_stack absolute_top = { 0 };	/**< The file level
+						   state. */
+static struct state_stack *state = &absolute_top; /**< The current
+						     state level. */
+
+static int func_allocd = 0;	/**< The amount of memory that has so
+				   far been allocated for the
+				   function. */
+static int curr_labelno = 1;	/**< The number of the next label that
+				   will be identified. */
 
 /**
  * Add a variable to the state, noting the amount of memory that is
  * allocated to it.
+ *
+ * @param v The variable name to be added.
+ * @param s The size of @c v (the amount of memory to allocate).
  */
 static inline void
 add_to_state (const char *v, size_t s)
@@ -76,7 +125,16 @@ add_to_state (const char *v, size_t s)
 /**
  * Linearly search the state array for an entry with the same key as
  * l.  If one can't be found, then it is an externally linked in
- * symbol and is simply returned as is. 
+ * symbol and is simply returned as is.
+ *
+ * @todo We currently use a linear search to find the meaning of a
+ * particular string.  This should be altered to use something more
+ * scalable and more efficient.  Either Knuth's Algorithm T or
+ * something similar would be ideal.
+ *
+ * @param l The variable name to access from the state.
+ *
+ * @return The location that @c l refers to.
  */
 static inline struct loc *
 get_from_state (char *l)
@@ -100,6 +158,8 @@ get_from_state (char *l)
 /**
  * A similar routine as above, but if a symbol meaning can't be found
  * then create one and return it.
+ *
+ * @copydoc get_from_state
  */
 static inline struct loc *
 get_label (char *l)
@@ -123,20 +183,6 @@ get_label (char *l)
   return s;
 }
 
-static inline struct state_stack *
-clear_state (struct state_stack *s)
-{
-  if (s == NULL)
-    return NULL;
-  int i;
-  for (i = 0; i < s->state_end; i++)
-    {
-      FREE (s->state[i].label);
-      FREE_LOC (s->state[i].meaning);
-    }
-  return s->prev;
-}
-
 static void
 dealias_r (struct ast **ss)
 {
@@ -145,29 +191,22 @@ dealias_r (struct ast **ss)
 
   if (s == NULL)
     return;
-  struct state_stack *t;
   int i;
   struct loc *l;
   switch (s->type)
     {
     case block_type:
-      t = alloca (sizeof *t);
-      t->prev = state;
-      t->state_end = 0;
-      state = t;
+      state = create_state (state);
       dealias_r (&s->ops[0]);
-      state = clear_state (state);
+      state = free_state (state);
       break;
 
     case function_type:
       func_allocd = 0;
-      t = alloca (sizeof *t);
-      t->prev = state;
-      t->state_end = 0;
-      state = t;
+      state = create_state (state);
       dealias_r (&s->ops[0]);
       dealias_r (&s->ops[1]);
-      state = clear_state (state);
+      state = free_state (state);
       break;
 
     case variable_type:

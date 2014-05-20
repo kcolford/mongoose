@@ -44,6 +44,8 @@ run_unit ()
 {
   gl_list_t name = NULL;
   if (stop == 0)
+    /** @todo Consider using a linked list instead of an array list
+	for managing the queue of compiled object files. */
     name = gl_list_create_empty (GL_ARRAY_LIST, NULL, NULL, NULL, 1);
 
   int i;
@@ -56,7 +58,7 @@ run_unit ()
 	case 'c':
 	  out = tmpfile_name ();
 	  /** @todo This is the GCC's preprocessor which we hope to
-	     replace with our own. */
+	      replace with our own. */
 	  const char *cppargs[] =
 	    { "/usr/bin/cpp", in, out, NULL };
 	  if (safe_system (cppargs))

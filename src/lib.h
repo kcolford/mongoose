@@ -142,7 +142,7 @@ extern char *place_holder (void);
  * 
  * @return The return of the program.
  */
-extern int safe_system (const char **args);
+extern int safe_system (const char *args[]);
 
 /** 
  * This is function that dynamically allocates and returns a string

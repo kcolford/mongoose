@@ -80,6 +80,14 @@ safe_system (const char *args[])
     }
 }
 
+/** 
+ * The function that is called when any of the x*alloc functions fail
+ * to allocate memory.  The suggested method of handling this is by
+ * just calling abort but there are cleanups and error messages that
+ * need to be delt with.  So a call to @c error is made so that it
+ * exits instead.
+ * 
+ */
 void
 xalloc_die ()
 {
@@ -87,17 +95,41 @@ xalloc_die ()
   abort ();
 }
 
-static gl_list_t tmpfiles = NULL;
+static gl_list_t tmpfiles = NULL; /**< A list of temporary files. */
 
+/** 
+ * Delete a file whose name was dynamically allocated and then free it
+ * too.
+ *
+ * @note This function is called as the destructor of the tmpfiles
+ * variable and isn't directly invoked on any file name.  This
+ * destructor is called when free_tmpfiles is called either by one of
+ * the signal handlers or by the exit(3) function (since it had been
+ * registered with the atexit(3) function).
+ *
+ * @see free_tmpfiles
+ * @see tmpfile_name
+ * @see tmpfiles
+ * 
+ * @param _name The dynamically allocated name of the file.
+ */
 static void
 del_tmpfile (const void *_name)
 {
   char *name = (char *) _name;
   if (name != NULL)
     unlink (name);
-  free (name);
+  FREE (name);
 }
 
+/** 
+ * Free all temporary files in the tmpfiles list.
+ *
+ * @see del_tmpfile
+ * @see tmpfile_name
+ * @see tmpfiles
+ * 
+ */
 static void
 free_tmpfiles ()
 {
@@ -106,6 +138,12 @@ free_tmpfiles ()
   tmpfiles = NULL;
 }
 
+/** 
+ * @see free_tmpfiles
+ * @see del_tmpfile
+ * @see tmpfiles
+ *
+ */
 char *
 tmpfile_name ()
 {
@@ -115,6 +153,9 @@ tmpfile_name ()
     {
       tmpfiles = gl_list_create_empty (GL_ARRAY_LIST, NULL, NULL,
 				       del_tmpfile, 1);
+      /* Register the free_tmpfiles cleanup function so that it is
+	 called when the program exits and whenever the program
+	 recieves a fatal signal. */
       atexit (free_tmpfiles);
       at_fatal_signal (free_tmpfiles);
     }

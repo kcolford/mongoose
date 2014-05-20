@@ -30,6 +30,15 @@
 #include "compiler.h"
 #include "parse.h"
 
+/** 
+ * An error macro for making life easier in this semantic pass.
+ *
+ * @todo This macro currently fails out of the pass on encountering
+ * one error.  It should try to keep going and test for illegal values
+ * elsewhere in the code.
+ * 
+ * @param VAL 
+ */
 #define ERROR(VAL, ...) do {			\
     if (!(VAL))					\
       {						\
@@ -38,7 +47,13 @@
       }						\
   } while (0)
 
-
+/** 
+ * Test if the argument @c s is an lval.
+ * 
+ * @param s The argument to check.
+ * 
+ * @return true if @c s is an lval, false otherwise.
+ */
 static inline int
 is_lval (struct ast *s)
 {
@@ -55,12 +70,27 @@ is_lval (struct ast *s)
     }
 }
 
+/** 
+ * Verrifies that the argument @c VAL is an lval and fails otherwise.
+ * 
+ * @param VAL Argument to check.
+ */
 #define CHECK_LVAL(VAL)							\
   ERROR (is_lval (VAL), _("Syntax Error, operand is not an lval"))
 
-static int check_return = 0;
+static int check_return = 0;	/**< Global variable that tells the
+				   semantic pass whether or not to
+				   make sure the function has a return
+				   statement. */
 
-int
+/** 
+ * Recursive version of @c semantic to walk over the entire tree.
+ * 
+ * @param s The AST node to verify.
+ * 
+ * @return true/false depending on whether the AST is valid or not.
+ */
+static int
 semantic_r (struct ast *s)
 {
   int ret = 0;
