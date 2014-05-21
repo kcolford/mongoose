@@ -22,6 +22,14 @@
  * You should have received a copy of the GNU General Public License
  * along with Compiler; see the file COPYING.  If not see
  * <http://www.gnu.org/licenses/>.
+ *
+ * @note This pass makes use of gnulib's @c GL_RBTREE_LIST to ensure
+ * O(log N) time for all name lookups and insertions.  This is a
+ * significant inprovement on the earlier versions which had to
+ * perform a linear search through an array to lookup a name.  An
+ * alternative would be to use @c GL_AVLTREE_LIST (which is the same
+ * but uses an AVL-Tree instead of an RB-Tree) or @c GL_*TREEHASH_LIST
+ * (which is a hashtable but requires a good hashing function).
  * 
  */
 
@@ -29,6 +37,8 @@
 
 #include "ast.h"
 #include "compiler.h"
+#include "gl_rbtree_list.h"
+#include "gl_xlist.h"
 #include "lib.h"
 #include "parse.h"
 #include "xalloc.h"
@@ -55,13 +65,14 @@ create_entry (const char *label, struct loc *meaning)
 {
   struct state_entry *out = xmalloc (sizeof *out);
   out->label = xstrdup (label);
-  out->meaning = meaning;
+  out->meaning = loc_dup (meaning);
   return out;
 }
 
 static inline void
-free_entry (struct state_entry *s)
+free_entry (const void *ss)
 {
+  struct state_entry *s = (struct state_entry *) ss;
   if (s != NULL)
     return;
   FREE (s->label);
@@ -69,30 +80,44 @@ free_entry (struct state_entry *s)
   FREE (s);
 }
 
+static inline int
+compare_entry (const void *a, const void *b)
+{
+  return strcmp (((const struct state_entry *) a)->label,
+		 ((const struct state_entry *) b)->label);
+}
+
+static bool
+eq_entry (const void *a, const void *b)
+{
+  return compare_entry (a, b) == 0;
+}
 
 /**
  * This is a stack like structure that stores a record of each mapping
  * from variable name to location.
  * 
- * @todo Our implementation only allows 0x10000 variable names per
- * scope and allocates space for that many variable names every time
- * it enters a new scope level.  This should be fixed to make the
- * variable name array more dynamic.
+ * The previous TODO entry here was fixed by using gnulib's @c
+ * gl_list_t as the data type.  This allows us to use much higher
+ * level functions on it than we previously had access to.  Such as a
+ * search function (which only requires a function [eq_entry] to
+ * describe equality among entries in the structure).
  * 
  */
 
 struct state_stack
 {
   struct state_stack *prev;	/**< The previous state. */
-  int state_end;
-  struct state_entry *state[0x10000];
+  gl_list_t state;
 };
 
 static inline struct state_stack *
 create_state (struct state_stack *p)
 {
-  struct state_stack *s = xzalloc (sizeof *s);
+  struct state_stack *s = xmalloc (sizeof *s);
   s->prev = p;
+  s->state = gl_list_create_empty (GL_RBTREE_LIST, eq_entry, NULL,
+				   free_entry, 0);
   return s;
 }
 
@@ -101,18 +126,14 @@ free_state (struct state_stack *s)
 {
   if (s == NULL)
     return NULL;
-  int i;
-  for (i = 0; i < s->state_end; i++)
-    free_entry (s->state[i]);
+  gl_list_free (s->state);
   struct state_stack *t = s->prev;
   FREE (s);
   return t;
 }
 
-static struct state_stack absolute_top = { 0 };	/**< The file level
-						   state. */
-static struct state_stack *state = &absolute_top; /**< The current
-						     state level. */
+static struct state_stack *state = NULL; /**< The current state
+					    level. */
 
 static int func_allocd = 0;	/**< The amount of memory that has so
 				   far been allocated for the
@@ -134,18 +155,19 @@ add_to_state (const char *v, size_t s)
   struct loc *l;
   MAKE_BASE_LOC (l, memory_loc, xstrdup ("%rbp"));
   l->offset = -func_allocd;
-  state->state[state->state_end++] = create_entry (v, l);
+  gl_sortedlist_add (state->state, compare_entry, create_entry (v, l));
+  FREE_LOC (l);
 }
 
 /**
- * Linearly search the state array for an entry with the same key as
- * l.  If one can't be found, then it is an externally linked in
- * symbol and is simply returned as is.
+ * Search the state for an entry with the same key as l.  If one can't
+ * be found, then it is an externally linked in symbol and is simply
+ * returned as is.
  *
- * @todo We currently use a linear search to find the meaning of a
- * particular string.  This should be altered to use something more
- * scalable and more efficient.  Either Knuth's Algorithm T or
- * something similar would be ideal.
+ * We now use the gnulib's @c gl_sortedlist_* functions to manage the
+ * structure, and we have modified it to use the tree based @c
+ * gl_list_t.  This gives our lookups and insertions O(log N) time,
+ * and it can grow without restriction.
  *
  * @param l The variable name to access from the state.
  *
@@ -157,13 +179,12 @@ get_from_state (char *l)
   struct state_stack *p;
   for (p = state; p != NULL; p = p->prev)
     {
-      int i;
-      for (i = p->state_end - 1; i >= 0; i--)
-	{
-	  assert (p->state[i]->label != NULL);
-	  if (STREQ (l, p->state[i]->label))
-	    return loc_dup (p->state[i]->meaning);
-	}
+      struct state_entry t = { 0 };
+      t.label = l;
+      gl_list_node_t n = gl_sortedlist_search (p->state, compare_entry, &t);
+      if (n != NULL)
+	return loc_dup (((struct state_entry *) 
+			 gl_list_node_value (p->state, n))->meaning);
     }
   struct loc *s;
   MAKE_BASE_LOC (s, literal_loc, xstrdup (l));
@@ -174,7 +195,7 @@ get_from_state (char *l)
  * A similar routine as above, but if a symbol meaning can't be found
  * then create one and return it.
  *
- * @copydoc get_from_state
+ * @see get_from_state
  */
 static inline struct loc *
 get_label (char *l)
@@ -191,7 +212,7 @@ get_label (char *l)
       s->kind = symbol_loc;
       FREE (s->base);
       s->base = my_printf (".LJ%d", curr_labelno++);
-      p->state[p->state_end++] = create_entry (l, loc_dup (s));
+      gl_sortedlist_add (p->state, compare_entry, create_entry (l, s));
     }
   return s;
 }
@@ -261,8 +282,8 @@ int
 dealias (struct ast **ss)
 {
   /* Nullify the global vars. */
-  memset (&absolute_top, 0, sizeof absolute_top);
-  state = &absolute_top;
+  free_state (state);
+  state = create_state (NULL);
   func_allocd = 0;
   curr_labelno = 1;
 
