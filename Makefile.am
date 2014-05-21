@@ -8,10 +8,8 @@ html: doc.cfg
 
 doc: html
 
-distclean-html:
+distclean-local:
 	$(RM) -r $(top_builddir)/doc/html
-
-distclean: distclean-html
 
 .version:
 	$(AM_V_GEN)echo $(VERSION) > $@
@@ -21,4 +19,4 @@ gen-tarball-version:
 
 dist-hook: gen-tarball-version
 
-.PHONY: distclean-html doc gen-tarball-version
+.PHONY: doc gen-tarball-version
