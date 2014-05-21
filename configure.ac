@@ -39,7 +39,6 @@ AS_IF([test $cross_compiling = no], [
 # Checks for libraries.
 
 # Checks for header files.
-AC_FUNC_ALLOCA
 AC_CHECK_HEADERS([fcntl.h libintl.h locale.h stddef.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -52,6 +51,7 @@ AC_TYPE_UINT32_T
 
 # Checks for library functions.
 AC_CHECK_FUNCS([atexit memset setlocale strtol])
+AC_FUNC_ALLOCA
 AC_FUNC_ERROR_AT_LINE
 AC_FUNC_FORK
 AC_FUNC_MALLOC
@@ -59,6 +59,9 @@ AC_FUNC_REALLOC
 
 AC_DEFINE([COPYRIGHT_YEAR], [m4_esyscmd([date +%Y])],
           [year in copyright message])
+
+AC_DEFINE_UNQUOTED([C_COMPILER], ["$CC"],
+		   [C compiler used to bootstrap this project])
 
 AM_GNU_GETTEXT_VERSION([0.18.1])
 AM_GNU_GETTEXT([external])

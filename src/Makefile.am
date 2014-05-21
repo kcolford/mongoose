@@ -2,9 +2,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/lib
 AM_YFLAGS = -d
 EXTRA_DIST = ast.def ast.tpl
 
-localedir = $(datadir)/locale
-DEFS = -DLOCALEDIR=\"$(localedir)\" @DEFS@
-
 bin_PROGRAMS = compiler
 
 BUILT_SOURCES =					\

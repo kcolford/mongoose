@@ -69,7 +69,7 @@ safe_system (const char *args[])
     error (1, errno, _("could not fork the process to run %s"), args[0]);
   else if (p == 0)
     {
-      if (execv (args[0], (char * const *) args))
+      if (execvp (args[0], (char * const *) args))
 	error (1, errno, _("could not exec to program %s"), args[0]);
     }
   else

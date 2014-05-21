@@ -41,6 +41,8 @@
 
 #include <assert.h>
 
+#include "configmake.h"
+
 const char *argp_program_version = PACKAGE_STRING; /**< Program version. */
 const char *argp_program_bug_address = PACKAGE_BUGREPORT; /**< Bug address. */
 

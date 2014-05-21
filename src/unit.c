@@ -60,7 +60,7 @@ run_unit ()
 	  /** @todo This is the GCC's preprocessor which we hope to
 	      replace with our own. */
 	  const char *cppargs[] =
-	    { "/usr/bin/cpp", in, out, NULL };
+	    { C_COMPILER, "-E", in, "-o", out, NULL };
 	  if (safe_system (cppargs))
 	    error (1, 0, _("preprocessor failed"));
 	  in = out;
@@ -124,7 +124,7 @@ run_unit ()
 	  We have to use the GCC to link our programs for the time
 	  being. */
       const char *ldargs_template[] =
-	{ "/usr/bin/gcc", "-o", outfile_name };
+	{ C_COMPILER, "-o", outfile_name };
 
       const char **ldargs = xnmalloc (LEN (ldargs_template) +
 				      gl_list_size (name) + 2,
