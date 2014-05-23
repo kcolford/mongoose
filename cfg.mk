@@ -7,6 +7,7 @@ export COMPILER_ENV
 COMPILER_OPTS =
 export COMPILER_OPTS
 
+local-checks-to-skip = sc_prohibit_strcmp
 config_h_header = "config\.h"
 
 man: $(srcdir)/src/compiler.c $(srcdir)/.version
@@ -16,12 +17,13 @@ man: $(srcdir)/src/compiler.c $(srcdir)/.version
 copyright:
 	@env UPDATE_COPYRIGHT_HOLDER="Kieran Colford" $(MAKE) update-copyright
 
-remove-dates:
-	@sed -i -e '/@date/d' $(WRITTEN_FILES)
+fix-files:
+	@sed -i -e '/^ \* @date/d' $(WRITTEN_FILES)
+	@sed -i -e 's/[ \t]*$$//' $(WRITTEN_FILES)
 
 count:
 	@echo
 	@echo 'Line Counts'
 	@wc -l $(WRITTEN_FILES) cfg.mk
 
-.PHONY: copyright count man remove-dates
+.PHONY: copyright count fix-files man

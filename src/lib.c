@@ -104,8 +104,8 @@ static gl_list_t tmpfiles = NULL; /**< A list of temporary files. */
  * @note This function is called as the destructor of the tmpfiles
  * variable and isn't directly invoked on any file name.  This
  * destructor is called when free_tmpfiles is called either by one of
- * the signal handlers or by the exit(3) function (since it had been
- * registered with the atexit(3) function).
+ * the signal handlers or by the exit function (since it had been
+ * registered with the atexit function).
  *
  * @see free_tmpfiles
  * @see tmpfile_name
