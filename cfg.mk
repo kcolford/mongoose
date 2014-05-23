@@ -1,5 +1,5 @@
 FILES_IN_VC = $(shell ./build-aux/vc-list-files)
-GENERATED_FILES_IN_VC = bootstrap COPYING doc.cfg.in
+GENERATED_FILES_IN_VC = bootstrap COPYING doc.cfg.in fix-cleanup.patch
 WRITTEN_FILES = $(filter-out $(GENERATED_FILES_IN_VC) cfg.mk, $(FILES_IN_VC))
 
 COMPILER_ENV =
@@ -7,10 +7,10 @@ export COMPILER_ENV
 COMPILER_OPTS =
 export COMPILER_OPTS
 
-local-checks-to-skip = sc_prohibit_strcmp
+local-checks-to-skip = sc_trailing_blank sc_vulnerable_makefile_CVE-2012-3386
 config_h_header = "config\.h"
 
-man: $(srcdir)/src/compiler.c $(srcdir)/.version
+man: $(srcdir)/.version
 	$(MAKE) -C man
 	man -l $(top_srcdir)/man/compiler.1
 
@@ -19,7 +19,6 @@ copyright:
 
 fix-files:
 	@sed -i -e '/^ \* @date/d' $(WRITTEN_FILES)
-	@sed -i -e 's/[ \t]*$$//' $(WRITTEN_FILES)
 
 count:
 	@echo
