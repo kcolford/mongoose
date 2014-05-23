@@ -1,5 +1,5 @@
-Compiler Developer's Manual
-===========================
+Compiler
+========
 
 Prerequisites
 -------------

@@ -9,9 +9,9 @@ html: doc.cfg
 doc: html
 
 distclean-local:
-	$(RM) -r $(top_builddir)/doc/html
+	$(RM) -r $(builddir)/doc
 
-.version:
+.version: Makefile
 	$(AM_V_GEN)echo $(VERSION) > $@
 
 gen-tarball-version:
