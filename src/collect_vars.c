@@ -56,7 +56,8 @@ collect_vars_r (struct ast *s)
     {
     case function_type:
       assert (s->ops[1]->type == block_type);
-      struct ast **t = &s->ops[1]->ops[0];
+      struct ast **t;
+      t = &s->ops[1]->ops[0];
       *t = ast_cat (collect_vars_r (*t), *t);
       break;
 

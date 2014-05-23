@@ -48,14 +48,14 @@ my_printf (const char *fmt, ...)
   va_list args;
   va_start (args, fmt);
   char *out = NULL;
-  int val = vasprintf (&out, fmt, args);
+  vasprintf (&out, fmt, args);
   if (out == NULL)
     xalloc_die ();
   return out;
 }
 
 char *
-place_holder ()
+place_holder (void)
 {
   static int var = 1;
   return my_printf ("place$holder%d", var++);
@@ -78,6 +78,7 @@ safe_system (const char *args[])
       waitpid (p, &r, 0);
       return r;
     }
+  return -1;
 }
 
 /** 
@@ -89,7 +90,7 @@ safe_system (const char *args[])
  * 
  */
 void
-xalloc_die ()
+xalloc_die (void)
 {
   error (1, ENOMEM, _("out of memory"));
   abort ();
@@ -98,61 +99,47 @@ xalloc_die ()
 static gl_list_t tmpfiles = NULL; /**< A list of temporary files. */
 
 /** 
- * Delete a file whose name was dynamically allocated and then free it
- * too.
+ * Free all temporary files in the tmpfiles list.
  *
  * @note This function is called as the destructor of the tmpfiles
  * variable and isn't directly invoked on any file name.  This
- * destructor is called when free_tmpfiles is called either by one of
- * the signal handlers or by the exit function (since it had been
- * registered with the atexit function).
+ * destructor is called either by one of the signal handlers or by the
+ * exit function (since it had been registered with the atexit
+ * function).
  *
- * @see free_tmpfiles
- * @see tmpfile_name
- * @see tmpfiles
- * 
- * @param _name The dynamically allocated name of the file.
- */
-static void
-del_tmpfile (const void *_name)
-{
-  char *name = (char *) _name;
-  if (name != NULL)
-    unlink (name);
-  FREE (name);
-}
-
-/** 
- * Free all temporary files in the tmpfiles list.
- *
- * @see del_tmpfile
  * @see tmpfile_name
  * @see tmpfiles
  * 
  */
 static void
-free_tmpfiles ()
+free_tmpfiles (void)
 {
   if (tmpfiles != NULL)
-    gl_list_free (tmpfiles);
-  tmpfiles = NULL;
+    {
+      unsigned i;
+      for (i = 0; i < gl_list_size (tmpfiles); i++)
+	{
+	  const char *t = gl_list_get_at (tmpfiles, i);
+	  unlink (t);
+	  gl_list_set_at (tmpfiles, i, NULL);
+	  FREE (t);
+	}
+    }
 }
 
 /** 
  * @see free_tmpfiles
- * @see del_tmpfile
  * @see tmpfiles
  *
  */
 char *
-tmpfile_name ()
+tmpfile_name (void)
 {
   /* If this is the first time that this routine is run, set up the
      list and add the destructors to the cleanup functions. */
   if (tmpfiles == NULL)
     {
-      tmpfiles = gl_list_create_empty (GL_ARRAY_LIST, NULL, NULL,
-				       del_tmpfile, 1);
+      tmpfiles = gl_list_create_empty (GL_ARRAY_LIST, NULL, NULL, NULL, 1);
       /* Register the free_tmpfiles cleanup function so that it is
 	 called when the program exits and whenever the program
 	 recieves a fatal signal. */
@@ -175,7 +162,7 @@ tmpfile_name ()
       /* Create the file so that it can't be opened by another process
 	 or if it is, it will cause us to go and select a new
 	 file name. */
-      int t = creat (out, S_IRWXU);
+      t = creat (out, S_IRWXU);
       if (t >= 0)
 	close (t);
     }

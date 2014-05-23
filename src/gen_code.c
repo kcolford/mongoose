@@ -139,7 +139,7 @@ regis (int a)
  * 
  * @return The ath function call register index.
  */
-static inline const int
+static inline int
 call_regis(int a)
 {
   const int storage[] =
@@ -164,7 +164,7 @@ call_regis(int a)
  * 
  * @return 
  */
-static inline const int
+static inline int
 general_regis(int a)
 {
   const int storage[] =
@@ -353,7 +353,8 @@ gen_code_r (struct ast *s)
       /* Walk over the list of arguments and push them into the
 	 stack. */
       struct ast *i;
-      int argnum = 0;
+      int argnum;
+      argnum = 0;
       for (i = s->ops[0]; i != NULL; i = i->next)
 	{
 	  assert (i->type == variable_type);
@@ -384,7 +385,8 @@ gen_code_r (struct ast *s)
 
     case cond_type:
       ;
-      struct binop_branching *code = s->ops[0]->type != binary_type ? NULL :
+      struct binop_branching *code;
+      code = s->ops[0]->type != binary_type ? NULL :
 	bsearch (&s->ops[0]->op.binary.op, branchable_binops,
 		 LEN (branchable_binops), sizeof *branchable_binops,
 		 compare);
@@ -456,7 +458,8 @@ gen_code_r (struct ast *s)
       gen_code_r (s->ops[1]);
       assert (s->ops[1]->loc != NULL);
       s->loc = loc_dup (s->ops[0]->loc);
-      struct ast _from, *from = &_from;
+      struct ast _from, *from;
+      from = &_from;
       from->loc = loc_dup (s->ops[1]->loc);
       struct loc *l;
       switch (s->op.binary.op)

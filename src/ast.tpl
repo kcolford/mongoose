@@ -57,6 +57,7 @@ struct ast
   [+ FOR top_level +]
   [+type+] [+call+][+ IF (exist? "size") +]: [+size+][+ ENDIF +]; /**< [+doc+] */
   [+ ENDFOR top_level +];
+  const int num_ops;		/**< Number of variable ops. */
   union
   {
     [+ FOR types +]
@@ -74,7 +75,6 @@ struct ast
     [+ ENDFOR types +]
   } op;				/**< Wrapper around the anonymous
 				   union. */
-  const int num_ops;		/**< Number of variable ops. */
   struct ast *ops[1];		/**< Variable length array that stores
 				   any number of ops. */
 };
@@ -141,7 +141,7 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
 	       [+ FOR sub ', ' +]struct ast *[+sub+][+ ENDFOR sub +])
 {
   struct ast template = { [+ FOR top_level +]([+type+]) 0, [+ ENDFOR +]
-			  {0}, [+ (count "sub") +], NULL };
+			  [+ (count "sub") +] };
   struct ast *out = xmemdup (&template, sizeof *out +
 			     sizeof out->ops[0] * ([+ (count "sub") +] - 1));
   out->type = [+name+]_type;
@@ -203,6 +203,8 @@ ast_dup (const struct ast *s)
 	[+ ENDFOR cont +]
 	break;
       [+ ENDFOR types+]
+    default:
+      break;
     }
 
   int i;
@@ -247,7 +249,9 @@ ast_free (struct ast *s)
 	[+ ENDFOR cont +]
 	break;
       [+ ENDFOR types +]
-	}
+    default:
+      break;
+    }
 
   int i;
   for (i = 0; i < s->num_ops; i++)

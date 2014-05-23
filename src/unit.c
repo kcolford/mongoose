@@ -39,8 +39,22 @@
 
 extern int yyparse (void);
 
+/** @todo This is the GCC's preprocessor which we hope to
+    replace with our own. */
+static const char *cppargs[] =
+  { C_COMPILER, "-o", NULL, NULL, "-E", NULL };
+
+static const char *asargs[] =
+  { "as", "-o", NULL, NULL, NULL };
+
+/** @todo The GCC seems to link in some additional object files that
+    we can't duplicate or get the program working without.  We have to
+    use the GCC to link our programs for the time being. */
+const char *ldargs_template[] =
+  { C_COMPILER, "-o", NULL, NULL };
+
 void
-run_unit ()
+run_unit (void)
 {
   gl_list_t name = NULL;
   if (stop == 0)
@@ -48,19 +62,17 @@ run_unit ()
 	for managing the queue of compiled object files. */
     name = gl_list_create_empty (GL_ARRAY_LIST, NULL, NULL, NULL, 1);
 
-  int i;
+  unsigned i;
+  const char *out;
   for (i = 0; i < gl_list_size (infile_name); i++)
     {
       const char *in = gl_list_get_at (infile_name, i), *_in = in;
-      char *out;
       switch (in[strlen (in) - 1])
 	{
 	case 'c':
 	  out = tmpfile_name ();
-	  /** @todo This is the GCC's preprocessor which we hope to
-	      replace with our own. */
-	  const char *cppargs[] =
-	    { C_COMPILER, "-E", in, "-o", out, NULL };
+	  cppargs[2] = out;
+	  cppargs[3] = in;
 	  if (safe_system (cppargs))
 	    error (1, 0, _("preprocessor failed"));
 	  in = out;
@@ -80,11 +92,14 @@ run_unit ()
 	  if (stop == 's')
 	    break;
 	  out = tmpfile_name ();
-	  const char *asargs[] =
-	    { "/usr/bin/as", "-o", out, in, NULL };
+	  asargs[2] = out;
+	  asargs[3] = in;
 	  if (safe_system (asargs))
 	    error (1, 0, _("assembler failed"));
 	  in = out;
+
+	default:
+	  break;
 	}
 
       if (stop == 0)
@@ -93,11 +108,11 @@ run_unit ()
 	{
 	  /* If the output file wasn't specified, we'll decide on one
 	     by changing the extension of the input file.*/
-	  char *out;
 	  if (outfile_name == NULL)
 	    {
-	      out = xstrdup (_in);
-	      out[strlen (out) - 1] = stop;
+	      char *t = xstrdup (_in);
+	      t[strlen (t) - 1] = stop;
+	      out = t;
 	    }
 	  else
 	    out = outfile_name;
@@ -119,25 +134,18 @@ run_unit ()
 
   if (stop == 0)
     {
-      /** @todo The GCC seems to link in some additional object files
-	  that we can't duplicate or get the program working without.
-	  We have to use the GCC to link our programs for the time
-	  being. */
-      const char *ldargs_template[] =
-	{ C_COMPILER, "-o", outfile_name };
+      ldargs_template[2] = outfile_name;
 
-      const char **ldargs = xnmalloc (LEN (ldargs_template) +
-				      gl_list_size (name) + 2,
-				      sizeof *ldargs);
+      const char **ldargs = xcalloc (LEN (ldargs_template) +
+				     gl_list_size (name) + 1,
+				     sizeof *ldargs);
 
       memcpy (ldargs, ldargs_template, sizeof ldargs_template);
 
-      const char **ldargsptr = ldargs + LEN (ldargs_template);
-      int i;
+      const char **ldargsptr = ldargs + LEN (ldargs_template) - 1;
       for (i = 0; i < gl_list_size (name); i++)
 	*ldargsptr++ = gl_list_get_at (name, i);
       *ldargsptr++ = "-lm";
-      *ldargsptr++ = NULL;
 
       if (safe_system (ldargs))
 	error (1, 0, _("linker failed"));

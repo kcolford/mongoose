@@ -47,14 +47,14 @@ extern FILE *outfile;		/**< The output stream for the
 
 extern gl_list_t infile_name;	/**< The current input file as
 				   determined by the command line. */
-extern char *outfile_name;	/**< The current output file as
-				   determined by the command line. */
+extern const char *outfile_name; /**< The current output file as
+				    determined by the command line. */
 
 extern char *file_name;		/**< The current file name as
 				   determined by the lexer.  This is
 				   always either NULL or a dynamically
 				   allocated string. */
-extern int lineno;		/**< The current line number as
+extern int yylineno;		/**< The current line number as
 				   determined by the lexer. */
 
 extern int optimize;		/**< A flag describing the

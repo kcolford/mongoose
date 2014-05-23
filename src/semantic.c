@@ -115,6 +115,9 @@ semantic_r (struct ast *s)
       if (s->op.binary.op == INC || s->op.binary.op == DEC)
 	CHECK_LVAL (s->ops[0]);
       break;
+
+    default:
+      break;
     }
   int i;
   for (i = 0; i < s->num_ops; i++)

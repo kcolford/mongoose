@@ -225,8 +225,6 @@ dealias_r (struct ast **ss)
 
   if (s == NULL)
     return;
-  int i;
-  struct loc *l;
   switch (s->type)
     {
     case block_type:

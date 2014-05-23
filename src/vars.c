@@ -37,13 +37,12 @@ int optimize = 0;
 int debug = 0;
 
 gl_list_t infile_name = NULL;
-char *outfile_name = NULL;
+const char *outfile_name = NULL;
 
 char *file_name = NULL;
-int lineno = 0;
 
 void
-vars_init ()
+vars_init (void)
 {
   infile_name = gl_list_create_empty (GL_ARRAY_LIST, NULL, NULL, NULL, 1);
 }

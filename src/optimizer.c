@@ -116,6 +116,9 @@ optimizer_r (struct ast **ss)
 		  folded = 1;
 		}
 	      break;
+
+	    default:
+	      break;
 	    }
 	  if (folded)
 	    {
@@ -171,6 +174,8 @@ optimizer_r (struct ast **ss)
 	      FOLD_INT_BIN (NE, !=);
 	      FOLD_INT_BIN (RS, >>);
 	      FOLD_INT_BIN (LS, <<);
+	    default:
+	      error (1, 0, _("Invalid binop opcode: %d"), s->op.binary.op);
 	    }
 	}
       break;
@@ -184,6 +189,9 @@ optimizer_r (struct ast **ss)
 	    {
 	    case '-':
 	      FOLD_INTEGER_UNI (-);
+	      break;
+
+	    default:
 	      break;
 	    }
 	}

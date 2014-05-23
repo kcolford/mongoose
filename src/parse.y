@@ -43,6 +43,7 @@
 
 int yydebug = 0;
 
+extern int yylex (void);
 void yyerror (const char *);
 static struct ast *make_ifstatement (struct ast *, struct ast *);
 static struct ast *make_dowhileloop (struct ast *, struct ast *);
@@ -234,7 +235,7 @@ callargs:	expr                  { $$ = $1; }
 
 %%
 
-static void
+void
 no_op (void)
 {
   ;
@@ -248,7 +249,7 @@ no_op (void)
 void
 yyerror (const char *msg)
 {
-  error_at_line (0, 0, file_name, lineno, "%s", msg);
+  error_at_line (0, 0, file_name, yylineno, "%s", msg);
 }
 
 struct ast *

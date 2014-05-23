@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #include <errno.h>
 #include <error.h>
 
@@ -70,7 +71,7 @@
  * @param X Pointer to free.
  */
 #define FREE(X) do {				\
-    free (X);					\
+    free ((void *) (X));			\
     (X) = NULL;					\
   } while (0)
 
@@ -82,6 +83,7 @@
  * @return The length of X.
  */
 #define LEN(X) (sizeof (X) / sizeof *(X))
+#define SLEN(X) ((long) LEN (X))
 
 /**
  * Macro for swapping two pointer values.
@@ -101,7 +103,7 @@
  * @param FMT The format specifier.
  */
 #define EXTENDF(DEST, FMT, ...) do {					\
-    char *_v = (DEST);							\
+    const char *_v = (DEST);						\
     (DEST) = my_printf ("%s" FMT, ((DEST) != NULL ? (DEST) : ""),	\
 			__VA_ARGS__);					\
     FREE (_v);								\
@@ -117,7 +119,7 @@
 #define CHECK_BOUNDS(ARRAY, N) do {					\
     if (a < 0)								\
       error (1, 0, _("index out of bounds, %d less than zero"), a);	\
-    if (a >= LEN (ARRAY))						\
+    if (a >= SLEN (ARRAY))						\
       error (1, 0, _("index out of bounds, %d greater than or equal "	\
 		     "to the maximum %lu"), a, LEN (storage));		\
   } while (0)

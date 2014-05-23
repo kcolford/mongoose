@@ -25,6 +25,7 @@
  */
 
 %option noyywrap
+%option yylineno
 
 %{
 #include "config.h"
@@ -36,6 +37,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+
+#define YY_NO_INPUT
+#define YY_NO_YYUNPUT
 
 %}
 
@@ -87,7 +91,7 @@
 "continue"             { return CONTINUE; }
 
  /* Whitespace is thrown out. */
-[ \t\r]                ;
+[ \t\r\n]              ;
 
  /* Different styles of inputting numbers. */
 [-+]?0[0-8]*           { yylval.i = strtoll (yytext, NULL, 8); return INT; }
@@ -112,16 +116,13 @@
 "# "[0-9]+.*           {
   char *t = alloca (yyleng + 1);
   strcpy (t, yytext);
-  lineno = strtol (strtok (t, "# \""), NULL, 10);
+  yylineno = strtol (strtok (t, "# \""), NULL, 10);
   FREE (file_name);
   file_name = xstrdup (strtok (NULL, "# \""));
 }
 
  /* Ignore any pragmas found in the source. */
 "#"[ \t]*"pragma".*    ;
-
- /* Keep track of line numbers. */
-\n                     { lineno++; }
 
  /* If something didn't fit into any of the above categories, we'll
     return it to the parser to let it deal with whether it's valid or

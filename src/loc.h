@@ -57,14 +57,14 @@ struct loc
   enum loc_code kind;		/**< The type of location. */
   int offset;			/**< The offset from the base
 				   register. */
-  char *base;			/**< The base register/the
+  const char *base;		/**< The base register/the
 				   register/the string representation
 				   of a literal. */
-  char *index;			/**< An index operation in a memory
+  const char *index;		/**< An index operation in a memory
 				   access. */
   int scale;			/**< A scale to multiply the index
 				   by. */
-  char *string;			/**< The cached value of the
+  const char *string;		/**< The cached value of the
 				   serialized string. */
 };
 
@@ -94,7 +94,7 @@ struct loc
  * @return This is ignored, it might as well return void.
  */
 #ifndef FREE_LOC_HOOK
-# define FREE_LOC_HOOK(X) NULL
+# define FREE_LOC_HOOK(X)
 #endif
 
 /** 
@@ -142,7 +142,7 @@ struct loc
  * 
  * @return The string representation of @c l.
  */
-static inline char *
+static inline const char *
 print_loc (struct loc *l)
 {
   if (l == NULL)
@@ -167,6 +167,8 @@ print_loc (struct loc *l)
     case symbol_loc:
       l->string = my_printf ("%s", l->base);
       break;
+    default:
+      abort ();
     }
   return l->string;
 }

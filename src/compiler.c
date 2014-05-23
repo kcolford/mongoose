@@ -66,17 +66,19 @@ There is NO WARRANTY, to the extent permitted by law.\n"), COPYRIGHT_YEAR);
 void (*argp_program_version_hook)(FILE *, struct argp_state *) =
   print_version;		/**< Version printing hook. */
 
-const char *doc =
+const char *doc[] = {
   N_("This is an experimental compiler that compiles a Turing complete"
      " subset of C.  Where FILE is the input file to be compiled.  All C"
      " functions are supported except for the ones which require complicated"
-     " structures or support from the compiler."
-     "\v"
-     "The current subset supports the following: all arithmetic operators,"
+     " structures or support from the compiler."),
+  "\v",
+  N_("The current subset supports the following: all arithmetic operators,"
      " goto-statements and labels, if-statements, the comparison operators"
      " (<, >, <=, >=, ==, !=) can be used in the test for an if-statement,"
      " the bit wise operators (|, &, ^) are available, as well as pointers"
-     " (but there is no pointer data type), and more..."); /**< Help message. */
+     " (but there is no pointer data type), and more..."),
+  NULL
+}; /**< Help message. */
 
 struct argp_option opts[] = {
   { "outfile",  'o', "FILE",                   0,
@@ -196,7 +198,10 @@ int main (int argc, char *argv[])
 
   vars_init ();
 
-  struct argp args = { opts, arg_parse, N_("FILE"), doc };
+  const char *totaldoc = NULL, **ptr;
+  for (ptr = doc; *ptr != NULL; ptr++)
+    EXTENDF (totaldoc, "%s", *ptr);
+  struct argp args = { opts, arg_parse, N_("FILE"), totaldoc };
   argp_parse (&args, argc, argv, 0, NULL, NULL);
 
   run_unit ();
