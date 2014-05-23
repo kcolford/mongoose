@@ -37,18 +37,16 @@
 #include <error.h>
 
 /**
- * String comparision utilities.
+ * Test if the strings @c X and @c Y are equal.
  *
  */
-#define STREQ(X, Y) ((X) == (Y) || (X) != NULL && (Y) != NULL	\
-		     && strcmp (X, Y) == 0)
+#define STREQ(X, Y) (strcmp (X, Y) == 0)
 
 /**
- * String comparision utilities.
+ * Test if the strings @c X and @c Y are not equal
  *
  */
-#define STRNEQ(X, Y) ((X) != (Y) && (X) != NULL && (Y) != NULL	\
-		      && strcmp (X, Y) != 0)
+#define STRNEQ(X, Y) (strcmp (X, Y) != 0)
 
 /**
  * Special macros for making it easier to mark strings for
