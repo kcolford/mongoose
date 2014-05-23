@@ -11,7 +11,7 @@ doc: html
 distclean-local:
 	$(RM) -r $(builddir)/doc
 
-.version: Makefile
+.version:
 	$(AM_V_GEN)echo $(VERSION) > $@
 
 gen-tarball-version:

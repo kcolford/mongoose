@@ -1,4 +1,4 @@
-AM_CPPFLAGS = -I$(top_srcdir)/lib
+AM_CPPFLAGS = -I$(top_srcdir)/lib -I$(top_builddir)/lib
 AM_YFLAGS = -d
 EXTRA_DIST = ast.def ast.tpl
 
