@@ -74,9 +74,10 @@ free_entry (const void *ss)
 {
   struct state_entry *s = (struct state_entry *) ss;
   if (s != NULL)
-    return;
-  FREE (s->label);
-  FREE_LOC (s->meaning);
+    {
+      FREE (s->label);
+      FREE_LOC (s->meaning);
+    }
   FREE (s);
 }
 

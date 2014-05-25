@@ -175,7 +175,7 @@ optimizer_r (struct ast **ss)
 	      FOLD_INT_BIN (RS, >>);
 	      FOLD_INT_BIN (LS, <<);
 	    default:
-	      error (1, 0, _("Invalid binop opcode: %d"), s->op.binary.op);
+	      break;
 	    }
 	}
       break;

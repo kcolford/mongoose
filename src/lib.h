@@ -103,10 +103,10 @@
  * @param FMT The format specifier.
  */
 #define EXTENDF(DEST, FMT, ...) do {					\
-    const char *_v = (DEST);						\
-    (DEST) = my_printf ("%s" FMT, ((DEST) != NULL ? (DEST) : ""),	\
-			__VA_ARGS__);					\
-    FREE (_v);								\
+    char *_v = my_printf ("%s" FMT, ((DEST) != NULL ? (DEST) : ""),	\
+			  __VA_ARGS__);					\
+    FREE (DEST);							\
+    (DEST) = _v;							\
   } while (0)
 
 /** 

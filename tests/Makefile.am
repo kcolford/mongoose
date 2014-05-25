@@ -1,5 +1,5 @@
 EXTRA_DIST = $(TESTS) tester.sh
-MOSTLYCLEANFILES = core log-*
+MOSTLYCLEANFILES = core *.log
 
 COMPILER = $(COMPILER_ENV) $(top_builddir)/src/compiler $(COMPILER_OPTS)
 

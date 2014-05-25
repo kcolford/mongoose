@@ -5,7 +5,8 @@ if [ x"$COMPILER" = x ]; then
     exit 77
 fi
 
-$COMPILER -o $prog $srcfile || ret=1
+$COMPILER -o $prog $srcfile 2> $0.log || ret=1
+[ -s $0.log ] || rm $0.log
 myout=`mktemp`
 if [ -x $prog ]; then
     $prog > $myout || ret=1
