@@ -38,8 +38,5 @@ if RELOCATABLE_VIA_LD
 compiler_LDFLAGS = `$(RELOCATABLE_LDFLAGS) $(bindir)`
 endif
 
-ast.c: ast.def ast.tpl
+ast.c ast.h: ast.def ast.tpl
 	$(AM_V_GEN)$(AUTOGEN) ast.def
-
-ast.h: ast.c
-ast.o: parse.h

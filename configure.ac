@@ -52,6 +52,7 @@ done
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h libintl.h locale.h stddef.h])
+AC_HEADER_STDBOOL
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_INT8_T

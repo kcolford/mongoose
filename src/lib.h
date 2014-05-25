@@ -33,7 +33,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <limits.h>
 #include <errno.h>
 #include <error.h>
 
@@ -71,7 +70,8 @@
  * @param X Pointer to free.
  */
 #define FREE(X) do {				\
-    free ((void *) (X));			\
+    void *_free_target = (void *) (X);		\
+    free (_free_target);			\
     (X) = NULL;					\
   } while (0)
 
