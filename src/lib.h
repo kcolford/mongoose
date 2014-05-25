@@ -161,7 +161,7 @@ extern char *my_printf (const char *fmt, ...);
  * 
  * @return The temporary file name.
  */
-extern char *tmpfile_name (void);
+extern const char *tmpfile_name (void);
 
 /** 
  * This is a comparision function for use with "bsearch" and "qsort".

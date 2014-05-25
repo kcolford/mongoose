@@ -132,7 +132,7 @@ free_tmpfiles (void)
  * @see tmpfiles
  *
  */
-char *
+const char *
 tmpfile_name (void)
 {
   /* If this is the first time that this routine is run, set up the
@@ -152,7 +152,6 @@ tmpfile_name (void)
   gl_list_add_last (tmpfiles, NULL);
   char *out = NULL;
 
-  int t = 0;
   do
     {
       FREE (out);
@@ -162,7 +161,7 @@ tmpfile_name (void)
       /* Create the file so that it can't be opened by another process
 	 or if it is, it will cause us to go and select a new
 	 file name. */
-      t = creat (out, S_IRWXU);
+      int t = creat (out, S_IRWXU);
       if (t >= 0)
 	close (t);
     }
