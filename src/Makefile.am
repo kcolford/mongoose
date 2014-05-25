@@ -34,6 +34,10 @@ vars.c
 
 compiler_LDADD = $(top_builddir)/lib/lib$(PACKAGE).la $(LTLIBINTL) $(LIB_ACL)
 
+if RELOCATABLE_VIA_LD
+compiler_LDFLAGS = `$(RELOCATABLE_LDFLAGS) $(bindir)`
+endif
+
 ast.c: ast.def ast.tpl
 	$(AM_V_GEN)$(AUTOGEN) ast.def
 
