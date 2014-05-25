@@ -39,13 +39,10 @@ AS_IF([test $cross_compiling = no], [
 # Set up warnings for the compilation routines.
 gl_MANYWARN_ALL_GCC([warnings])
 nw=
-nw="$nw -Wall -Wextra -Wunused"	# Would break the following.
 nw="$nw -Wsystem-headers"	# Ridiculous warning.
 nw="$nw -Wvla"			# Breaks gnulib gettext.h.
 nw="$nw -Wswitch-default"	# Breaks generated files.
-nw="$nw -Wunused-function"	# Likewise.
 nw="$nw -Wunused-macros"	# Likewise.
-nw="$nw -Wunused-parameter"	# Breaks compiler.c.
 gl_MANYWARN_COMPLEMENT([warnings], [$warnings], [$nw])
 for w in $warnings; do
   gl_WARN_ADD([$w])

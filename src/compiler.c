@@ -55,7 +55,7 @@ const char *argp_program_bug_address = PACKAGE_BUGREPORT; /**< Bug address. */
 void
 print_version (FILE *stream, struct argp_state *state)
 {
-  fprintf (stream, "%s (%s) %s\n\n", PACKAGE, PACKAGE_NAME, VERSION);
+  fprintf (stream, "%s (%s) %s\n\n", state->name, PACKAGE_NAME, VERSION);
   fprintf (stream, _("\
 Copyright (C) %d Kieran Colford\n\
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n\

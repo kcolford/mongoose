@@ -38,8 +38,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define YY_NO_INPUT
-#define YY_NO_YYUNPUT
+#define static			/**< Eliminate generated warnings. */
+#define YY_NO_INPUT		/**< We have no use for it. */
 
 %}
 
