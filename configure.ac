@@ -25,10 +25,14 @@ AC_PROG_RANLIB
 
 AM_MISSING_PROG([AUTOGEN], [autogen])
 
-AX_COMPARE_VERSION([1.8], [le], [$(doxygen -v)], [AS_ECHO(
-['checking for doxygen version 1.8 or higher... yes']
-)], [AC_MSG_ERROR(
-[you need Doxygen version 1.8 or higher to generate the documentation.])])
+AC_CHECK_PROG([DOXYGEN], [doxygen], [doxygen], [:])
+AC_MSG_CHECKING([whether doxygen is version 1.8 or higher])
+AX_COMPARE_VERSION([1.8], [le], [$($DOXYGEN -v)], [
+  AC_MSG_RESULT([yes])
+], [
+  $DOXYGEN=:
+  AC_MSG_RESULT([no])
+])
 
 AS_IF([test $cross_compiling = no], [
   AM_MISSING_PROG([HELP2MAN], [help2man])
@@ -73,8 +77,7 @@ AC_FUNC_REALLOC
 AC_DEFINE([COPYRIGHT_YEAR], [m4_esyscmd([date +%Y])],
           [year in copyright message])
 
-AC_DEFINE_UNQUOTED([C_COMPILER], ["$CC"],
-		   [C compiler used to bootstrap this project])
+AC_DEFINE_UNQUOTED([CC], ["$CC"], [C compiler used to bootstrap])
 
 AM_GNU_GETTEXT_VERSION([0.18.1])
 AM_GNU_GETTEXT([external])

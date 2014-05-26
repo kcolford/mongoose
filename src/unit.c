@@ -42,8 +42,9 @@ extern int yyparse (void);
 /** @todo This is the GCC's preprocessor which we hope to
     replace with our own. */
 static const char *cppargs[] =
-  { C_COMPILER, "-o", NULL, NULL, "-E", NULL };
+  { CC, "-o", NULL, NULL, "-E", NULL };
 
+/** @todo Determine the needed assembler program in a portable way. */
 static const char *asargs[] =
   { "as", "-o", NULL, NULL, NULL };
 
@@ -51,7 +52,10 @@ static const char *asargs[] =
     we can't duplicate or get the program working without.  We have to
     use the GCC to link our programs for the time being. */
 const char *ldargs_template[] =
-  { C_COMPILER, "-o", NULL, NULL };
+  { CC, "-o", NULL };
+
+const char *extra_libs[] =
+  { "-lm" };
 
 void
 run_unit (void)
@@ -137,15 +141,19 @@ run_unit (void)
       ldargs_template[2] = outfile_name;
 
       const char **ldargs = xcalloc (LEN (ldargs_template) +
-				     gl_list_size (name) + 1,
+				     gl_list_size (name) +
+				     LEN (extra_libs) + 1,
 				     sizeof *ldargs);
+      const char **ldargsptr = ldargs;
 
-      memcpy (ldargs, ldargs_template, sizeof ldargs_template);
+      memcpy (ldargsptr, ldargs_template, sizeof ldargs_template);
+      ldargsptr += LEN (ldargs_template);
 
-      const char **ldargsptr = ldargs + LEN (ldargs_template) - 1;
       for (i = 0; i < gl_list_size (name); i++)
 	*ldargsptr++ = gl_list_get_at (name, i);
-      *ldargsptr++ = "-lm";
+
+      memcpy (ldargsptr, extra_libs, sizeof extra_libs);
+      ldargsptr = ldargsptr + LEN (extra_libs);
 
       if (safe_system (ldargs))
 	error (1, 0, _("linker failed"));

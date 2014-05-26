@@ -4,7 +4,7 @@ EXTRA_DIST = m4/gnulib-cache.m4 .version COPYING README.md doc.cfg.in
 BUILT_SOURCES = .version
 
 html: doc.cfg
-	$(AM_V_GEN)doxygen $<
+	$(AM_V_GEN)$(DOXYGEN) $<
 
 doc: html
 
