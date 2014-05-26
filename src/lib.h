@@ -67,6 +67,9 @@
  * setting the location to NULL so that it's safe from a
  * double-free.
  *
+ * @warning This function casts the pointer @c X to void* and thus is
+ * considered dangerous.
+ *
  * @param X Pointer to free.
  */
 #define FREE(X) do {				\
@@ -80,10 +83,18 @@
  *
  * @param X The array to check.
  *
- * @return The length of X.
+ * @return The length of @c X.
  */
 #define LEN(X) (sizeof (X) / sizeof *(X))
-#define SLEN(X) ((long) LEN (X))
+
+/** 
+ * Macro for determining the signed size of an array.
+ * 
+ * @param X The array to check.
+ * 
+ * @return The signed length of @c X.
+ */
+#define SLEN(X) ((ssize_t) LEN (X))
 
 /**
  * Macro for swapping two pointer values.
@@ -121,7 +132,7 @@
       error (1, 0, _("index out of bounds, %d less than zero"), a);	\
     if (a >= SLEN (ARRAY))						\
       error (1, 0, _("index out of bounds, %d greater than or equal "	\
-		     "to the maximum %lu"), a, LEN (storage));		\
+		     "to the maximum %ld"), a, SLEN (ARRAY));		\
   } while (0)
 
 /** 
@@ -157,7 +168,10 @@ extern char *my_printf (const char *fmt, ...);
 /** 
  * This creates an appropriate file name that can be used as a
  * temporary file.
- * 
+ *
+ * This temporary file is automatically deleted upon program
+ * termination (either from a fatal signal that isn't SIGKILL or a
+ * call to exit).
  * 
  * @return The temporary file name.
  */

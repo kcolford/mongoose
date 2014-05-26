@@ -3,9 +3,12 @@ ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = m4/gnulib-cache.m4 .version COPYING README.md doc.cfg.in
 BUILT_SOURCES = .version
 
-doc html pdf: doc.cfg
+doc html: doc.cfg
 	$(AM_V_GEN)$(DOXYGEN) $<
-	@if [ "@GENERATE_LATEX@" = "YES" ]; then \
+
+pdf: doc.cfg
+	$(AM_V_GEN)$(DOXYGEN) $<; \
+	if [ "@GENERATE_LATEX@" = "YES" ]; then \
 	  $(MAKE) -C doc/latex; \
 	fi
 
@@ -20,4 +23,4 @@ gen-tarball-version:
 
 dist-hook: gen-tarball-version
 
-.PHONY: doc gen-tarball-version
+.PHONY: doc gen-tarball-version pdf-make
