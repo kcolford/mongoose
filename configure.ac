@@ -25,13 +25,32 @@ AC_PROG_RANLIB
 
 AM_MISSING_PROG([AUTOGEN], [autogen])
 
-AC_CHECK_PROG([DOXYGEN], [doxygen], [doxygen], [:])
-AC_MSG_CHECKING([whether doxygen is version 1.8 or higher])
-AX_COMPARE_VERSION([1.8], [le], [$($DOXYGEN -v)], [
-  AC_MSG_RESULT([yes])
+AC_CHECK_PROGS([DOXYGEN], [doxygen])
+AS_IF([test -n "$DOXYGEN"], [
+  AC_MSG_CHECKING([whether doxygen is version 1.8 or higher])
+  AX_COMPARE_VERSION([1.8], [le], [$($DOXYGEN -v)], [
+    AC_MSG_RESULT([yes])
+  ], [
+    DOXYGEN=:
+    AC_MSG_RESULT([no])
+  ])
 ], [
-  $DOXYGEN=:
-  AC_MSG_RESULT([no])
+  DOXYGEN=:
+])
+
+AC_CHECK_PROGS([LATEX], [latex])
+AS_IF([test -n "$LATEX"], [
+  AC_SUBST([GENERATE_LATEX], [YES])
+  AC_CHECK_PROGS([PDFLATEX], [pdflatex])
+  AS_IF([test -n "$PDFLATEX"], [
+    AC_SUBST([USE_PDFLATEX], [YES])
+  ], [
+    AC_SUBST([USE_PDFLATEX], [NO])
+  ])
+  AC_CHECK_PROGS([MAKEINDEX], [makeindex])
+], [
+  AC_SUBST([GENERATE_LATEX], [NO])
+  LATEX=:
 ])
 
 AS_IF([test $cross_compiling = no], [

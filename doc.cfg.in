@@ -78,7 +78,7 @@ GENERATE_TESTLIST      = YES
 GENERATE_BUGLIST       = YES
 GENERATE_DEPRECATEDLIST= YES
 ENABLED_SECTIONS       =
-MAX_INITIALIZER_LINES  = 30
+MAX_INITIALIZER_LINES  = 50
 SHOW_USED_FILES        = YES
 SHOW_FILES             = YES
 SHOW_NAMESPACES        = YES
@@ -103,7 +103,8 @@ INPUT                  = @srcdir@/src \
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          =
 RECURSIVE              = NO
-EXCLUDE                =
+EXCLUDE                = @srcdir@/src/lex.c \
+                         @srcdir@/src/parse.c
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       =
 EXCLUDE_SYMBOLS        =
@@ -197,10 +198,10 @@ EXTRA_SEARCH_MAPPINGS  =
 #---------------------------------------------------------------------------
 # Configuration options related to the LaTeX output
 #---------------------------------------------------------------------------
-GENERATE_LATEX         = NO
+GENERATE_LATEX         = @GENERATE_LATEX@
 LATEX_OUTPUT           = latex
-LATEX_CMD_NAME         = latex
-MAKEINDEX_CMD_NAME     = makeindex
+LATEX_CMD_NAME         = @LATEX@
+MAKEINDEX_CMD_NAME     = @MAKEINDEX@
 COMPACT_LATEX          = NO
 PAPER_TYPE             = a4
 EXTRA_PACKAGES         =
@@ -208,7 +209,7 @@ LATEX_HEADER           =
 LATEX_FOOTER           =
 LATEX_EXTRA_FILES      =
 PDF_HYPERLINKS         = YES
-USE_PDFLATEX           = YES
+USE_PDFLATEX           = @USE_PDFLATEX@
 LATEX_BATCHMODE        = NO
 LATEX_HIDE_INDICES     = NO
 LATEX_SOURCE_CODE      = NO
@@ -259,10 +260,11 @@ ENABLE_PREPROCESSING   = YES
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
 SEARCH_INCLUDES        = YES
-INCLUDE_PATH           =
+INCLUDE_PATH           = @srcdir@/config.h
 INCLUDE_FILE_PATTERNS  =
 PREDEFINED             =
-EXPAND_AS_DEFINED      = YY_DECL
+EXPAND_AS_DEFINED      = CC \
+                         YY_DECL
 SKIP_FUNCTION_MACROS   = YES
 #---------------------------------------------------------------------------
 # Configuration options related to external references
