@@ -98,7 +98,7 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # Configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = @srcdir@/src \
+INPUT                  = @srcdir@/src @builddir@/src \
                          @srcdir@/README.md
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          =
@@ -260,7 +260,7 @@ ENABLE_PREPROCESSING   = YES
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
 SEARCH_INCLUDES        = YES
-INCLUDE_PATH           = @srcdir@/config.h
+INCLUDE_PATH           = @srcdir@ @srcdir@/lib @builddir@/lib
 INCLUDE_FILE_PATTERNS  =
 PREDEFINED             =
 EXPAND_AS_DEFINED      = CC \
