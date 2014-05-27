@@ -24,25 +24,28 @@ use warnings;
 
 sub basics() {
     s/\@copyright{}/&copy;/g;
-    s/\@url{(.*?)}/&lt;<$1>&gt;/g;
+    s/\@dots{}/.../g;
+    s/La\@TeX{}/LaTeX/g;
+    s/\@(?:url|uref){(.*?)}/<$1>/g;
     s/\@var{(.*?)}/<$1>/g;
     s/\@samp{(.*?)}/'$1'/g;
     s/\@(?:code|command){(.*?)}/<code>$1<\/code>/g;
     s/\@file{(.*?)}/&lsquo;<tt>$1<\/tt>&rsquo;/g;
     s/\@option{(.*?)}/&lsquo;<code>$1<\/code>&rsquo;/g;
-    s/\@emph{(.*?)}/_$1_/g;
+    s/\@(?:emph|dfn){(.*?)}/_$1_/g;
     s/\@\././g;
     s/\@:/:/g;
-    s/``/&ldquo;/g;
-    s/''/&rdquo;/g;
-    s/\@center//g;
-    s/\@display//g;
-    s/\@end display//g;
+    if (!/^    /) {
+	s/``/&ldquo;/g;
+	s/''/&rdquo;/g;
+    }
+    s/\@(center|display|group|page)//g;
+    s/\@end (display|group)//g;
     s/\@c\b.*$//;
 }
 
 sub enum_alpha {
-    if (/\@enumerate ([a-z])/) {
+    if (/\@enumerate ([a-zA-Z])/) {
 	my $count = $1;
       LINE: while (<>) {
 	  last LINE if (/\@end enumerate/);
@@ -65,6 +68,9 @@ sub enum_num {
 	  basics ();
 	  enum_alpha ();
 	  if (/\@item/) {
+	      if (!/\@item [a-zA-Z0-9]+/) {
+		  chomp; $_ .= ' ' . <>;
+	      }
 	      s/\@item/### $count./;
 	      $count += 1;
 	  }
@@ -78,8 +84,8 @@ sub example {
     if (/\@(small)?example/) {
       LINE: while (<>) {
 	  last LINE if (/\@end (small)?example/);
-	  basics ();
 	  $_ = '    ' . $_;
+	  basics ();
 	  print;
       }
 	$_ = '';
