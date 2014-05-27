@@ -33,7 +33,7 @@ OPTIMIZE_OUTPUT_FOR_C  = YES
 OPTIMIZE_OUTPUT_JAVA   = NO
 OPTIMIZE_FOR_FORTRAN   = NO
 OPTIMIZE_OUTPUT_VHDL   = NO
-EXTENSION_MAPPING      =
+EXTENSION_MAPPING      = no_extension=md
 MARKDOWN_SUPPORT       = YES
 AUTOLINK_SUPPORT       = YES
 BUILTIN_STL_SUPPORT    = NO
@@ -98,7 +98,9 @@ WARN_LOGFILE           =
 #---------------------------------------------------------------------------
 # Configuration options related to the input files
 #---------------------------------------------------------------------------
-INPUT                  = @srcdir@/src @builddir@/src \
+INPUT                  = @srcdir@/src \
+                         @builddir@/src \
+                         @srcdir@/doc/GPL.md \
                          @srcdir@/README.md
 INPUT_ENCODING         = UTF-8
 FILE_PATTERNS          =
@@ -260,7 +262,9 @@ ENABLE_PREPROCESSING   = YES
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = YES
 SEARCH_INCLUDES        = YES
-INCLUDE_PATH           = @srcdir@ @srcdir@/lib @builddir@/lib
+INCLUDE_PATH           = @srcdir@ \
+                         @srcdir@/lib \
+                         @builddir@/lib
 INCLUDE_FILE_PATTERNS  =
 PREDEFINED             =
 EXPAND_AS_DEFINED      = CC \

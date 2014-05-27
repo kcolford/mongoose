@@ -3,17 +3,18 @@ ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = m4/gnulib-cache.m4 .version COPYING README.md doc.cfg.in
 BUILT_SOURCES = .version
 
-doc html: doc.cfg
+doc: doc.cfg
 	$(AM_V_GEN)$(DOXYGEN) $<
 
-pdf: doc.cfg
-	$(AM_V_GEN)$(DOXYGEN) $<; \
-	if [ "@GENERATE_LATEX@" = "YES" ]; then \
-	  $(MAKE) -C doc/latex; \
+html: doc
+
+pdf: doc
+	@if [ "@GENERATE_LATEX@" = "YES" ]; then \
+	  $(MAKE) -C doc/latex refman.pdf; \
 	fi
 
 distclean-local:
-	$(RM) -r $(builddir)/doc
+	$(RM) -r $(builddir)/doc/html $(builddir)/doc/latex
 
 .version:
 	$(AM_V_GEN)echo $(VERSION) > $@
