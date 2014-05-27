@@ -1,0 +1,104 @@
+#!/usr/bin/env perl
+
+# This program translates texinfo files to markdown for use in
+# doxygen.
+
+# Copyright (C) 2014 Kieran Colford
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see
+# <http://www.gnu.org/licenses/>.
+
+use strict;
+use warnings;
+
+sub basics() {
+    s/\@copyright{}/&copy;/g;
+    s/\@url{(.*?)}/&lt;<$1>&gt;/g;
+    s/\@var{(.*?)}/<$1>/g;
+    s/\@samp{(.*?)}/'$1'/g;
+    s/\@(?:code|command){(.*?)}/<code>$1<\/code>/g;
+    s/\@file{(.*?)}/&lsquo;<tt>$1<\/tt>&rsquo;/g;
+    s/\@option{(.*?)}/&lsquo;<code>$1<\/code>&rsquo;/g;
+    s/\@emph{(.*?)}/_$1_/g;
+    s/\@\././g;
+    s/\@:/:/g;
+    s/``/&ldquo;/g;
+    s/''/&rdquo;/g;
+    s/\@center//g;
+    s/\@display//g;
+    s/\@end display//g;
+    s/\@c\b.*$//;
+}
+
+sub enum_alpha {
+    if (/\@enumerate ([a-z])/) {
+	my $count = $1;
+      LINE: while (<>) {
+	  last LINE if (/\@end enumerate/);
+	  basics ();
+	  if (/\@item/) {
+	      s/\@item/* **$count)** /;
+	      $count = chr ((ord $count) + 1);
+	  }
+	  print;
+      }
+	$_ = '';
+    }
+}
+
+sub enum_num {
+    if (/\@enumerate ([0-9])/) {
+	my $count = $1;
+      LINE: while (<>) {
+	  last LINE if (/\@end enumerate/);
+	  basics ();
+	  enum_alpha ();
+	  if (/\@item/) {
+	      s/\@item/### $count./;
+	      $count += 1;
+	  }
+	  print;
+      }
+	$_ = '';
+    }
+}
+
+sub example {
+    if (/\@(small)?example/) {
+      LINE: while (<>) {
+	  last LINE if (/\@end (small)?example/);
+	  basics ();
+	  $_ = '    ' . $_;
+	  print;
+      }
+	$_ = '';
+    }
+}
+
+sub parse () {
+    while (<>) {
+	basics ();
+	s/\@heading/##/;
+	s/\@section/##/;
+	enum_alpha ();
+	enum_num ();
+	example ();
+	print;
+    }
+}
+
+$_ = <>;
+s/\@[^ \t]+/#/;
+print;
+parse ();

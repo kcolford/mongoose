@@ -1,10 +1,10 @@
 SUBDIRS = lib src man tests po
 ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = m4/gnulib-cache.m4 .version COPYING README.md doc.cfg.in \
-doc/GPL.md
+doc/gpl-3.0.texi doc/relocatable.texi
 BUILT_SOURCES = .version
 
-doc: doc.cfg doc/GPL.md
+doc: doc.cfg
 	$(AM_V_GEN)$(DOXYGEN) $<
 
 html: doc
