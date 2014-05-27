@@ -5,8 +5,13 @@ An experimental C compiler.
 
 This is a project that attempts to become a fully fledged C compiler.
 It is currently Turing Complete and can be linked in to any other
-library.  It currently has no support for C's type system, all types
-are just 64-bit numbers
+library.
+
+It currently has no support for C's type system, all types are just
+64-bit numbers.  It has no structs, unions, or enums.  All pointers
+are the same as int.  Because of the lack of a type system but the
+need to know when to allocate a variable, a type must be given to
+declare a variable but that type is ignored.
 
 Prerequisites
 -------------
