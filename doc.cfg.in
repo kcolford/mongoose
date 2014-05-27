@@ -33,7 +33,8 @@ OPTIMIZE_OUTPUT_FOR_C  = YES
 OPTIMIZE_OUTPUT_JAVA   = NO
 OPTIMIZE_FOR_FORTRAN   = NO
 OPTIMIZE_OUTPUT_VHDL   = NO
-EXTENSION_MAPPING      = no_extension=md texi=md
+EXTENSION_MAPPING      = no_extension=c \
+                         texi=md
 MARKDOWN_SUPPORT       = YES
 AUTOLINK_SUPPORT       = YES
 BUILTIN_STL_SUPPORT    = NO
@@ -101,9 +102,13 @@ WARN_LOGFILE           =
 INPUT                  = @srcdir@/src \
                          @builddir@/src \
                          @srcdir@/doc \
-                         @srcdir@/README.md
+                         @srcdir@/README.md \
+                         @srcdir@/texi2md
 INPUT_ENCODING         = UTF-8
-FILE_PATTERNS          = *.c *.h *.md *.texi
+FILE_PATTERNS          = *.c \
+                         *.h \
+                         *.md \
+                         *.texi
 RECURSIVE              = NO
 EXCLUDE                = @srcdir@/src/lex.c \
                          @srcdir@/src/parse.c

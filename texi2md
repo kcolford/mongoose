@@ -26,7 +26,6 @@ sub basics() {
     s/\@copyright{}/&copy;/g;
     s/\@dots{}/.../g;
     s/La\@TeX{}/LaTeX/g;
-    s/\@(?:url|uref){(.*?)}/<$1>/g;
     s/\@var{(.*?)}/<$1>/g;
     s/\@samp{(.*?)}/'$1'/g;
     s/\@(?:code|command){(.*?)}/<code>$1<\/code>/g;
@@ -36,11 +35,14 @@ sub basics() {
     s/\@\././g;
     s/\@:/:/g;
     if (!/^    /) {
+	s/\@(?:url|uref){(.*?)}/<<$1>>/g;
 	s/``/&ldquo;/g;
 	s/''/&rdquo;/g;
+    } else {
+	s/\@(?:url|uref){(.*?)}/<$1>/g;
     }
-    s/\@(center|display|group|page)//g;
-    s/\@end (display|group)//g;
+    s/\@(center|display|group|page)\b//g;
+    s/\@end (display|group)\b//g;
     s/\@c\b.*$//;
 }
 
@@ -51,7 +53,7 @@ sub enum_alpha {
 	  last LINE if (/\@end enumerate/);
 	  basics ();
 	  if (/\@item/) {
-	      s/\@item/* **$count)** /;
+	      s/\@item/ * **$count)** /;
 	      $count = chr ((ord $count) + 1);
 	  }
 	  print;
