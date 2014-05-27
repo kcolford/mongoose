@@ -1,9 +1,10 @@
 SUBDIRS = lib src man tests po
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = m4/gnulib-cache.m4 .version COPYING README.md doc.cfg.in
+EXTRA_DIST = m4/gnulib-cache.m4 .version COPYING README.md doc.cfg.in \
+doc/GPL.md
 BUILT_SOURCES = .version
 
-doc: doc.cfg
+doc: doc.cfg doc/GPL.md
 	$(AM_V_GEN)$(DOXYGEN) $<
 
 html: doc
