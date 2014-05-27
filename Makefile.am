@@ -1,7 +1,7 @@
 SUBDIRS = lib src man tests po
 ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = m4/gnulib-cache.m4 .version COPYING README.md doc.cfg.in \
-doc/gpl-3.0.texi doc/relocatable.texi
+texi2md.pl doc/gpl-3.0.texi doc/relocatable.texi
 BUILT_SOURCES = .version
 
 doc: doc.cfg
