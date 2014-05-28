@@ -25,6 +25,8 @@ AC_PROG_RANLIB
 
 AM_MISSING_PROG([AUTOGEN], [autogen])
 
+AC_ARG_VAR([DOXYGEN], [The instance of Doxygen to use when generating
+documentation from source files.  Note: must be version 1.8 or higher])
 AC_CHECK_PROGS([DOXYGEN], [doxygen])
 AS_IF([test -n "$DOXYGEN"], [
   AC_MSG_CHECKING([whether doxygen is version 1.8 or higher])
@@ -38,6 +40,8 @@ AS_IF([test -n "$DOXYGEN"], [
   DOXYGEN=:
 ])
 
+AC_ARG_VAR([LATEX], [The instance of LaTeX to use when compiling .tex
+files into the appropriate documentation.])
 AC_CHECK_PROGS([LATEX], [latex])
 AS_IF([test -n "$LATEX"], [
   AC_SUBST([GENERATE_LATEX], [YES])
