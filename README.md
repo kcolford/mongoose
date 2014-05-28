@@ -58,6 +58,13 @@ With this done, you can now run the configure script and make,
 
     ./configure && make
 
+For more information, read the INSTALL file distributed with this
+package.
+
+To learn about Enabling Relocation, read the corresponding section of
+the manual.  Alternatively, you can read the file relocatable.texi for
+more information.
+
 What To Do
 ----------
 
