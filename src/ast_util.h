@@ -1,9 +1,8 @@
 /**
- * @file   compilation_passes.c
+ * @file   ast_util.h
  * @author Kieran Colford <colfordk@gmail.com>
  * 
- * @brief This is the routine that runs all the different passes in
- * the correct order.
+ * @brief  A series of utility functions for use with the AST.
  * 
  * Copyright (C) 2014 Kieran Colford
  *
@@ -25,20 +24,32 @@
  * 
  */
 
-#include "config.h"
+#ifndef AST_UTIL_H
+#define AST_UTIL_H
 
 #include "ast.h"
-#include "compiler.h"
 
-int
-run_compilation_passes (struct ast **ss)
+/** 
+ * This concatenates two lists of ASTs.
+ * 
+ * @param l Left AST.
+ * @param r Right AST.
+ * 
+ * @return Concatenation of them both.
+ */
+static inline struct ast *
+ast_cat (struct ast *l, struct ast *r)
 {
-  int ret = 0;
-  ret = ret || semantic (*ss);
-  ret = ret || dealias (ss);
-  ret = ret || collect_vars (*ss);
-  ret = ret || optimizer (ss);
-  ret = ret || gen_code (*ss);
-  AST_FREE (*ss);
-  return ret;
+  if (l == NULL)
+    return r;
+  else
+    {
+      struct ast *t = l;
+      while (t->next != NULL)
+	t = t->next;
+      t->next = r;
+      return l;
+    }
 }
+
+#endif

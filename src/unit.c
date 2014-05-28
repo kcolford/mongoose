@@ -1,154 +1,148 @@
-/* These are the routines that select which phase of the compiler to
-   run.
-
-Copyright (C) 2014 Kieran Colford
-
-This file is part of Compiler.
-
-Compiler is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
-
-Compiler is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Compiler; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>. */
+/**
+ * @file   unit.c
+ * @author Kieran Colford <colfordk@gmail.com>
+ * 
+ * @brief These are the routines that select which phase of the
+ * compiler to run.
+ * 
+ * Copyright (C) 2014 Kieran Colford
+ *
+ * This file is part of Compiler.
+ *
+ * Compiler is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Compiler is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with Compiler; see the file COPYING.  If not see
+ * <http://www.gnu.org/licenses/>.
+ * 
+ */
 
 #include "config.h"
 
 #include "compiler.h"
 #include "copy-file.h"
+#include "gl_array_list.h"
+#include "gl_xlist.h"
 #include "lib.h"
 #include "xalloc.h"
 
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
-FILE *outfile = NULL;
-char *name = NULL;
-char stop = 0;
-extern char *infile_name;
-extern char *outfile_name;
 extern int yyparse (void);
-
-static void
-del_name ()
-{
-  if (name != NULL && STRNEQ (name, infile_name))
-    {
-      unlink (name);
-      FREE (name);
-    }
-}
-
-static inline char *
-preprocess (const char *in)
-{
-  char *out = tmpfile_name ();
-  /* TODO: This is the GCC's preprocessor which we hope to replace
-           with our own. */
-  const char *args[] = { "/usr/bin/cpp", in, out, NULL };
-  if (safe_system (args))
-    return NULL;
-  else
-    return out;
-}
-
-static inline char *
-compile (const char *in)
-{
-  if (in ==  NULL)
-    return NULL;
-  yyin = fopen (in, "r");
-  char *out = tmpfile_name ();
-  outfile = fopen (out, "w");
-  int i = yyparse ();
-  fclose (yyin);
-  fclose (outfile);
-  if (i)
-    return NULL;
-  else
-    return out;
-}
-
-static inline char *
-assemble (const char *in)
-{
-  char *out = tmpfile_name ();
-  const char *args[] = { "/usr/bin/as", "-o", out, in, NULL };
-  if (safe_system (args))
-    return NULL;
-  else
-    return out;
-}
-
-static inline char *
-linker (const char *in)
-{
-  char *out = tmpfile_name ();
-  /* TODO: Hopefully we can move away from having to use the GCC to
-           link our programs, but it seems to link in some other
-           object files that we can't duplicate yet.  Once we can
-           create our own, we will replace this with "ld". */
-  const char *args[] = { "/usr/bin/gcc", "-o", out, in, "-lm", NULL };
-  if (safe_system (args))
-    return NULL;
-  else
-    return out;
-}
 
 void
 run_unit ()
 {
-  name = infile_name;
-  atexit (del_name);
+  gl_list_t name = NULL;
+  if (stop == 0)
+    /** @todo Consider using a linked list instead of an array list
+	for managing the queue of compiled object files. */
+    name = gl_list_create_empty (GL_ARRAY_LIST, NULL, NULL, NULL, 1);
 
-#define CHECK(C, S)						\
-    do {							\
-      char *r = (C) (name);					\
-      del_name ();						\
-      name = r;							\
-      if (r == NULL)						\
-	exit (EXIT_FAILURE);					\
-    } while (0);						\
-    if (stop == (S))						\
-      break;							\
-
-  switch (name[strlen (name) - 1])
+  int i;
+  for (i = 0; i < gl_list_size (infile_name); i++)
     {
-    case 'c':
-      CHECK (preprocess, 'i');
-    case 'i':
-      CHECK (compile, 's');
-    case 's':
-      CHECK (assemble, 'o');
-    case 'o':
-    default:
-      CHECK (linker, 0);
-    }
+      const char *in = gl_list_get_at (infile_name, i), *_in = in;
+      char *out;
+      switch (in[strlen (in) - 1])
+	{
+	case 'c':
+	  out = tmpfile_name ();
+	  /** @todo This is the GCC's preprocessor which we hope to
+	      replace with our own. */
+	  const char *cppargs[] =
+	    { "/usr/bin/cpp", in, out, NULL };
+	  if (safe_system (cppargs))
+	    error (1, 0, _("preprocessor failed"));
+	  in = out;
 
-#undef CHECK
+	case 'i':
+	  if (stop == 'i')
+	    break;
+	  out = tmpfile_name ();
+	  outfile = fopen (out, "w");
+	  yyin = fopen (in, "r");
+	  yyparse ();
+	  fclose (outfile);
+	  fclose (yyin);
+	  in = out;
+
+	case 's':
+	  if (stop == 's')
+	    break;
+	  out = tmpfile_name ();
+	  const char *asargs[] =
+	    { "/usr/bin/as", "-o", out, in, NULL };
+	  if (safe_system (asargs))
+	    error (1, 0, _("assembler failed"));
+	  in = out;
+	}
+
+      if (stop == 0)
+	gl_list_add_last (name, in);
+      else
+	{
+	  /* If the output file wasn't specified, we'll decide on one
+	     by changing the extension of the input file.*/
+	  char *out;
+	  if (outfile_name == NULL)
+	    {
+	      out = xstrdup (_in);
+	      out[strlen (out) - 1] = stop;
+	    }
+	  else
+	    out = outfile_name;
+
+	  /* The reason that we wait until now to set up the output
+	     file is that one of the programs could clobber the output
+	     file, but then fail.  This would break any Makefiles due
+	     to new timestamps being applied and the file having
+	     corrupt data. */
+	  copy_file_preserving (in, out);
+	}
+    }
 
   /* If an output file name wasn't specified, then we need to
      determine one from the name of the source file.  If that can't be
      done though, we just set it to "a.out". */
   if (outfile_name == NULL)
-    {
-      if (stop != 0)
-	{
-	  assert (strchr ("iso", stop) != NULL);
-	  outfile_name = xstrdup (infile_name);
-	  outfile_name[strlen (outfile_name) - 1] = stop;
-	}
-      else
-	outfile_name = "a.out";
-    }
+    outfile_name = "a.out";
 
-  copy_file_preserving (name, outfile_name);
+  if (stop == 0)
+    {
+      /** @todo The GCC seems to link in some additional object files
+	  that we can't duplicate or get the program working without.
+	  We have to use the GCC to link our programs for the time
+	  being. */
+      const char *ldargs_template[] =
+	{ "/usr/bin/gcc", "-o", outfile_name };
+
+      const char **ldargs = xnmalloc (LEN (ldargs_template) +
+				      gl_list_size (name) + 2,
+				      sizeof *ldargs);
+
+      memcpy (ldargs, ldargs_template, sizeof ldargs_template);
+
+      const char **ldargsptr = ldargs + LEN (ldargs_template);
+      int i;
+      for (i = 0; i < gl_list_size (name); i++)
+	*ldargsptr++ = gl_list_get_at (name, i);
+      *ldargsptr++ = "-lm";
+      *ldargsptr++ = NULL;
+
+      if (safe_system (ldargs))
+	error (1, 0, _("linker failed"));
+
+      FREE (ldargs);
+      gl_list_free (name);
+    }
 }

@@ -20,6 +20,7 @@ prog-10						\
 prog-11						\
 prog-12						\
 prog-13						\
+prog-14						\
 prog-gcd					\
 prog-primes
 

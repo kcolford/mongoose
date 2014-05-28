@@ -1,27 +1,34 @@
-[+ AutoGen5 template -*- mode: c -*-
+[+ AutoGen5 template
 h
 c
 +]
 
-/* This is the template file for the AST.
-
-Copyright (C) 2014 Kieran Colford
-
-This file is part of Compiler.
-
-Compiler is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
-
-Compiler is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Compiler; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>. */
+/**
+ * @file
+ * @author Kieran Colford <colfordk@gmail.com>
+ * 
+ * @brief This file contains definitions/declarations for the entire
+ * AST framework.
+ * 
+ * Copyright (C) 2014 Kieran Colford
+ *
+ * This file is part of Compiler.
+ *
+ * Compiler is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Compiler is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with Compiler; see the file COPYING.  If not see
+ * <http://www.gnu.org/licenses/>.
+ * 
+ */
 
 [+ CASE (suffix) +]
 
@@ -31,12 +38,24 @@ along with Compiler; see the file COPYING.  If not see
 
 [+added_code+]
 
+/**
+ * Data type that lists off all of the different kinds of ASTs.
+ * 
+ */
+enum ast_code {
+  [+ FOR types ',
+  ' +][+name+]_type /**< [+doc+] */[+ ENDFOR types +]
+};
+
+/**
+ * The AST structure that the compiler uses for its intermediate
+ * representation.
+ * 
+ */
 struct ast
 {
-  enum { [+ FOR types ',
-         ' +][+name+]_type[+ ENDFOR types +] } type;
   [+ FOR top_level +]
-  [+type+] [+call+];
+  [+type+] [+call+][+ IF (exist? "size") +]: [+size+][+ ENDIF +]; /**< [+doc+] */
   [+ ENDFOR top_level +];
   union
   {
@@ -45,31 +64,63 @@ struct ast
     struct
     {
       [+ FOR cont +]
-      [+type+] [+call+];
+      [+type+] [+call+];	/**< [+doc+] */
       [+ ENDFOR cont +]
       [+ FOR extra +]
-      [+type+] [+call+];
+      [+type+] [+call+];	/**< [+doc+] */
       [+ ENDFOR extra +]
-    } [+name+];
+    } [+name+];			/**< [+doc+] */
     [+ ENDIF +]
     [+ ENDFOR types +]
-  } op;
-  const int num_ops;
-  struct ast *ops[1];
+  } op;				/**< Wrapper around the anonymous
+				   union. */
+  const int num_ops;		/**< Number of variable ops. */
+  struct ast *ops[1];		/**< Variable length array that stores
+				   any number of ops. */
 };
 
 [+ FOR types +]
-extern struct ast *make_[+name+] ([+ FOR cont ', ' +][+type+][+ ENDFOR cont +]
-				  [+ IF (and (exist? "cont") (exist? "sub")) +], [+ ENDIF +]
-				  [+ FOR sub ', ' +]struct ast *[+ ENDFOR sub +]);
+/**
+ * Create an instance of the AST using the type: @c [+name+]_type.
+ *
+ * [+doc+]
+ *
+[+ IF (exist? "cont") +] * @see ast::[+name+]
+[+ ENDIF +] * @see [+name+]_type
+ * 
+ * @return A pointer to an AST of type @c [+name+]_type.
+ */
+extern struct ast *make_[+name+]
+([+ FOR cont ', ' +][+type+][+ ENDFOR cont +]
+ [+ IF (and (exist? "cont") (exist? "sub")) +], [+ ENDIF +]
+ [+ FOR sub ', ' +]struct ast *[+ ENDFOR sub +]);
 [+ ENDFOR types +]
 
-extern struct ast *ast_dup (const struct ast *);
-extern void ast_free (struct ast *);
+/** 
+ * Create a duplicate of the AST structure s.
+ * 
+ * @param s AST to duplicate.
+ * 
+ * @return The copy of @c s.
+ */
+extern struct ast *ast_dup (const struct ast *s);
 
+/** 
+ * Free the AST @c s.
+ * 
+ * @param s The AST to free.
+ * 
+ * @return NULL
+ */
+extern struct ast *ast_free (struct ast *s);
+
+/** 
+ * Free an AST structure and overwrite it with NULL.
+ * 
+ * @param S AST to free.
+ */
 #define AST_FREE(S) do {			\
-    ast_free (S);				\
-    (S) = NULL;					\
+    (S) = ast_free (S);				\
   } while (0)
 
 #endif
@@ -77,7 +128,7 @@ extern void ast_free (struct ast *);
 #include "config.h"
 
 #include "ast.h"
-#include "compiler.h"
+#include "ast_util.h"
 #include "lib.h"
 #include "xalloc.h"
 
@@ -89,9 +140,11 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
 	       [+ IF (and (exist? "cont") (exist? "sub")) +], [+ ENDIF +]
 	       [+ FOR sub ', ' +]struct ast *[+sub+][+ ENDFOR sub +])
 {
-  struct ast template = { [+name+]_type[+ FOR top_level +], ([+type+]) 0[+ ENDFOR +],
+  struct ast template = { [+ FOR top_level +]([+type+]) 0, [+ ENDFOR +]
 			  {0}, [+ (count "sub") +], NULL };
-  struct ast *out = xmemdup (&template, sizeof *out + sizeof out->ops[0] * ([+ (count "sub") +] - 1));
+  struct ast *out = xmemdup (&template, sizeof *out +
+			     sizeof out->ops[0] * ([+ (count "sub") +] - 1));
+  out->type = [+name+]_type;
   [+ FOR extra +]
     out->op.[+name+].[+call+] = ([+type+]) 0;
   [+ ENDFOR extra +];
@@ -105,12 +158,30 @@ make_[+name+] ([+ FOR cont ', ' +][+type+] [+call+][+ ENDFOR cont +]
 }
 [+ ENDFOR types +]
 
-#define USE_RETURN(X, F) if ((X) != NULL) (X) = F (X)
+/** 
+ * Mutate a variable X according to the function F.
+ *
+ * Take the return value from the function F applied to X (so long as
+ * X is not NULL) and then store it back in to X.
+ * 
+ * @param X The variable to mutate.
+ * @param F The function to use.
+ */
+#define USE_RETURN(X, F) do { if ((X) != NULL) (X) = F (X); } while (0)
 
 struct ast *
 ast_dup (const struct ast *s)
 {
-  struct ast *out = xmemdup (s, sizeof *s + sizeof s->ops[0] * (s->num_ops - 1));
+  if (s == NULL)
+    return NULL;
+
+#if USE_REFCOUNT
+  s->refs++;
+  return s;
+#else
+  struct ast *out = xmemdup (s, sizeof *s +
+			     sizeof s->ops[0] * (s->num_ops - 1));
+
   [+ FOR top_level +]
     [+ IF (== "char *" (get "type")) +]
     USE_RETURN (out->[+call+], xstrdup);
@@ -120,6 +191,7 @@ ast_dup (const struct ast *s)
     USE_RETURN (out->[+call+], loc_dup);
   [+ ENDIF +]
     [+ ENDFOR top_level+];
+
   switch (out->type)
     {
       [+ FOR types +]
@@ -132,17 +204,28 @@ ast_dup (const struct ast *s)
 	break;
       [+ ENDFOR types+]
     }
+
   int i;
   for (i = 0; i < out->num_ops; i++)
     USE_RETURN (out->ops[i], ast_dup);
   return out;
+#endif	/* USE_REFCOUNT */
 }
 
-void
+struct ast *
 ast_free (struct ast *s)
 {
   if (s == NULL)
-    return;
+    return NULL;
+
+#if USE_REFCOUNT
+  if (s->refs != 0)
+    {
+      s->refs--;
+      return s;
+    }
+#endif
+
   [+ FOR top_level +]
     [+ IF (== "char *" (get "type")) +]
     FREE (s->[+call+]);
@@ -152,6 +235,7 @@ ast_free (struct ast *s)
     FREE_LOC (s->[+call+]);
   [+ ENDIF +]
     [+ ENDFOR top_level +];
+
   switch (s->type)
     {
       [+ FOR types +]
@@ -164,10 +248,19 @@ ast_free (struct ast *s)
 	break;
       [+ ENDFOR types +]
 	}
+
   int i;
   for (i = 0; i < s->num_ops; i++)
     AST_FREE (s->ops[i]);
+
   FREE (s);
+  return NULL;
 }
 
 [+ ESAC +]
+
+/* Hey Emacs!
+Local Variables:
+mode: c
+End:
+*/

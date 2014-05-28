@@ -1,27 +1,35 @@
-/* This is the main driver for the program.
-
-Copyright (C) 2014 Kieran Colford
-
-This file is part of Compiler.
-
-Compiler is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
-
-Compiler is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Compiler; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>. */
+/**
+ * @file   compiler.c
+ * @author Kieran Colford <colfordk@gmail.com>
+ * 
+ * @brief  This is the main driver for the program.
+ * 
+ * Copyright (C) 2014 Kieran Colford
+ *
+ * This file is part of Compiler.
+ *
+ * Compiler is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Compiler is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with Compiler; see the file COPYING.  If not see
+ * <http://www.gnu.org/licenses/>.
+ * 
+ */
 
 #include "config.h"
 
 #include "compiler.h"
 #include "copy-file.h"
+#include "gl_xlist.h"
+#include "lib.h"
 #include "progname.h"
 
 #include <stdlib.h>
@@ -33,19 +41,15 @@ along with Compiler; see the file COPYING.  If not see
 
 #include <assert.h>
 
-int optimize = 0;
-int debug = 0;
+const char *argp_program_version = PACKAGE_STRING; /**< Program version. */
+const char *argp_program_bug_address = PACKAGE_BUGREPORT; /**< Bug address. */
 
-char *infile_name = NULL;
-char *outfile_name = NULL;
-
-extern int yydebug;
-extern char stop;
-extern void run_unit (void);
-
-const char *argp_program_version = PACKAGE_STRING;
-const char *argp_program_bug_address = PACKAGE_BUGREPORT;
-
+/** 
+ * Function to print a formated version message and copyright notice.
+ * 
+ * @param stream The FILE * stream to print to.
+ * @param state The state of the ARGP parser.
+ */
 void
 print_version (FILE *stream, struct argp_state *state)
 {
@@ -57,7 +61,8 @@ This is free software: you are free to change and redistribute it.\n\
 There is NO WARRANTY, to the extent permitted by law.\n"), COPYRIGHT_YEAR);
 }
 
-void (*argp_program_version_hook)(FILE *, struct argp_state *) = print_version;
+void (*argp_program_version_hook)(FILE *, struct argp_state *) =
+  print_version;		/**< Version printing hook. */
 
 const char *doc =
   N_("This is an experimental compiler that compiles a Turing complete"
@@ -69,7 +74,7 @@ const char *doc =
      " goto-statements and labels, if-statements, the comparison operators"
      " (<, >, <=, >=, ==, !=) can be used in the test for an if-statement,"
      " the bit wise operators (|, &, ^) are available, as well as pointers"
-     " (but there is no pointer data type), and more...");
+     " (but there is no pointer data type), and more..."); /**< Help message. */
 
 struct argp_option opts[] = {
   { "outfile",  'o', "FILE",                   0,
@@ -93,8 +98,18 @@ struct argp_option opts[] = {
     N_("Add LIB to the list of linked-in libraries") },
 #endif
   { 0 }
-};
+};				/**< The program options recognized by
+				   this compiler. */
 
+/** 
+ * The ARGP parser function.
+ * 
+ * @param key The key that maps to an option.
+ * @param arg The argument supplied to the option (or NULL).
+ * @param state A pointer describing the state of the parser.
+ * 
+ * @return Error code as described by the ARGP info docs.
+ */
 error_t
 arg_parse (int key, char *arg, struct argp_state *state)
 {
@@ -137,7 +152,7 @@ arg_parse (int key, char *arg, struct argp_state *state)
       break;
 
     case ARGP_KEY_ARG:
-      infile_name = arg;
+      gl_list_add_last (infile_name, arg);
       break;
 
     case ARGP_KEY_NO_ARGS:
@@ -150,6 +165,14 @@ arg_parse (int key, char *arg, struct argp_state *state)
   return 0;
 }
 
+/** 
+ * The main entry point.
+ * 
+ * @param argc Number of program arguments.
+ * @param argv The argument vector supplied to this program.
+ * 
+ * @return The exit status of the program.
+ */
 int main (int argc, char *argv[])
 {
   set_program_name (argv[0]);
@@ -160,19 +183,19 @@ int main (int argc, char *argv[])
   textdomain (PACKAGE);
 #endif
 
-  /* XXX: This has some sort of side effect that affects the printf
-          family of functions, the cause must be found out at once and
-          fixed with a proper solution rather than what we have
-          here. */
+  /** @todo This @c gettext call has some sort of side effect that
+      affects the printf family of functions, the cause must be found
+      out at once and fixed with a proper solution rather than what we
+      have here. */
 #if 1
   char *test = _("testing");
   assert (test != NULL);
 #endif
 
+  vars_init ();
+
   struct argp args = { opts, arg_parse, N_("FILE"), doc };
   argp_parse (&args, argc, argv, 0, NULL, NULL);
-
-  assert (infile_name != NULL);
 
   run_unit ();
 

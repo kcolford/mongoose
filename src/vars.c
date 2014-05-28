@@ -1,9 +1,9 @@
 /**
- * @file   compilation_passes.c
+ * @file   vars.c
  * @author Kieran Colford <colfordk@gmail.com>
  * 
- * @brief This is the routine that runs all the different passes in
- * the correct order.
+ * @brief This object file stores all the global variables used
+ * throughout the program that require external linkage.
  * 
  * Copyright (C) 2014 Kieran Colford
  *
@@ -27,18 +27,23 @@
 
 #include "config.h"
 
-#include "ast.h"
 #include "compiler.h"
+#include "gl_array_list.h"
 
-int
-run_compilation_passes (struct ast **ss)
+FILE *outfile = NULL;
+char stop = 0;
+
+int optimize = 0;
+int debug = 0;
+
+gl_list_t infile_name = NULL;
+char *outfile_name = NULL;
+
+char *file_name = NULL;
+int lineno = 0;
+
+void
+vars_init ()
 {
-  int ret = 0;
-  ret = ret || semantic (*ss);
-  ret = ret || dealias (ss);
-  ret = ret || collect_vars (*ss);
-  ret = ret || optimizer (ss);
-  ret = ret || gen_code (*ss);
-  AST_FREE (*ss);
-  return ret;
+  infile_name = gl_list_create_empty (GL_ARRAY_LIST, NULL, NULL, NULL, 1);
 }

@@ -1,4 +1,4 @@
-autogen definitions ast; /* -*- mode:c -*- */
+autogen definitions ast;
 
 /* This is the definition file for the AST.
 
@@ -24,126 +24,187 @@ added_code = "
 #include \"loc.h\"
 #include <stddef.h>
 
-#define AST_THROW_AWAY 0x1
-
-#define AST_UNARY_PREFIX    0x20000
-
+#define USE_REFCOUNT 0
 ";
 
 top_level = {
-    type = "struct loc *";
-    call = loc;
+  type = "enum ast_code";
+  call = type;
+  doc = "The type of this AST.";
 };
 
 top_level = {
+  type = "struct loc *";
+  call = loc;
+  doc = "The location of this AST's return value.";
+};
+
+top_level = {
+  type = unsigned;
+  call = throw_away;
+  size = 1;
+  doc = "Whether or not to throw away the return value for this AST.";
+};
+
+top_level = {
+  type = unsigned;
+  call = unary_prefix;
+  size = 1;
+  doc = "Whether this unary operator is prefix op.";
+};
+
+top_level = {
+  type = unsigned;
+  call = boolean_not;
+  size = 1;
+  doc = "Whether this boolean expression has a NOT applied to it.";
+};
+
+top_level = {
+  type = unsigned;
+  call = refs;
+  size = 32;
+  doc = "The reference count of this structure.";
+};
+
+top_level = {
+  type = "struct ast *";
+  call = next;
+  doc = "The next AST to go to after this one.";
+};
+
+types = {
+  name = block;
+  sub = val;
+  doc = "One level of boxing that can be placed on an AST.";
+};
+
+types = {
+  name = ret;
+  sub = val;
+  doc = "A return statement.";
+};
+
+types = {
+  name = function;
+  cont = {
+    type = "char *";
+    call = type;
+    doc = "The return type of the function.";
+  };
+  cont = {
+    type = "char *";
+    call = name;
+    doc = "The name of the function.";
+  };
+  sub = args;
+  sub = body;
+  doc = "A function declaration.";
+};
+
+types = {
+  name = cond;
+  cont = {
+    type = "char *";
+    call = name;
+    doc = "The branch to jump to.";
+  };
+  sub = cond;
+  doc = "A conditional goto.";
+};
+
+types = {
+  name = label;
+  cont = {
+    type = "char *";
+    call = name;
+    doc = "The name of the label.";
+  };
+  doc = "A label for a goto.";
+};
+
+types = {
+  name = jump;
+  cont = {
+    type = "char *";
+    call = name;
+    doc = "The target of this unconditional jump.";
+  };
+  doc = "An unconditional jump.";
+};
+
+types = {
+  name = integer;
+  cont = {
+    type = "long long";
+    call = i;
+    doc = "The value that this integer represents.";
+  };
+  doc = "An integer literal.";
+};
+
+types = {
+  name = string;
+  cont = {
+    type = "char *";
+    call = val;
+    doc = "The value that this string literal represents.";
+  };
+  doc = "A string literal.";
+};
+
+types = {
+  name = variable;
+  cont = {
+    type = "char *";
+    call = type;
+    doc = "The type of this variable.";
+  };
+  cont = {
+    type = "char *";
+    call = name;
+    doc = "The name of this variable.";
+  };
+  extra = {
     type = int;
-    call = flags;
-};
-
-top_level = {
-    type = "struct ast *";
-    call = next;
-};
-
-types = {
-    name = block;
-    sub = val;
+    call = alloc;
+    doc = "The amount of memory to be allocated for this variable.";
+  };
+  doc = "A variable.";
 };
 
 types = {
-    name = ret;
-    sub = val;
+  name = binary;
+  cont = {
+    type = int;
+    call = op;
+    doc = "An integer representing an opcode.";
+  };
+  sub = left;
+  sub = right;
+  doc = "A binary operation.";
 };
 
 types = {
-    name = function;
-    cont = {
-	type = "char *";
-	call = type;
-    };
-    cont = {
-	type = "char *";
-	call = name;
-    };
-    sub = args;
-    sub = body;
+  name = unary;
+  cont = {
+    type = int;
+    call = op;
+    doc = "An integer representing an opcode.";
+  };
+  sub = arg;
+  doc = "A unary operation.";
 };
 
 types = {
-    name = cond;
-    sub = cond;
-    sub = body;
+  name = function_call;
+  sub = name;
+  sub = args;
+  doc = "A function call.";
 };
 
-types = {
-    name = label;
-    cont = {
-	type = "char *";
-	call = name;
-    };
-};
-
-types = {
-    name = jump;
-    cont = {
-	type = "char *";
-	call = name;
-    };
-};
-
-types = {
-    name = integer;
-    cont = {
-	type = "long long";
-	call = i;
-    };
-};
-
-types = {
-    name = string;
-    cont = {
-	type = "char *";
-	call = val;
-    };
-};
-
-types = {
-    name = variable;
-    cont = {
-	type = "char *";
-	call = type;
-    };
-    cont = {
-	type = "char *";
-	call = name;
-    };
-    extra = {
-	type = int;
-	call = alloc;
-    };
-};
-
-types = {
-    name = binary;
-    cont = {
-	type = int;
-	call = op;
-    };
-    sub = left;
-    sub = right;
-};
-
-types = {
-    name = unary;
-    cont = {
-	type = int;
-	call = op;
-    };
-    sub = arg;
-};
-
-types = {
-    name = function_call;
-    sub = name;
-    sub = args;
-};
+/*
+Local Variables:
+mode:c
+End:
+*/

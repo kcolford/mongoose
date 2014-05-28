@@ -1,30 +1,39 @@
-/* This is the parser for the program.
-
-Copyright (C) 2014 Kieran Colford
-
-This file is part of Compiler.
-
-Compiler is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public License as published by the
-Free Software Foundation; either version 3 of the License, or (at your
-option) any later version.
-
-Compiler is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Compiler; see the file COPYING.  If not see
-<http://www.gnu.org/licenses/>. */
+/**
+ * @file   
+ * @author Kieran Colford <colfordk@gmail.com>
+ * 
+ * @brief  This is the parser for the program.
+ * 
+ * Copyright (C) 2014 Kieran Colford
+ *
+ * This file is part of Compiler.
+ *
+ * Compiler is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Compiler is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with Compiler; see the file COPYING.  If not see
+ * <http://www.gnu.org/licenses/>.
+ *
+ */
 
 %error-verbose
 %define parse.lac full
+
+%expect 1
 
 %{
 #include "config.h"
 
 #include "ast.h"
+#include "ast_util.h"
 #include "compiler.h"
 #include "lib.h"
 #include "xalloc.h"
@@ -35,10 +44,12 @@ along with Compiler; see the file COPYING.  If not see
 int yydebug = 0;
 
 void yyerror (const char *);
+static struct ast *make_ifstatement (struct ast *, struct ast *);
 static struct ast *make_dowhileloop (struct ast *, struct ast *);
 static struct ast *make_whileloop (struct ast *, struct ast *);
 static struct ast *make_array (char *, char *, struct ast *);
 static struct ast *make_forloop (struct ast *, struct ast *, struct ast *, struct ast *);
+static struct ast *make_ifelse (struct ast *, struct ast *, struct ast *);
 
 #define YYDEBUG 1
 %}
@@ -149,9 +160,10 @@ maybe_expr:     /* empty */ { $$ = NULL; }
 statement:	';'                             { $$ = NULL; }
 	|	STR STR ';'                     { $$ = make_variable ($1, $2); }
 	|	STR STR '[' expr ']' ';'        { $$ = make_array ($1, $2, $4); }
-	|	STR STR '=' expr ';'            { $$ = make_binary ('=', make_variable ($1, $2), $4); $$->flags |= AST_THROW_AWAY; }
-	|	expr ';'                        { $$ = $1; $$->flags |= AST_THROW_AWAY; }
-	|	IF '(' expr ')' sub_body        { $$ = make_cond ($3, $5); }
+	|	STR STR '=' expr ';'            { $$ = make_binary ('=', make_variable ($1, $2), $4); $$->throw_away = 1; }
+	|	expr ';'                        { $$ = $1; $$->throw_away = 1; }
+	|	IF '(' expr ')' sub_body        { $$ = make_ifstatement ($3, $5); }
+	|	IF '(' expr ')' sub_body ELSE sub_body { $$ = make_ifelse ($3, $5, $7); }
 	|	STR ':' statement               { $$ = ast_cat (make_label ($1), $3); }
 	|	GOTO STR ';'                    { $$ = make_jump ($2); }
 	|	WHILE '(' expr ')' sub_body     { $$ = make_whileloop ($3, $5); }
@@ -169,7 +181,7 @@ str:		STRING     { $$ = $1; }
 
 /* These are all the constant expressions. */
 constrval:	INT { $$ = make_integer ($1); }
-	|	str { $$ = make_string ($1); }
+	|	str { $$ = make_unary ('&', make_string ($1)); }
 	;
 
 /* Expressions. */
@@ -208,8 +220,8 @@ expr:		STR                   { $$ = make_variable (NULL, $1); }
 	|	'*'expr %prec SIZEOF  { $$ = make_unary ('*', $2); }
 	|	expr INC              { $$ = make_unary (INC, $1); }
 	|	expr DEC              { $$ = make_unary (DEC, $1); }
-	|	INC expr              { $$ = make_unary (AST_UNARY_PREFIX | INC, $2); }
-	|	DEC expr              { $$ = make_unary (AST_UNARY_PREFIX | DEC, $2); }
+	|	INC expr              { $$ = make_unary (INC, $2); $$->unary_prefix = 1; }
+	|	DEC expr              { $$ = make_unary (DEC, $2); $$->unary_prefix = 1; }
 	|	'-'expr %prec SIZEOF  { $$ = make_unary ('-', $2); }
 	|	'(' expr ')'          { $$ = $2; }
 	|	constrval             { $$ = $1; }
@@ -222,6 +234,17 @@ callargs:	expr                  { $$ = $1; }
 
 %%
 
+static void
+no_op (void)
+{
+  ;
+}
+
+/** 
+ * Print error message with current file name and line number.
+ * 
+ * @param msg Error message to be displayed.
+ */
 void
 yyerror (const char *msg)
 {
@@ -229,17 +252,25 @@ yyerror (const char *msg)
 }
 
 struct ast *
+make_ifstatement (struct ast *cond, struct ast *body)
+{
+  char *t = place_holder (), *tt = xstrdup (t);
+  cond->boolean_not = 1;
+  return ast_cat (make_cond (t, cond) , ast_cat (body, make_label (tt)));
+}
+
+struct ast *
 make_dowhileloop (struct ast *cond, struct ast *body)
 {
   char *t = place_holder (), *tt = xstrdup (t);
-  return ast_cat (make_label (t), ast_cat (body, make_cond (cond, make_jump (tt))));
+  return ast_cat (make_label (t), ast_cat (body, make_cond (tt, cond)));
 }
 
 struct ast *
 make_whileloop (struct ast *cond, struct ast *body)
 {
   char *t = place_holder (), *tt = xstrdup (t);
-  return ast_cat (make_label (t), make_cond (cond, ast_cat (body, make_jump (tt))));
+  return ast_cat (make_label (t), make_ifstatement (cond, ast_cat (body, make_jump (tt))));
 }
 
 struct ast *
@@ -256,10 +287,20 @@ make_array (char *type, char *name, struct ast *size)
 struct ast *
 make_forloop (struct ast *init, struct ast *cond, struct ast *step, struct ast *body)
 {
-  step->flags |= AST_THROW_AWAY;
-  init->flags |= AST_THROW_AWAY;
+  step->throw_away = 1;
+  init->throw_away = 1;
   struct ast *out = ast_cat (body, step);
   out = make_whileloop (cond, out);
   out = ast_cat (init, out);
+  return out;
+}
+
+struct ast *
+make_ifelse (struct ast *cond, struct ast *body, struct ast *elsebody)
+{
+  char *t = place_holder (), *tt = xstrdup (t);
+  body = ast_cat (body, make_jump (t));
+  struct ast *out = ast_cat (make_label (tt), elsebody);
+  out = ast_cat (make_ifstatement (cond, body), out);
   return out;
 }
