@@ -1,21 +1,7 @@
-SUBDIRS = lib src man tests po
+SUBDIRS = lib src man tests po doc
 ACLOCAL_AMFLAGS = -I m4
-EXTRA_DIST = m4/gnulib-cache.m4 .version COPYING README.md doc.cfg.in \
-texi2md/texi2md.pl doc/gpl-3.0.texi doc/relocatable.texi
+EXTRA_DIST = m4/gnulib-cache.m4 .version COPYING README.md texi2md/texi2md.pl
 BUILT_SOURCES = .version
-
-doc: doc.cfg
-	$(AM_V_GEN)$(DOXYGEN) $<
-
-html: doc
-
-pdf: doc
-	@if [ "@GENERATE_LATEX@" = "YES" ]; then \
-	  $(MAKE) -C doc/latex refman.pdf; \
-	fi
-
-distclean-local:
-	$(RM) -r $(builddir)/doc/html $(builddir)/doc/latex
 
 .version:
 	$(AM_V_GEN)echo $(VERSION) > $@
@@ -25,4 +11,4 @@ gen-tarball-version:
 
 dist-hook: gen-tarball-version
 
-.PHONY: doc gen-tarball-version pdf-make
+.PHONY: gen-tarball-version

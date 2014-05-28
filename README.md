@@ -72,7 +72,7 @@ If you don't know how Compiler works, read through the documentation.
 It has all been generated with Doxygen and thus should be easy to
 generate read through.  To generate the documentation, just run:
 
-    make doc
+    make html
 
 If you can't think of something to work on, see the Doxygen generated
 Todo List.

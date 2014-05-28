@@ -106,8 +106,9 @@ AC_DEFINE_UNQUOTED([CC], ["$CC"], [C compiler used to bootstrap])
 AM_GNU_GETTEXT_VERSION([0.18.1])
 AM_GNU_GETTEXT([external])
 
-AC_CONFIG_FILES([doc.cfg
-		 Makefile
+AC_CONFIG_FILES([Makefile
+		 doc/doc.cfg
+		 doc/Makefile
 		 lib/Makefile
 		 man/Makefile
 		 po/Makefile.in

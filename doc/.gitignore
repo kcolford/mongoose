@@ -1,5 +1,6 @@
-html
-latex
-relocatable.texi
+/doc.cfg
+/html
+/latex
+/relocatable.texi
 /gpl-3.0.texi
 /fdl.texi
