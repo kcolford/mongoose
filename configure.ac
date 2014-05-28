@@ -23,11 +23,13 @@ AC_PROG_YACC
 AM_PROG_LEX
 AC_PROG_RANLIB
 
-AM_MISSING_PROG([AUTOGEN], [autogen])
+AC_ARG_VAR([AUTOGEN], [*Maintainers Only*: The AutoGen program to use,
+must be version 5 or later.])
+AC_PATH_PROG([AUTOGEN], [autogen], [touch])
 
 AC_ARG_VAR([DOXYGEN], [The instance of Doxygen to use when generating
 documentation from source files.  Note: must be version 1.8 or higher])
-AC_CHECK_PROGS([DOXYGEN], [doxygen])
+AC_PATH_PROG([DOXYGEN], [doxygen])
 AS_IF([test -n "$DOXYGEN"], [
   AC_MSG_CHECKING([whether doxygen is version 1.8 or higher])
   AX_COMPARE_VERSION([1.8], [le], [$($DOXYGEN -v)], [
@@ -40,18 +42,17 @@ AS_IF([test -n "$DOXYGEN"], [
   DOXYGEN=:
 ])
 
-AC_ARG_VAR([LATEX], [The instance of LaTeX to use when compiling .tex
-files into the appropriate documentation.])
-AC_CHECK_PROGS([LATEX], [latex])
+AC_ARG_VAR([LATEX], [The instance of LaTeX to use when compiling .tex files.])
+AC_PATH_PROG([LATEX], [latex])
 AS_IF([test -n "$LATEX"], [
   AC_SUBST([GENERATE_LATEX], [YES])
-  AC_CHECK_PROGS([PDFLATEX], [pdflatex])
+  AC_PATH_PROG([PDFLATEX], [pdflatex])
   AS_IF([test -n "$PDFLATEX"], [
     AC_SUBST([USE_PDFLATEX], [YES])
   ], [
     AC_SUBST([USE_PDFLATEX], [NO])
   ])
-  AC_CHECK_PROGS([MAKEINDEX], [makeindex])
+  AC_PATH_PROG([MAKEINDEX], [makeindex])
 ], [
   AC_SUBST([GENERATE_LATEX], [NO])
   LATEX=:
