@@ -1,3 +1,2 @@
-core
-log-*
-*.log
+/core
+/*.log

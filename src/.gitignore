@@ -1,13 +1,13 @@
-.deps
+/.deps
 
-compiler
+/compiler
 
-ast.c
-ast.h
+/ast.c
+/ast.h
 
-parse.c
-parse.h
+/parse.c
+/parse.h
 
-lex.c
+/lex.c
 
-*.o
+/*.o
