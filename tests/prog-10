@@ -2,10 +2,14 @@
 
 srcfile=file.c
 cat - > $srcfile <<EOF
+#ifdef GCC
+#define ptr_t int *
+#endif
+
 int main ()
 {
   int a = 45;
-  int a_ptr = &a;
+  ptr_t a_ptr = &a;
   printf ("%d\n", *a_ptr);
   return 0;
 }

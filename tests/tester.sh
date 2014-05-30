@@ -15,7 +15,7 @@ else
 fi
 
 nativeout=`mktemp`
-$CC -o $prog $srcfile -lm 2> /dev/null
+$CC -DGCC -o $prog $srcfile -lm 2> /dev/null || ret=1
 if [ -x $prog ]; then
     $prog > $nativeout || ret=1
 else

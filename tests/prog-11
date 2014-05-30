@@ -2,9 +2,13 @@
 
 srcfile=file.c
 cat - > $srcfile <<EOF
+#ifdef GCC
+#define ptr_t int *
+#endif
+
 int main ()
 {
-  int a_ptr = malloc (8);
+  ptr_t a_ptr = malloc (8);
   *a_ptr = 45;
   printf ("%d\n", *a_ptr);
   free (a_ptr);
