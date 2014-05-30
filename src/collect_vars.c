@@ -61,17 +61,14 @@ collect_vars_r (struct ast *s)
       *t = ast_cat (collect_vars_r (*t), *t);
       break;
 
-    case variable_type:
-      if (s->op.variable.alloc != 0)
+    case alloc_type:
+      if (s->ops[0]->type == integer_type)
 	{
-	  assert (s->op.variable.type != NULL);
-	  vars = make_variable (xstrdup (s->op.variable.type),
-				xstrdup (s->op.variable.name));
-	  vars->op.variable.alloc = s->op.variable.alloc;
-	  s->op.variable.alloc = 0;
+	  vars = make_alloc (s->ops[0]);
+	  s->ops[0] = NULL;
 	}
       break;
-
+	
     default:
       ;
       int i;

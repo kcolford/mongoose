@@ -357,7 +357,8 @@ gen_code_r (struct ast *s)
       argnum = 0;
       for (i = s->ops[0]; i != NULL; i = i->next)
 	{
-	  assert (i->type == variable_type);
+	  if (i->type != variable_type)
+	    continue;
 	  PUT ("\tsub\t$%d, %%rsp\n", i->op.variable.alloc);
 	  assert (i->loc != NULL);
 	  PUT ("\tmov\t%s, %s\n", regis(call_regis(argnum)),
@@ -433,14 +434,6 @@ gen_code_r (struct ast *s)
       if (s->loc == NULL)
 	MAKE_BASE_LOC (s->loc, literal_loc,
 		       my_printf ("%lld", s->op.integer.i));
-      break;
-
-    case variable_type:
-      /* The stack position of the variable has already been
-	 determined by a previous pass, but we still have to emit an
-	 instruction if any memory has to be allocated. */
-      if (s->op.variable.alloc != 0)
-	PUT ("\tsub\t$%d, %%rsp\n", s->op.variable.alloc);
       break;
 
     case string_type:
@@ -636,6 +629,17 @@ gen_code_r (struct ast *s)
 	  MAKE_BASE_LOC (s->loc, register_loc, xstrdup ("%rax"));
 	}
       GIVE_REGISTER (s->loc);
+      break;
+
+    case alloc_type:
+      if (s->ops[0] != NULL)
+	{
+	  gen_code_r (s->ops[0]);
+	  PUT ("\tsub\t%s, %%rsp\n", print_loc (s->ops[0]->loc));
+	  FREE_LOC (s->ops[0]->loc);
+	  MAKE_BASE_LOC (s->loc, register_loc, xstrdup ("%rsp"));
+	  GIVE_REGISTER (s->loc);
+	}
       break;
 
     default:

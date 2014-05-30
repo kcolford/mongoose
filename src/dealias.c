@@ -36,6 +36,7 @@
 #include "config.h"
 
 #include "ast.h"
+#include "ast_util.h"
 #include "compiler.h"
 #include "gl_rbtree_list.h"
 #include "gl_xlist.h"
@@ -202,7 +203,7 @@ static inline struct loc *
 get_label (char *l)
 {
   struct loc *s = get_from_state (l);
-  if (*s->base != '.')
+  if (s->kind != symbol_loc)
     {
       struct state_stack *p = state;
       /* Jump up to the function level state. */
@@ -245,6 +246,7 @@ dealias_r (struct ast **ss)
     case variable_type:
       if (s->op.variable.type != NULL)
 	{
+	  s->next = ast_cat (make_alloc (make_integer (8)), s->next);
 	  s->op.variable.alloc = 8;
 	  add_to_state (s->op.variable.name, 8);
 	}

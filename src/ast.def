@@ -168,7 +168,7 @@ types = {
   extra = {
     type = int;
     call = alloc;
-    doc = "The amount of memory to be allocated for this variable.";
+    doc = "The amount of memory that was allocated for this variable.";
   };
   doc = "A variable.";
 };
@@ -201,6 +201,12 @@ types = {
   sub = name;
   sub = args;
   doc = "A function call.";
+};
+
+types = {
+  name = alloc;
+  sub = amount;
+  doc = "Allocate memory.";
 };
 
 /*

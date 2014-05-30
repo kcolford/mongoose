@@ -277,12 +277,10 @@ make_whileloop (struct ast *cond, struct ast *body)
 struct ast *
 make_array (char *type, char *name, struct ast *size)
 {
-  struct ast *func = make_variable (NULL, xstrdup ("__builtin_alloca"));
-  size = make_binary ('*', size, make_integer (8));
-  func = make_function_call (func, size);
-  char *newtype = my_printf ("%s *", type);
+  char *newtype = my_printf ("%s * const", type);
   FREE (type);
-  return make_binary ('=', make_variable (newtype, name), func);
+  size = make_binary ('*', size, make_integer (8));
+  return make_binary ('=', make_variable (newtype, name), make_alloc (size));
 }
 
 struct ast *

@@ -93,40 +93,16 @@ optimizer_r (struct ast **ss)
   switch (s->type)
     {
       /* Fold up repetitive allocations into one allocation. */
-    case variable_type:
-      if (s->next != NULL)
+    case alloc_type:
+      if (s->ops[0] != NULL
+	  && s->ops[0]->type == integer_type
+	  && s->next != NULL
+	  && s->next->type == alloc_type
+	  && s->next->ops[0] != NULL
+	  && s->next->ops[0]->type == integer_type)
 	{
-	  int folded = 0;
-	  switch (s->next->type)
-	    {
-	    case variable_type:
-	      if (s->next->op.variable.type == NULL
-		  && s->next->op.variable.name == NULL)
-		{
-		  s->op.variable.alloc += s->next->op.variable.alloc;
-		  folded = 1;
-		}
-	      break;
-
-	    case function_call_type:
-	      if (STREQ (s->next->ops[0]->loc->base, "__builtin_alloca")
-		  && s->ops[1]->type == integer_type)
-		{
-		  s->op.variable.alloc += s->next->ops[1]->op.integer.i;
-		  folded = 1;
-		}
-	      break;
-
-	    default:
-	      break;
-	    }
-	  if (folded)
-	    {
-	      struct ast *t = s->next;
-	      s->next = t->next;
-	      t->next = NULL;
-	      AST_FREE (t);
-	    }
+	  s->next->ops[0]->op.integer.i += s->ops[0]->op.integer.i;
+	  AST_FREE (s->ops[0]);
 	}
       break;
 
