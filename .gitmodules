@@ -3,4 +3,4 @@
 	url = git://git.sv.gnu.org/gnulib.git
 [submodule "texi2md"]
 	path = texi2md
-	url = git@github.com:kcolford/texi2md.git
+	url = git://github.com/kcolford/texi2md.git
