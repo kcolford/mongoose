@@ -34,7 +34,6 @@
 #include "ast_util.h"
 #include "compiler.h"
 #include "lib.h"
-#include "xalloc.h"
 
 #include <assert.h>
 

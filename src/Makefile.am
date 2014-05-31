@@ -9,6 +9,7 @@ BUILT_SOURCES =					\
 ast.c						\
 ast.h						\
 lex.c						\
+lib-recurse					\
 parse.c						\
 parse.h
 
@@ -34,9 +35,14 @@ vars.c
 
 compiler_LDADD = $(top_builddir)/lib/lib$(PACKAGE).la $(LTLIBINTL) $(LIB_ACL)
 
+lib-recurse:
+	$(MAKE) -C $(top_builddir)/lib lib$(PACKAGE).la
+
 if RELOCATABLE_VIA_LD
 compiler_LDFLAGS = `$(RELOCATABLE_LDFLAGS) $(bindir)`
 endif
 
 ast.c ast.h: ast.def ast.tpl
 	$(AM_V_GEN)$(AUTOGEN) ast.def
+
+.PHONY: lib-recurse
