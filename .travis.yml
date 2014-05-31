@@ -7,6 +7,9 @@ install:
 
 script:
   - ./bootstrap
-  - ./configure --disable-silent-rules
+  - ./configure
   - make
+  - make html
   - make check
+  - make syntax-check
+  - make distcheck
