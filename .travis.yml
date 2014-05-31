@@ -1,9 +1,11 @@
+language: c
+
 install:
   - sudo apt-get update
   - sudo apt-get install autoconf autoconf-archive automake libtool
   - sudo apt-get install gettext autopoint
   - sudo apt-get install autogen help2man
-  - sudo apt-get install doxygen
+  - sudo apt-get install --no-install-recommends doxygen
 
 script:
   - ./bootstrap
