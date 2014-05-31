@@ -5,8 +5,15 @@ if [ x"$COMPILER" = x ]; then
     exit 77
 fi
 
-$COMPILER -o $prog $srcfile 2> $0.log || ret=1
-[ -s $0.log ] || rm $0.log
+logname=`basename $0`.log
+
+$COMPILER -o $prog $srcfile 2> $logname || ret=1
+if [ -s $logname ]; then
+    ret=1
+else
+    rm -f $logname
+fi
+
 myout=`mktemp`
 if [ -x $prog ]; then
     $prog > $myout || ret=1

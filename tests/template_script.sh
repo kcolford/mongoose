@@ -6,6 +6,6 @@ cat - > $srcfile <<EOF
 EOF
 
 ret=0
-. ./tester.sh
+. $srcdir/tester.sh
 rm $srcfile
 exit $ret

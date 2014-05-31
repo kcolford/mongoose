@@ -17,7 +17,7 @@ int main () {
 }
 EOF
 
-. ./tester.sh
+. $srcdir/tester.sh
 
 rm $srcfile
 exit $ret

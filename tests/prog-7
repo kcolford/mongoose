@@ -15,7 +15,7 @@ ret=0
 srcfile=file.c
 echo "$src" > $srcfile
 
-. ./tester.sh
+. $srcdir/tester.sh
 
 rm $srcfile
 exit $ret
