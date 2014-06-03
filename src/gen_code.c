@@ -22,6 +22,13 @@
  * along with Compiler; see the file COPYING.  If not see
  * <http://www.gnu.org/licenses/>.
  *
+ * @todo The current implementation restricts itself in that it cannot
+ * save the value of a register when it runs out of registers.  Thus
+ * we cannot manage when presented with an expression that is too
+ * long, a function call is passed as the paramater to another
+ * function, or there are more parameters for a function than
+ * registers available.
+ *
  */
 
 #include "config.h"
@@ -611,8 +618,8 @@ gen_code_r (struct ast *s)
 	}
       else
 	{
-	  /* TODO: Don't clobber other registers when making a function
-	     call. */
+	  /** @todo Don't clobber other registers when making a
+	      function call. */
 	  int a = 0;
 	  gen_code_r (s->ops[1]);
 	  for (i = s->ops[1]; i != NULL; i = i->next)
