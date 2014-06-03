@@ -32,18 +32,20 @@ programs,
 - Automake*
 - Bash
 - Bison*
-- Doxygen
+- Doxygen+
 - Flex*
 - GCC
 - GIT*
-- Help2man*
+- Help2man*+
 - Make
-- Perl
+- Perl+
 - Tar
 - Valgrind (Optional)
 
 *: Only required if you're a developer or acquired the source from a
  source repository.
+
++: Only required for generating documentation.
 
 How to Set Up
 -------------
