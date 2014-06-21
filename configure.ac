@@ -10,6 +10,8 @@ AC_CONFIG_SRCDIR([src/compiler.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
+AC_CANONICAL_TARGET
+
 AC_USE_SYSTEM_EXTENSIONS
 AM_INIT_AUTOMAKE([foreign silent-rules color-tests dist-xz])
 LT_INIT
@@ -23,10 +25,12 @@ AC_PROG_YACC
 AM_PROG_LEX
 AC_PROG_RANLIB
 
+# Locate the AutoGen program for maintainer's use.
 AC_ARG_VAR([AUTOGEN], [*Maintainers Only*: The AutoGen program to use,
 must be version 5 or later.])
-AC_PATH_PROG([AUTOGEN], [autogen], [touch])
+AC_PATH_PROG([AUTOGEN], [autogen], [false])
 
+# Locate Doxygen on the host system.
 AC_ARG_VAR([DOXYGEN], [The instance of Doxygen to use when generating
 documentation from source files.  Note: must be version 1.8 or higher])
 AC_PATH_PROG([DOXYGEN], [doxygen])
@@ -42,6 +46,7 @@ AS_IF([test -n "$DOXYGEN"], [
   DOXYGEN=:
 ])
 
+# Locate LaTeX for converting Doxygen output to PDFs.
 AC_ARG_VAR([LATEX], [The instance of LaTeX to use when compiling .tex files.])
 AC_PATH_PROG([LATEX], [latex])
 AS_IF([test -n "$LATEX"], [
@@ -58,11 +63,26 @@ AS_IF([test -n "$LATEX"], [
   LATEX=:
 ])
 
+# Check if we can use Help2Man to create a man page for the user.
 AS_IF([test $cross_compiling = no], [
   AM_MISSING_PROG([HELP2MAN], [help2man])
 ], [
   HELP2MAN=:
 ])
+
+# BOOTSTRAP_PROG(VARIABLE, PROGS-TO-CHECK-FOR, [VARIABLE-COMMENT])
+# ----------------------------------------------------------------
+AC_DEFUN([BOOTSTRAP_PROG], [
+  AC_CHECK_TARGET_TOOLS([_BOOTSTRAP_$1], [$2])
+  AS_IF([test -n "$_BOOTSTRAP_$1"], [
+    AC_DEFINE_UNQUOTED([$1], ["$_BOOTSTRAP_$1"], [$3])
+  ])
+])
+# Check for programs that we can boostrap off of.
+BOOTSTRAP_PROG([CC], [$CC], [The C compiler to bootstrap off of.])
+BOOTSTRAP_PROG([CPP], [cpp], [The C preprocessor to boostrap off of.])
+BOOTSTRAP_PROG([AS], [as gas], [The assembler to bootstrap off of.])
+BOOTSTRAP_PROG([LD], [ld], [The linker to bootstrap off of.])
 
 # Set up warnings for the compilation routines.
 gl_MANYWARN_ALL_GCC([warnings])
@@ -100,8 +120,6 @@ AC_FUNC_REALLOC
 
 AC_DEFINE([COPYRIGHT_YEAR], [m4_esyscmd([date +%Y])],
           [year in copyright message])
-
-AC_DEFINE_UNQUOTED([CC], ["$CC"], [C compiler used to bootstrap])
 
 AM_GNU_GETTEXT_VERSION([0.18.1])
 AM_GNU_GETTEXT([external])

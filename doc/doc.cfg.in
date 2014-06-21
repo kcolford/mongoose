@@ -273,8 +273,7 @@ INCLUDE_PATH           = @top_srcdir@ \
                          @top_builddir@/lib
 INCLUDE_FILE_PATTERNS  =
 PREDEFINED             =
-EXPAND_AS_DEFINED      = CC \
-                         YY_DECL
+EXPAND_AS_DEFINED      = YY_DECL
 SKIP_FUNCTION_MACROS   = YES
 #---------------------------------------------------------------------------
 # Configuration options related to external references
