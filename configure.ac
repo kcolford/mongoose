@@ -10,7 +10,23 @@ AC_CONFIG_SRCDIR([src/compiler.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
+# Set the default prefix to /usr.  We do this because that is where
+# glibc is installed on most systems and thus the compiler needs to be
+# installed there too.
+AC_PREFIX_DEFAULT([/usr])
+
+# Determine the target system.
 AC_CANONICAL_TARGET
+AS_IF([test "$target_cpu" != "x86_64"], [
+  AC_MSG_ERROR([Invalid target CPU.])
+])
+AS_IF([test "$target_os" != "linux-gnu"], [
+  AC_MSG_ERROR([Invalid target OS.])
+])
+
+# Determine the directory for glibc files.
+AC_DEFINE_UNQUOTED([ARCHITECTURE_DIR], [LIBDIR "/${target_cpu}-${target_os}"],
+                   [Directory for glibc files.])
 
 AC_USE_SYSTEM_EXTENSIONS
 AM_INIT_AUTOMAKE([foreign silent-rules color-tests dist-xz])
