@@ -1,8 +1,3 @@
-#!/bin/sh
-
-ret=0
-srcfile=file.c
-cat - > $srcfile <<EOF
 int foo (int a) {
     return a;
 }
@@ -15,9 +10,3 @@ int main () {
     printf ("%d\n", bar (0));
     return 0;
 }
-EOF
-
-. $srcdir/tester.sh
-
-rm $srcfile
-exit $ret

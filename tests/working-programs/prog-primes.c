@@ -1,7 +1,3 @@
-#!/bin/sh
-
-srcfile=file.c
-cat - > $srcfile <<EOF
 int main () {
   int primes[100];
   int i = 0;
@@ -20,9 +16,3 @@ int main () {
   }
   return 0;
 }
-EOF
-
-ret=0
-. $srcdir/tester.sh
-rm $srcfile
-exit $ret

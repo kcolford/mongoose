@@ -1,3 +1,7 @@
+#!/bin/sh
+
+ret=0
+srcfile=$1
 
 prog=`mktemp`
 
@@ -5,9 +9,9 @@ if [ x"$COMPILER" = x ]; then
     exit 77
 fi
 
-logname=`basename $0`.log
+logname=$srcfile.log
 
-$COMPILER -o $prog $srcfile 2> $logname || ret=1
+$COMPILER -o $prog $srcfile | tee $logname || ret=1
 if [ -s $logname ]; then
     ret=1
 else
@@ -27,8 +31,11 @@ if [ -x $prog ]; then
     $prog > $nativeout || ret=1
 else
     ret=1
+    echo "The regular C compiler failed..." >&2
 fi
 
 cmp -s $myout $nativeout || ret=1
 
 rm $myout $nativeout $prog
+
+exit $ret

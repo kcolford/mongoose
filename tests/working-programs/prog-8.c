@@ -1,6 +1,4 @@
-#!/bin/sh
 
-src='
 int foo (int a, int b, int c) {
     return 1 + a + a * (1 + b + b * (1 + c + c * (1 + a + a * (1 + b + b * (1 + c + c * (1 + a + a * (1 + b + b * 2)))))));
 }
@@ -10,13 +8,4 @@ int main () {
     return 0;
 }
 
-'
 
-ret=0
-srcfile=file.c
-echo "$src" > $srcfile
-
-. $srcdir/tester.sh
-
-rm $srcfile
-exit $ret

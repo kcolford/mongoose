@@ -1,7 +1,3 @@
-#!/bin/sh
-
-srcfile=file.c
-cat - > $srcfile <<EOF
 int main ()
 {
   int a = 0;
@@ -13,9 +9,3 @@ int main ()
     puts ("Third Condition");
   return 0;
 }
-EOF
-
-ret=0
-. $srcdir/tester.sh
-rm $srcfile
-exit $ret

@@ -1,7 +1,3 @@
-#!/bin/sh
-
-srcfile=file.c
-cat - > $srcfile <<EOF
 /* this is a
    block comment */
 
@@ -22,9 +18,3 @@ int main ()
   printf ("%d\n", test1 ());
   return 0;
 }
-EOF
-
-ret=0
-. $srcdir/tester.sh
-rm $srcfile
-exit $ret

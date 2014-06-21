@@ -1,7 +1,3 @@
-#!/bin/sh
-
-srcfile=file.c
-cat - > $srcfile <<EOF
 int main () {
   int t = 10;
   if (t < 20) {
@@ -12,9 +8,3 @@ int main () {
   printf ("%d\n", t);
   return 0;
 }
-EOF
-
-ret=0
-. $srcdir/tester.sh
-rm $srcfile
-exit $ret

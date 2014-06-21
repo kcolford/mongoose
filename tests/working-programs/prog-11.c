@@ -1,7 +1,3 @@
-#!/bin/sh
-
-srcfile=file.c
-cat - > $srcfile <<EOF
 #ifdef GCC
 #define ptr_t int *
 #endif
@@ -14,9 +10,3 @@ int main ()
   free (a_ptr);
   return 0;
 }
-EOF
-
-ret=0
-. $srcdir/tester.sh
-rm $srcfile
-exit $ret

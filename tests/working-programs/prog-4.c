@@ -1,7 +1,3 @@
-#!/bin/sh
-
-srcfile=file.c
-cat - > $srcfile <<EOF
 int test4 (int a) {
     while (a < 20) {
 	a = a + 1;
@@ -16,11 +12,3 @@ int main () {
     printf ("%d\n", test4 (21));
     return 0;
 }
-EOF
-
-ret=0
-
-. $srcdir/tester.sh
-
-rm $srcfile
-exit $ret
