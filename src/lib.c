@@ -34,13 +34,19 @@
 #include "lib.h"
 #include "xalloc.h"
 
+#include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/wait.h>
+
+#ifndef SYSTEM_EMIT_DEBUGING
+#define SYSTEM_EMIT_DEBUGING 0
+#endif
 
 char *
 my_printf (const char *fmt, ...)
@@ -64,6 +70,18 @@ place_holder (void)
 int
 safe_system (const char *args[])
 {
+  assert (args[0] != NULL);
+
+  /* Emit debuging info about external programs run. */
+  if (SYSTEM_EMIT_DEBUGING)
+    {
+      const char **i;
+      fprintf (stderr, "%s: ", _("Running Program"));
+      for (i = args; i[1] != NULL; i++)
+	fprintf (stderr, "%s ", *i);
+      fprintf (stderr, "%s\n", *i);
+    }
+
   pid_t p = fork ();
   if (p < 0)
     error (1, errno, _("could not fork the process to run %s"), args[0]);

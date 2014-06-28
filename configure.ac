@@ -25,8 +25,20 @@ AS_IF([test "$target_os" != "linux-gnu"], [
 ])
 
 # Determine the directory for glibc files.
-AC_DEFINE_UNQUOTED([ARCHITECTURE_DIR], [LIBDIR "/${target_cpu}-${target_os}"],
+AS_IF([test -z "$archdir"], [
+  archdir="$prefix/lib/${target_cpu}-${target_os}"
+])
+AC_SUBST([archdir])
+AC_DEFINE_UNQUOTED([ARCHITECTURE_DIR], ["$archdir"],
                    [Directory for glibc files.])
+
+# Determine if we can in fact use glibc files on our own.  If not, we
+# fall back on the existing compiler's ability to do this.
+AC_CHECK_FILES([$archdir/crti.o $archdir/crt1.o $archdir/crtn.o], [
+  AC_DEFINE([RUN_INDEPENDANTLY], [1], [Whether we are linking on our own.])
+], [
+  AC_DEFINE([RUN_INDEPENDANTLY], [0])
+])
 
 AC_USE_SYSTEM_EXTENSIONS
 AM_INIT_AUTOMAKE([foreign silent-rules color-tests dist-xz])
