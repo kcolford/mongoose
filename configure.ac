@@ -126,7 +126,7 @@ AC_DEFUN([BOOTSTRAP_PROG], [
 BOOTSTRAP_PROG([CC], [$CC], [The C compiler to bootstrap off of.])
 BOOTSTRAP_PROG([CPP], [cpp], [The C preprocessor to boostrap off of.])
 BOOTSTRAP_PROG([AS], [as gas], [The assembler to bootstrap off of.])
-BOOTSTRAP_PROG([LD], [ld], [The linker to bootstrap off of.])
+BOOTSTRAP_PROG([LD], [ld gold], [The linker to bootstrap off of.])
 
 # Set up warnings for the compilation routines.
 gl_MANYWARN_ALL_GCC([warnings])
