@@ -29,7 +29,7 @@
 
 #include "compiler.h"
 #include "copy-file.h"
-#include "gl_array_list.h"
+#include "gl_linked_list.h"
 #include "gl_xlist.h"
 #include "lib.h"
 #include "xalloc.h"
@@ -110,9 +110,7 @@ run_unit (void)
 {
   gl_list_t name = NULL;
   if (stop == 0)
-    /** @todo Consider using a linked list instead of an array list
-	for managing the queue of compiled object files. */
-    name = gl_list_create_empty (GL_ARRAY_LIST, NULL, NULL, NULL, 1);
+    name = gl_list_create_empty (GL_LINKED_LIST, NULL, NULL, NULL, 1);
 
   unsigned i;
   const char *out;
