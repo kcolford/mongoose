@@ -6,8 +6,9 @@ COMPILER_OPTS =
 export COMPILER_OPTS
 
 config_h_header = "config\.h"
-local-checks-to-skip = sc_trailing_blank sc_vulnerable_makefile_CVE-2012-3386
 update-copyright-env = UPDATE_COPYRIGHT_HOLDER="Kieran Colford"
+local-checks-to-skip = sc_trailing_blank sc_vulnerable_makefile_CVE-2012-3386
+VC_LIST_ALWAYS_EXCLUDE_REGEX = 'tests/.*\.c$$'
 
 man: $(srcdir)/.version
 	$(MAKE) -C man
