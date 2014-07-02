@@ -10,13 +10,17 @@ AC_CONFIG_SRCDIR([src/compiler.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
-# Set the default prefix to /usr.  We do this because that is where
-# glibc is installed on most systems and thus the compiler needs to be
-# installed there too.
-AC_PREFIX_DEFAULT([/usr])
+# Set the default prefix to the same one as ldd(1).  We do this
+# because that is the same prefix where glibc is installed on most
+# systems and thus the compiler needs to be installed there too.
+AC_PREFIX_PROGRAM([ldd])
 
-# Determine the target system.
+# Determine the build, host, and target system.
+AC_CANONICAL_BUILD
+AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
+
+# Restrict ourselves to only building on systems we know.
 AS_IF([test "$target_cpu" != "x86_64"], [
   AC_MSG_ERROR([Invalid target CPU.])
 ])
