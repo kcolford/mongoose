@@ -41,7 +41,7 @@ AC_PROG_RANLIB
 # Locate the AutoGen program for maintainer's use.
 AC_ARG_VAR([AUTOGEN], [*Maintainers Only*: The AutoGen program to use,
 must be version 5 or later.])
-AC_PATH_PROG([AUTOGEN], [autogen], [false])
+AC_CHECK_PROG([AUTOGEN], [autogen], [false])
 
 # Locate Doxygen on the host system.
 AC_ARG_VAR([DOXYGEN], [The instance of Doxygen to use when generating
