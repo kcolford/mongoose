@@ -4,7 +4,9 @@
 AC_PREREQ([2.68])
 AC_INIT([Compiler],
         [m4_esyscmd([build-aux/git-version-gen .tarball-version])],
-	[colfordk@gmail.com])
+	[colfordk@gmail.com],
+	[],
+	[https://github.com/kcolford/compiler])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/compiler.h])
 AC_CONFIG_HEADERS([config.h])
@@ -165,9 +167,6 @@ AC_FUNC_ERROR_AT_LINE
 AC_FUNC_FORK
 AC_FUNC_MALLOC
 AC_FUNC_REALLOC
-
-AC_DEFINE([COPYRIGHT_YEAR], [m4_esyscmd([date +%Y])],
-          [year in copyright message])
 
 AM_GNU_GETTEXT_VERSION([0.19.1])
 AM_GNU_GETTEXT([external])

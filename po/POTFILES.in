@@ -15,4 +15,5 @@ lib/error.c
 lib/getopt.c
 lib/quotearg.c
 lib/set-acl.c
+lib/version-etc.c
 lib/xalloc-die.c

@@ -26,6 +26,7 @@
 
 #include "config.h"
 
+#include "argp-version-etc.h"
 #include "compiler.h"
 #include "copy-file.h"
 #include "gl_xlist.h"
@@ -44,31 +45,19 @@
 
 #include "configmake.h"
 
-const char *argp_program_version = PACKAGE_STRING; /**< Program version. */
-const char *argp_program_bug_address = PACKAGE_BUGREPORT; /**< Bug address. */
+const char *authors[] = {
+  "Kieran Colford",
+  NULL
+};
 
-/** 
- * Function to print a formated version message and copyright notice.
- * 
- * @param stream The FILE * stream to print to.
- * @param state The state of the ARGP parser.
- */
-void
-print_version (FILE *stream, struct argp_state *state)
-{
-  fprintf (stream, "%s (%s) %s\n\n", state->name, PACKAGE_NAME, VERSION);
-  fprintf (stream, _("\
-Copyright (C) %d Kieran Colford\n\
-License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n\
-This is free software: you are free to change and redistribute it.\n\
-There is NO WARRANTY, to the extent permitted by law.\n"), COPYRIGHT_YEAR);
-}
-
-void (*argp_program_version_hook)(FILE *, struct argp_state *) =
-  print_version;		/**< Version printing hook. */
+/* Don't mark this string for translation.  English is the standard
+   for copyright declarations.  The string is a (C) symbol suitable
+   for the current locale and the number is the current year. */
+const char version_etc_copyright[] =
+  "Copyright %s %d Kieran Colford";
 
 const char *doc[] = {
-  N_("This is an experimental compiler that compiles a Turing complete"
+  N_("This is an experimental compiler that compiles a Turing Complete"
      " subset of C.  Where FILE is the input file to be compiled.  All C"
      " functions are supported except for the ones which require complicated"
      " structures or support from the compiler."),
@@ -198,10 +187,15 @@ int main (int argc, char *argv[])
 #endif
 
   vars_init ();
+  
+  /* Initialize the version string. */
+  argp_version_setup (program_name, authors);
 
+  /* Initialize the help string. */
   const char *totaldoc = NULL, **ptr;
   for (ptr = doc; *ptr != NULL; ptr++)
     EXTENDF (totaldoc, "%s", *ptr);
+
   struct argp args = { opts, arg_parse, N_("FILE"), totaldoc };
   argp_parse (&args, argc, argv, 0, NULL, NULL);
   FREE (totaldoc);
