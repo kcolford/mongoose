@@ -1,4 +1,6 @@
-AM_CPPFLAGS = -I$(top_srcdir)/lib -I$(top_builddir)/lib
+AM_CPPFLAGS = -I$(top_srcdir)/lib \
+              -I$(top_builddir)/lib \
+              -DARCHDIR=\"$(archdir)\"
 AM_CFLAGS = $(WARN_CFLAGS)
 AM_YFLAGS = -d
 EXTRA_DIST = ast.def ast.tpl

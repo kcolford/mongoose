@@ -24,22 +24,7 @@ AS_IF([test "$target_os" != "linux-gnu"], [
   AC_MSG_ERROR([Invalid target OS.])
 ])
 
-# Determine the directory for glibc files.
-AS_IF([test -z "$archdir"], [
-  archdir="$prefix/lib/${target_cpu}-${target_os}"
-])
-AC_SUBST([archdir])
-AC_DEFINE_UNQUOTED([ARCHITECTURE_DIR], ["$archdir"],
-                   [Directory for glibc files.])
-
-# Determine if we can in fact use glibc files on our own.  If not, we
-# fall back on the existing compiler's ability to do this.
-AC_CHECK_FILES([$archdir/crti.o $archdir/crt1.o $archdir/crtn.o], [
-  AC_DEFINE([RUN_INDEPENDANTLY], [1], [Whether we are linking on our own.])
-], [
-  AC_DEFINE([RUN_INDEPENDANTLY], [0])
-])
-
+# Begin AutoMake intialization.
 AC_USE_SYSTEM_EXTENSIONS
 AM_INIT_AUTOMAKE([foreign silent-rules color-tests dist-xz])
 LT_INIT
@@ -61,7 +46,7 @@ AC_PATH_PROG([AUTOGEN], [autogen], [false])
 # Locate Doxygen on the host system.
 AC_ARG_VAR([DOXYGEN], [The instance of Doxygen to use when generating
 documentation from source files.  Note: must be version 1.8 or higher])
-AC_PATH_PROG([DOXYGEN], [doxygen])
+AC_CHECK_PROG([DOXYGEN], [doxygen])
 AS_IF([test -n "$DOXYGEN"], [
   AC_MSG_CHECKING([whether doxygen is version 1.8 or higher])
   AX_COMPARE_VERSION([1.8], [le], [$($DOXYGEN -v)], [
@@ -76,16 +61,16 @@ AS_IF([test -n "$DOXYGEN"], [
 
 # Locate LaTeX for converting Doxygen output to PDFs.
 AC_ARG_VAR([LATEX], [The instance of LaTeX to use when compiling .tex files.])
-AC_PATH_PROG([LATEX], [latex])
+AC_CHECK_PROG([LATEX], [latex])
 AS_IF([test -n "$LATEX"], [
   AC_SUBST([GENERATE_LATEX], [YES])
-  AC_PATH_PROG([PDFLATEX], [pdflatex])
+  AC_CHECK_PROG([PDFLATEX], [pdflatex])
   AS_IF([test -n "$PDFLATEX"], [
     AC_SUBST([USE_PDFLATEX], [YES])
   ], [
     AC_SUBST([USE_PDFLATEX], [NO])
   ])
-  AC_PATH_PROG([MAKEINDEX], [makeindex])
+  AC_CHECK_PROG([MAKEINDEX], [makeindex])
 ], [
   AC_SUBST([GENERATE_LATEX], [NO])
   LATEX=:
@@ -96,6 +81,37 @@ AS_IF([test $cross_compiling = no], [
   AM_MISSING_PROG([HELP2MAN], [help2man])
 ], [
   HELP2MAN=:
+])
+
+# Locate the Dynamic Linker by searching through the shell script
+# ldd(1) that's distributed with glibc.
+AC_PATH_PROG([LDD], [ldd])
+AS_IF([test "$LDD"], [
+  AC_PROG_GREP
+  eval `$GREP '^RTLDLIST=".*"$' $LDD`
+], [
+  RTLDLIST=''
+])
+dynamiclinker=''
+for d in $RTLDLIST
+do
+  AS_IF([test -r "$d"], [
+    dynamiclinker="$d"
+  ])
+done
+# Define the path for the dynamic linker that we will use.
+AC_DEFINE_UNQUOTED([DYNAMIC_LINKER], ["$dynamiclinker"],
+                   [Define to the path of the dynamic linker to use.])
+
+# Determine the directory for glibc files.  This will be defined for
+# use in the makefile.
+AC_SUBST([archdir], ["${prefix}/lib/${target_cpu}-${target_os}"])
+
+# Determine if we can in fact use glibc files on our own.  If not,
+# we fall back on the existing compiler's ability to do this.
+AC_CHECK_FILES([$archdir/crti.o $archdir/crt1.o $archdir/crtn.o], [
+  AC_DEFINE([RUN_INDEPENDANTLY], [1],
+            [Define to 1 if we are linking on our own.])
 ])
 
 # BOOTSTRAP_PROG(VARIABLE, PROGS-TO-CHECK-FOR, [VARIABLE-COMMENT])
