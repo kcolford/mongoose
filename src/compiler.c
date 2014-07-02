@@ -45,6 +45,8 @@
 
 #include "configmake.h"
 
+const char *argp_program_bug_address = "<" PACKAGE_BUGREPORT ">";
+
 const char *authors[] = {
   "Kieran Colford",
   NULL
