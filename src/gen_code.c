@@ -76,7 +76,13 @@
 
 #include <assert.h>
 
+#ifndef USE_REGISTER_CHECKING
 #define USE_REGISTER_CHECKING 1
+#endif
+
+#ifndef USE_CALL_REGISTERS_GENERALY
+#define USE_CALL_REGISTERS_GENERALY 1
+#endif
 
 /** 
  * Emit code to move the data stored in location X to location Y using
@@ -176,7 +182,7 @@ general_regis(int a)
 {
   const int storage[] =
     { 1, 8, 9, 10, 11, 12, 13
-#if 1
+#if USE_CALL_REGISTERS_GENERALY
       , 7, 6, 3, 2, 5, 4
 #endif
     };
