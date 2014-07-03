@@ -76,7 +76,7 @@ is_lval (struct ast *s)
  * @param VAL Argument to check.
  */
 #define CHECK_LVAL(VAL)							\
-  ERROR (is_lval (VAL), _("Syntax Error, operand is not an lval"))
+  ERROR (is_lval (VAL), _("WARNING: operand is not an lval"))
 
 static int check_return = 0;	/**< Global variable that tells the
 				   semantic pass whether or not to

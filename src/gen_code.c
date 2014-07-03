@@ -87,6 +87,9 @@
 /** 
  * Emit code to move the data stored in location X to location Y using
  * the operator OP.
+ *
+ * This is the essential command of the entire register allocation
+ * framework.
  * 
  * @param OP Operation to move the data.
  * @param X Source operand.
@@ -239,7 +242,16 @@ static int branch_labelno = 0;	/**< Current label number for branch
  * @param S The location to receive a register.
  */
 #define GIVE_REGISTER(S)			\
-  GIVE_REGISTER_HOW ("mov", (S))
+  GIVE_REGISTER_HOW ("mov", S)
+
+/** 
+ * Move the data in location X to location Y.
+ * 
+ * @param X Source operand.
+ * @param Y Destination operand.
+ */
+#define MOVE_LOC(X, Y)				\
+  MOVE_LOC_WITH ("mov", X, Y)
 
 /** 
  * Wrapper macro around sub macros to decide on which method of
@@ -291,7 +303,7 @@ static int branch_labelno = 0;	/**< Current label number for branch
 	  {					\
 	    struct loc *t = loc_dup (Y);	\
 	    GIVE_REGISTER (Y);			\
-	    MOVE_LOC_WITH ("mov", (X), t);	\
+	    MOVE_LOC ((X), t);			\
 	  }					\
 	else					\
 	  GIVE_REGISTER (X);			\
@@ -308,7 +320,7 @@ static int branch_labelno = 0;	/**< Current label number for branch
       {							\
 	struct loc *_l;					\
 	MAKE_BASE_LOC (_l, register_loc, "%rcx");	\
-	MOVE_LOC_WITH ("mov", (Y), _l);			\
+	MOVE_LOC ((Y), _l);				\
 	(Y)->base = xstrdup ("%cl");			\
       }							\
     if (IS_LITERAL (X))					\
@@ -321,8 +333,7 @@ static int branch_labelno = 0;	/**< Current label number for branch
  */
 #define ENSURE_DESTINATION_REGISTER4(X, Y) do {	\
     ENSURE_DESTINATION_REGISTER2 (X, Y);	\
-    if (!IS_REGISTER (Y))			\
-      GIVE_REGISTER (Y);			\
+    ENSURE_DESTINATION_REGISTER_UNI (Y);	\
   } while (0)
 
 /** 
@@ -386,7 +397,7 @@ gen_code_ret (struct ast *s)
       assert (s->ops[0]->loc != NULL);
       struct loc *ret;
       MAKE_BASE_LOC (ret, register_loc, xstrdup ("%rax"));
-      MOVE_LOC_WITH ("mov", s->ops[0]->loc, ret);
+      MOVE_LOC (s->ops[0]->loc, ret);
     }
   /* Function footer. */
   PUT ("\tmov\t%%rbp, %%rsp\n\tpop\t%%rbp\n\tret\n");
@@ -481,7 +492,7 @@ gen_code_binary (struct ast *s)
 
     case '*':
       MAKE_BASE_LOC (l, register_loc, "%rax");
-      MOVE_LOC_WITH ("mov", s->loc, l);
+      MOVE_LOC (s->loc, l);
       PUT ("\tmov\t$0, %%rdx\n");
       if (IS_LITERAL (from->loc))
 	GIVE_REGISTER (from->loc);
@@ -493,7 +504,7 @@ gen_code_binary (struct ast *s)
 
     case '/':
       MAKE_BASE_LOC (l, register_loc, "%rax");
-      MOVE_LOC_WITH ("mov", s->loc, l);
+      MOVE_LOC (s->loc, l);
       PUT ("\tmov\t$0, %%rdx\n");
       if (IS_LITERAL (from->loc))
 	GIVE_REGISTER (from->loc);
@@ -505,7 +516,7 @@ gen_code_binary (struct ast *s)
 
     case '%':
       MAKE_BASE_LOC (l, register_loc, "%rax");
-      MOVE_LOC_WITH ("mov", s->loc, l);
+      MOVE_LOC (s->loc, l);
       PUT ("\tmov\t$0, %%rdx\n");
       if (IS_LITERAL (from->loc))
 	GIVE_REGISTER (from->loc);
@@ -535,7 +546,7 @@ gen_code_binary (struct ast *s)
       break;
 
     default:
-      error (1, 0, _("invalid binary operator op-code: %d"),
+      error (1, 0, _("FATAL: invalid binary operator op-code: %d"),
 	     s->op.binary.op);
     }
   /* Release the previously allocated register. */
@@ -560,7 +571,7 @@ gen_code_unary (struct ast *s)
       else if (IS_SYMBOL (s->loc))
 	s->loc->kind = literal_loc;
       else
-	assert (0);
+	error (1, 0, _("FATAL: illegal operand for operator '&'"));
       break;
 
     case '-':
@@ -581,7 +592,7 @@ gen_code_unary (struct ast *s)
       break;
 
     default:
-      error (1, 0, _("invalid unary operator opcode: %d"),
+      error (1, 0, _("FATAL: invalid unary operator opcode: %d"),
 	     s->op.unary.op);
     }
   assert (s->loc != NULL);
@@ -612,7 +623,7 @@ gen_code_function_call (struct ast *s)
 	  struct loc *call;
 	  MAKE_BASE_LOC (call, register_loc,
 			 xstrdup (regis(call_regis(a++))));
-	  MOVE_LOC_WITH ("mov", i->loc, call);
+	  MOVE_LOC (i->loc, call);
 	}
       assert (s->ops[0]->type == variable_type);
       PUT ("\tmov\t$0, %%rax\n\tcall\t%s\n", s->ops[0]->loc->base);
