@@ -47,46 +47,39 @@ AC_PROG_RANLIB
 # Locate the AutoGen program for maintainer's use.
 AC_ARG_VAR([AUTOGEN], [*Maintainers Only*: The AutoGen program to use,
 must be version 5 or later.])
-AC_CHECK_PROG([AUTOGEN], [autogen], [false])
+AC_CHECK_PROGS([AUTOGEN], [autogen], [false])
 
 # Locate Doxygen on the host system.
 AC_ARG_VAR([DOXYGEN], [The instance of Doxygen to use when generating
 documentation from source files.  Note: must be version 1.8 or higher])
-AC_CHECK_PROG([DOXYGEN], [doxygen])
-AS_IF([test -n "$DOXYGEN"], [
-  AC_MSG_CHECKING([whether doxygen is version 1.8 or higher])
-  AX_COMPARE_VERSION([1.8], [le], [$($DOXYGEN -v)], [
-    AC_MSG_RESULT([yes])
-  ], [
-    DOXYGEN=:
-    AC_MSG_RESULT([no])
-  ])
+AC_CHECK_PROGS([DOXYGEN], [doxygen], [false])
+AC_MSG_CHECKING([whether doxygen is version 1.8 or higher])
+AX_COMPARE_VERSION([1.8], [le], [$($DOXYGEN -v)], [
+  AC_MSG_RESULT([yes])
 ], [
-  DOXYGEN=:
+  DOXYGEN=false
+  AC_MSG_RESULT([no])
 ])
 
 # Locate LaTeX for converting Doxygen output to PDFs.
 AC_ARG_VAR([LATEX], [The instance of LaTeX to use when compiling .tex files.])
-AC_CHECK_PROG([LATEX], [latex])
-AS_IF([test -n "$LATEX"], [
+AC_CHECK_PROGS([LATEX], [latex], [false])
+AS_IF([test "$LATEX" = "false"], [
   AC_SUBST([GENERATE_LATEX], [YES])
-  AC_CHECK_PROG([PDFLATEX], [pdflatex])
-  AS_IF([test -n "$PDFLATEX"], [
+  AC_CHECK_PROGS([PDFLATEX], [pdflatex], [false])
+  AS_IF([test "$PDFLATEX" = "false"], [
     AC_SUBST([USE_PDFLATEX], [YES])
   ], [
     AC_SUBST([USE_PDFLATEX], [NO])
   ])
-  AC_CHECK_PROG([MAKEINDEX], [makeindex])
+  AC_CHECK_PROGS([MAKEINDEX], [makeindex])
 ], [
   AC_SUBST([GENERATE_LATEX], [NO])
-  LATEX=:
 ])
 
 # Check if we can use Help2Man to create a man page for the user.
 AS_IF([test $cross_compiling = no], [
   AM_MISSING_PROG([HELP2MAN], [help2man])
-], [
-  HELP2MAN=:
 ])
 
 # Locate the Dynamic Linker by searching through the shell script

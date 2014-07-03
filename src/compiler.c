@@ -45,16 +45,23 @@
 
 #include "configmake.h"
 
+/** Bug reporting address displayed by the argp parser. */
 const char *argp_program_bug_address = "<" PACKAGE_BUGREPORT ">";
 
+/** List of authors to be displayed along with --version. */
 const char *authors[] = {
   "Kieran Colford",
   NULL
 };
 
-/* Don't mark this string for translation.  English is the standard
-   for copyright declarations.  The string is a (C) symbol suitable
-   for the current locale and the number is the current year. */
+/** Copyright notice to be displayed along with --version.  It is a
+    printf format string that first accepts a string for "(C)"
+    (translated to the current locale) followed by a number (the
+    current year).
+
+    @note Do not mark this string for translation.  English is the
+    standard requested by the Berne convention and thus this should
+    remain in that language. */
 const char version_etc_copyright[] =
   "Copyright %s %d Kieran Colford";
 
@@ -191,7 +198,7 @@ int main (int argc, char *argv[])
   vars_init ();
   
   /* Initialize the version string. */
-  argp_version_setup (program_name, authors);
+  argp_version_setup (PACKAGE, authors);
 
   /* Initialize the help string. */
   const char *totaldoc = NULL, **ptr;
@@ -200,7 +207,6 @@ int main (int argc, char *argv[])
 
   struct argp args = { opts, arg_parse, N_("FILE"), totaldoc };
   argp_parse (&args, argc, argv, 0, NULL, NULL);
-  FREE (totaldoc);
 
   run_unit ();
 
