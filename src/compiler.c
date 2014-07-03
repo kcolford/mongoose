@@ -207,6 +207,7 @@ int main (int argc, char *argv[])
 
   struct argp args = { opts, arg_parse, N_("FILE"), totaldoc };
   argp_parse (&args, argc, argv, 0, NULL, NULL);
+  FREE (totaldoc);
 
   run_unit ();
 
