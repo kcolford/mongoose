@@ -576,7 +576,6 @@ gen_code_binary (struct ast *s)
       GIVE_REGISTER (s->loc);
       break;
 
-    
     case '[':
       assert (!IS_LITERAL (s->loc));
       ENSURE_DESTINATION_REGISTER (4, s->loc, from->loc);
