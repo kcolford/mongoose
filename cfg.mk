@@ -14,12 +14,8 @@ man: $(srcdir)/.version
 	$(MAKE) -C man
 	man -l $(top_srcdir)/man/compiler.1
 
-fix-files:
-	@sed -i -e '/^ \* @date/d' $(WRITTEN_FILES)
-
 count:
-	@echo
 	@echo 'Line Counts'
 	@wc -l $(WRITTEN_FILES) cfg.mk
 
-.PHONY: count fix-files man
+.PHONY: count man
