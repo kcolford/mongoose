@@ -336,23 +336,11 @@ static int branch_labelno = 0;	/**< Current label number for branch
     ENSURE_DESTINATION_REGISTER_UNI (Y);	\
   } while (0)
 
-/** 
- * Store the construction of the binary operators that work with the
- * branching routine. 
- */
-struct binop_branching
-{
-  int op;
-  const char *check;
-  const char *jump;
-  const char *not;
-} branchable_binops[] = {
-  { '<', "cmp", "jl", "jnl" },
-  { '>', "cmp", "jg", "jng" },
-  { EQ, "cmp", "je", "jne" },
-  { NE, "cmp", "jne", "je" },
-  { LE, "cmp", "jle", "jnle" },
-  { GE, "cmp", "jge", "jnge" } };
+#define BINARY_ENSURE_AND_PUT(N, OP, X, Y) do {			\
+    ENSURE_DESTINATION_REGISTER (N, X, Y);			\
+    PUT ("\t%s\t%s, %s\n", OP, print_loc (Y), print_loc (X));	\
+  } while (0)
+
 
 /* Forward declaration for more specific functions. */
 static void gen_code_r (struct ast *);
@@ -403,41 +391,35 @@ gen_code_ret (struct ast *s)
   PUT ("\tmov\t%%rbp, %%rsp\n\tpop\t%%rbp\n\tret\n");
 }
 
+/** 
+ * Store the construction of the binary operators that work with the
+ * branching routine. 
+ */
+const char *binop_branch_suffix[512] = { NULL };
+
 static void
 gen_code_cond (struct ast *s)
 {
-  struct binop_branching *code;
-  code = s->ops[0]->type != binary_type ? NULL :
-    bsearch (&s->ops[0]->op.binary.op, branchable_binops,
-	     LEN (branchable_binops), sizeof *branchable_binops,
-	     compare);
-  if (code != NULL)
+  s->ops[0]->actlikejump = 1;
+  gen_code_r (s->ops[0]);
+
+  if (s->ops[0]->type == binary_type
+      && binop_branch_suffix[s->ops[0]->op.binary.op] != 0)
     {
-      gen_code_r (s->ops[0]->ops[0]);
-      assert (s->ops[0]->ops[0]->loc != NULL);
-      gen_code_r (s->ops[0]->ops[1]);
-      assert (s->ops[0]->ops[1]->loc != NULL);
-      ENSURE_DESTINATION_REGISTER (2, s->ops[0]->ops[0]->loc,
-				   s->ops[0]->ops[1]->loc);
-      PUT ("\t%s\t%s, %s\n\t%s\t%s\n", code->check,
-	   print_loc (s->ops[0]->ops[1]->loc),
-	   print_loc (s->ops[0]->ops[0]->loc),
-	   (s->ops[0]->boolean_not ? code->not : code->jump),
-	   print_loc (s->loc));
-      FREE_LOC (s->ops[0]->ops[1]->loc);
-      FREE_LOC (s->ops[0]->ops[0]->loc);
+      PUT ("\tj%s%s\t%s\n", (s->ops[0]->boolean_not ? "n" : ""),
+	   binop_branch_suffix[s->ops[0]->op.binary.op], print_loc (s->loc));
     }
   else
     {
       /* When in doubt, the C standard requires that if an
 	 expression evaluates to 0 then it is false, otherwise it
 	 is true. */
-      gen_code_r (s->ops[0]);
-      assert (s->ops[0]->loc != NULL);
-      PUT ("\tcmpq\t%s, $0\n\tjz\t%s\n", print_loc (s->ops[0]->loc),
-	   print_loc (s->loc));
-      FREE_LOC (s->ops[0]->loc);
+      PUT ("\tcmpq\t%s, $0\n", print_loc (s->ops[0]->loc));
+      PUT ("\tjz\t%s\n", print_loc (s->loc));
     }
+  
+  /* Free the location of the conditional expression. */
+  FREE_LOC (s->ops[0]->loc);
 }
 
 static void
@@ -466,28 +448,23 @@ gen_code_binary (struct ast *s)
       break;
 
     case '&':
-      ENSURE_DESTINATION_REGISTER (1, s->loc, from->loc);
-      PUT ("\tand\t%s, %s\n", print_loc (from->loc), print_loc (s->loc));
+      BINARY_ENSURE_AND_PUT (1, "and", s->loc, from->loc);
       break;
 
     case '|':
-      ENSURE_DESTINATION_REGISTER (1, s->loc, from->loc);
-      PUT ("\tor\t%s, %s\n", print_loc (from->loc), print_loc (s->loc));
+      BINARY_ENSURE_AND_PUT (1, "or", s->loc, from->loc);
       break;
 
     case '^':
-      ENSURE_DESTINATION_REGISTER (1, s->loc, from->loc);
-      PUT ("\txor\t%s, %s\n", print_loc (from->loc), print_loc (s->loc));
+      BINARY_ENSURE_AND_PUT (1, "xor", s->loc, from->loc);
       break;
 
     case '+':
-      ENSURE_DESTINATION_REGISTER (1, s->loc, from->loc);
-      PUT ("\tadd\t%s, %s\n", print_loc (from->loc), print_loc (s->loc));
+      BINARY_ENSURE_AND_PUT (1, "add", s->loc, from->loc);
       break;
 
     case '-':
-      ENSURE_DESTINATION_REGISTER (2, s->loc, from->loc);
-      PUT ("\tsub\t%s, %s\n", print_loc (from->loc), print_loc (s->loc));
+      BINARY_ENSURE_AND_PUT (2, "sub", s->loc, from->loc);
       break;
 
     case '*':
@@ -527,13 +504,34 @@ gen_code_binary (struct ast *s)
       break;
 
     case RS:
-      ENSURE_DESTINATION_REGISTER (3, s->loc, from->loc);
-      PUT ("\tshr\t%s, %s\n", print_loc (from->loc), print_loc (s->loc));
+      BINARY_ENSURE_AND_PUT (3, "shr", s->loc, from->loc);
       break;
 
     case LS:
-      ENSURE_DESTINATION_REGISTER (3, s->loc, from->loc);
-      PUT ("\tshl\t%s, %s\n", print_loc (from->loc), print_loc (s->loc));
+      BINARY_ENSURE_AND_PUT (3, "shl", s->loc, from->loc);
+      break;
+
+    case NE:
+      /* Turn this into an equality statement. */
+      s->op.binary.op = EQ;
+      s->boolean_not ^= 1;
+    case EQ:
+    case LE:
+    case GE:
+    case '<':
+    case '>':
+      BINARY_ENSURE_AND_PUT (2, "cmp", s->loc, from->loc);
+      if (!s->actlikejump)
+	{
+	  const char *instruct = my_printf ("cmov%s%s", (s->boolean_not ? "n" : ""),
+					    binop_branch_suffix[s->op.binary.op]);
+	  struct loc *oneorzero;
+	  MAKE_BASE_LOC (oneorzero, literal_loc,
+			 xstrdup (s->boolean_not ? "0" : "1"));
+	  GIVE_REGISTER (oneorzero);
+	  MOVE_LOC_WITH (instruct, oneorzero, s->loc);
+	  FREE (instruct);
+	}
       break;
 
     case '[':
@@ -730,8 +728,13 @@ gen_code (struct ast *s)
   data_section = NULL;
   branch_labelno = 0;
 
-  qsort (branchable_binops, LEN (branchable_binops),
-	 sizeof *branchable_binops, compare);
+  /* Set up branch codes. */
+  binop_branch_suffix['<'] = "l";
+  binop_branch_suffix['>'] = "g";
+  binop_branch_suffix[EQ] = "e";
+  binop_branch_suffix[LE] = "le";
+  binop_branch_suffix[GE] = "ge";
+
   data_section = xstrdup ("\t.data\n");
   gen_code_r (s);
   PUT ("%s", data_section);

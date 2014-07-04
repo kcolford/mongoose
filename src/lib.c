@@ -187,15 +187,3 @@ tmpfile_name (void)
 
   return out;
 }
-
-int
-compare (const void *a, const void *b)
-{
-  return *(const int *) a - *(const int *) b;
-}
-
-int
-compares (const void *a, const void *b)
-{
-  return strcmp (*(char * const *) a, *(char * const *) b);
-}

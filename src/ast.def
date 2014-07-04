@@ -62,6 +62,13 @@ top_level = {
 
 top_level = {
   type = unsigned;
+  call = actlikejump;
+  size = 1;
+  doc = "Whether this is a condtional that behaves as a jump instead of a branch.";
+};
+
+top_level = {
+  type = unsigned;
   call = refs;
   size = 32;
   doc = "The reference count of this structure.";

@@ -52,7 +52,9 @@ static struct ast *make_array (char *, char *, struct ast *);
 static struct ast *make_forloop (struct ast *, struct ast *, struct ast *, struct ast *);
 static struct ast *make_ifelse (struct ast *, struct ast *, struct ast *);
 
+#ifndef YYDEBUG
 #define YYDEBUG 1
+#endif
 %}
 
 %token END 0 "end of file"
@@ -219,6 +221,7 @@ expr:		STR                   { $$ = make_variable (NULL, $1); }
 	|	expr LS expr          { $$ = make_binary (LS, $1, $3); }
 	|	'&'expr %prec SIZEOF  { $$ = make_unary ('&', $2); }
 	|	'*'expr %prec SIZEOF  { $$ = make_unary ('*', $2); }
+	|	'!'expr %prec SIZEOF  { $$ = $2; $$->boolean_not ^= 1; }
 	|	expr INC              { $$ = make_unary (INC, $1); }
 	|	expr DEC              { $$ = make_unary (DEC, $1); }
 	|	INC expr              { $$ = make_unary (INC, $2); $$->unary_prefix = 1; }
@@ -256,7 +259,7 @@ struct ast *
 make_ifstatement (struct ast *cond, struct ast *body)
 {
   char *t = place_holder (), *tt = xstrdup (t);
-  cond->boolean_not = 1;
+  cond->boolean_not ^= 1;
   return ast_cat (make_cond (t, cond) , ast_cat (body, make_label (tt)));
 }
 

@@ -177,32 +177,4 @@ extern char *my_printf (const char *fmt, ...);
  */
 extern const char *tmpfile_name (void);
 
-/** 
- * This is a comparision function for use with "bsearch" and "qsort".
- * This variant works on type @c int.
- * 
- * @see bsearch
- * @see qsort
- * 
- * @param a Pointer to @c int.
- * @param b Pointer to @c int.
- * 
- * @return A code that is understood by @c bsearch and @c qsort.
- */
-extern int compare (const void *a, const void *b);
-
-/** 
- * This is a comparision function for use with "bsearch" and "qsort".
- * This variant works on type @c char* .
- * 
- * @see bsearch
- * @see qsort
- * 
- * @param a Pointer to @c char* .
- * @param b Pointer to @c char* .
- * 
- * @return A code that is understood by @c bsearch and @c qsort.
- */
-extern int compares (const void *a, const void *b);
-
 #endif
