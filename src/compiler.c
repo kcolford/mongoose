@@ -84,6 +84,8 @@ struct argp_option opts[] = {
     N_("Write output to FILE") },
   { "verbose",  'v',   NULL,                   0,
     N_("Give output verbosely (intended for debugging purposes only)") },
+  { "debug",    'd',   NULL,                   0,
+    N_("Issue debuging data on the parser.") },
   { NULL,       'O',    "n", OPTION_ARG_OPTIONAL,
     N_("Control the optimization level (starts at 0, default is 1)") },
   { "echo",     'e',   NULL,                   0,
@@ -123,6 +125,10 @@ arg_parse (int key, char *arg, struct argp_state *state)
       break;
 
     case 'v':
+      debug = -1;
+      break;
+      
+    case 'd':
       yydebug = -1;
       break;
 

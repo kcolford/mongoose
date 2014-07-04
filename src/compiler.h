@@ -92,6 +92,15 @@ extern int gen_code (struct ast *s);
 extern int optimizer (struct ast **ss);
 
 /** 
+ * The transformation pass for the lower level passes.
+ * 
+ * @param ss A reference to the AST structure that must be transformed.
+ * 
+ * @return Error code.
+ */
+extern int transform (struct ast **ss);
+
+/** 
  * This pass collects all the allocated variables into the start of
  * the function definition, making it easier to optimize them into a
  * single allocation.

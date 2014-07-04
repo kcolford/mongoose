@@ -268,12 +268,31 @@ static int branch_labelno = 0;	/**< Current label number for branch
   } while (0)
 
 /**
- * Ensure that that X is in a register. 
+ * Ensure that that @c X is in a register. 
  *
+ * @param X The location to move into a register.
  */
 #define ENSURE_DESTINATION_REGISTER_UNI(X) do {	\
     if (!IS_REGISTER (X))			\
       GIVE_REGISTER (X);			\
+  } while (0)
+
+/** 
+ * Designed for any binary operation on the x86_64 by restricting the
+ * destination to being a memory/register and forcing one of them to
+ * be a register.
+ *
+ * Although a @c mov instruction can handle a memory and an immediate,
+ * it cannot handle a 64-bit immediate operand, so we force one of
+ * them to be a register.
+ * 
+ * @param X @c s->loc
+ * @param Y @c from->loc
+ */
+#define ENSURE_DESTINATION_REGISTER0(X, Y) do {	\
+    assert (!IS_LITERAL (X));			\
+    if (IS_MEMORY (X) && IS_MEMORY (Y))		\
+      GIVE_REGISTER (Y);			\
   } while (0)
 
 /**
@@ -376,7 +395,8 @@ gen_code_function (struct ast *s)
   PUT ("%s:\n", s->op.function.name);
 
   /* Set up the stack frame. */
-  PUT ("\tpush\t%%rbp\n\tmov\t%%rsp, %%rbp\n");
+  PUT ("\tpush\t%%rbp\n");
+  PUT ("\tmov\t%%rsp, %%rbp\n");
 
   /* Walk over the list of arguments and push them into the
      stack. */
@@ -411,7 +431,9 @@ gen_code_ret (struct ast *s)
       MOVE_LOC (s->ops[0]->loc, ret);
     }
   /* Function footer. */
-  PUT ("\tmov\t%%rbp, %%rsp\n\tpop\t%%rbp\n\tret\n");
+  PUT ("\tmov\t%%rbp, %%rsp\n");
+  PUT ("\tpop\t%%rbp\n");
+  PUT ("\tret\n");
 }
 
 /** 
@@ -420,17 +442,36 @@ gen_code_ret (struct ast *s)
  */
 const char *binop_branch_suffix[MAX_TOKEN] = { NULL };
 
+/** 
+ * Generate the opcode for branch instruction @c S with prefix @c OP
+ * and store it in @c I.
+ *
+ * @note The stored value in @c I is dynamically allocated and so it
+ * must be freed when no longer in use.
+ * 
+ * @param I Location to store the operand in.
+ * @param OP The prefix for the operand.
+ * @param S The AST that is translated into a branch instruction.
+ */
+#define GEN_BINOP_BRANCH_CODE(I, OP, S) do {				\
+    assert ((S)->type == binary_type);					\
+    assert (binop_branch_suffix[(S)->op.binary.op] != NULL);		\
+    (I) = my_printf ("%s%s%s", (OP), ((S)->boolean_not ? "n" : ""),	\
+		     binop_branch_suffix[(S)->op.binary.op]);		\
+  } while (0)
+
 static void
 gen_code_cond (struct ast *s)
 {
-  s->ops[0]->actlikejump = 1;
   gen_code_r (s->ops[0]);
 
   if (s->ops[0]->type == binary_type
-      && binop_branch_suffix[s->ops[0]->op.binary.op] != 0)
+      && binop_branch_suffix[s->ops[0]->op.binary.op] != NULL)
     {
-      PUT ("\tj%s%s\t%s\n", (s->ops[0]->boolean_not ? "n" : ""),
-	   binop_branch_suffix[s->ops[0]->op.binary.op], print_loc (s->loc));
+      const char *instruct;
+      GEN_BINOP_BRANCH_CODE (instruct, "j", s->ops[0]);
+      PUT ("\t%s\t%s\n", instruct, print_loc (s->loc));
+      FREE (instruct);
     }
   else
     {
@@ -443,6 +484,21 @@ gen_code_cond (struct ast *s)
   
   /* Free the location of the conditional expression. */
   FREE_LOC (s->ops[0]->loc);
+}
+
+static void
+gen_code_cond_move (struct ast *s)
+{
+  FREE_LOC (s->loc);
+  ALLOC_REGISTER (s->loc);
+  gen_code_r (s->ops[1]);
+  gen_code_r (s->ops[0]);
+  const char *instruct;
+  GEN_BINOP_BRANCH_CODE (instruct, "cmov", s->ops[0]);
+  BINARY_ENSURE_AND_PUT (4, instruct, s->loc, s->ops[1]->loc);
+  FREE (instruct);
+  FREE_LOC (s->ops[0]->loc);
+  FREE_LOC (s->ops[1]->loc);
 }
 
 static void
@@ -459,22 +515,12 @@ gen_code_binary (struct ast *s)
   struct loc *l;
   switch (s->op.binary.op)
     {
-    case '=':
-      /* Either the source or the destination must be a
-	 register/immediate, if that's not the case, then we have
-	 to move the source operand into a register first. */
-      if (IS_MEMORY (from->loc))
-	GIVE_REGISTER (from->loc);
-      assert (IS_MEMORY (s->loc));
-      PUT ("\tmovq\t%s, %s\n", print_loc (from->loc),
-	   print_loc (s->loc));
-      break;
-
 #define AUTO_ENSURE_PUT(CASE, N, OP)				\
       case CASE:						\
 	BINARY_ENSURE_AND_PUT (N, OP, s->loc, from->loc);	\
 	break
 
+      AUTO_ENSURE_PUT ('=', 0, "movq");
       AUTO_ENSURE_PUT ('&', 1, "and");
       AUTO_ENSURE_PUT ('|', 1, "or");
       AUTO_ENSURE_PUT ('^', 1, "xor");
@@ -482,6 +528,15 @@ gen_code_binary (struct ast *s)
       AUTO_ENSURE_PUT ('-', 2, "sub");
       AUTO_ENSURE_PUT (RS, 3, "shr");
       AUTO_ENSURE_PUT (LS, 3, "shl");
+    case LE:
+    case GE:
+    case '<':
+    case '>':
+    case EQ:
+      BINARY_ENSURE_AND_PUT (2, "cmp", s->loc, from->loc);
+      FREE_LOC (from->loc);
+      FREE_LOC (s->loc);
+      break;
 
 #undef AUTO_ENSURE_PUT
 
@@ -521,29 +576,7 @@ gen_code_binary (struct ast *s)
       GIVE_REGISTER (s->loc);
       break;
 
-    case NE:
-      /* Turn this into an equality statement. */
-      s->op.binary.op = EQ;
-      s->boolean_not ^= 1;
-    case EQ:
-    case LE:
-    case GE:
-    case '<':
-    case '>':
-      BINARY_ENSURE_AND_PUT (2, "cmp", s->loc, from->loc);
-      if (!s->actlikejump)
-	{
-	  const char *instruct = my_printf ("cmov%s%s", (s->boolean_not ? "n" : ""),
-					    binop_branch_suffix[s->op.binary.op]);
-	  struct loc *oneorzero;
-	  MAKE_BASE_LOC (oneorzero, literal_loc,
-			 xstrdup (s->boolean_not ? "0" : "1"));
-	  GIVE_REGISTER (oneorzero);
-	  MOVE_LOC_WITH (instruct, oneorzero, s->loc);
-	  FREE (instruct);
-	}
-      break;
-
+    
     case '[':
       assert (!IS_LITERAL (s->loc));
       ENSURE_DESTINATION_REGISTER (4, s->loc, from->loc);
@@ -606,6 +639,11 @@ gen_code_unary (struct ast *s)
   assert (s->loc != NULL);
 }
 
+/** 
+ * Generate code for a function call.
+ * 
+ * @param s The AST to parse.
+ */
 static void
 gen_code_function_call (struct ast *s)
 {
@@ -633,8 +671,11 @@ gen_code_function_call (struct ast *s)
 			 xstrdup (regis(call_regis(a++))));
 	  MOVE_LOC (i->loc, call);
 	}
+      /* We don't support function pointers yet. */
       assert (s->ops[0]->type == variable_type);
-      PUT ("\tmov\t$0, %%rax\n\tcall\t%s\n", s->ops[0]->loc->base);
+
+      PUT ("\tmov\t$0, %%rax\n"); /* Needed for printf. */
+      PUT ("\tcall\t%s\n", s->ops[0]->loc->base);
       FREE_LOC (s->ops[0]->loc);
       MAKE_BASE_LOC (s->loc, register_loc, xstrdup ("%rax"));
     }
@@ -711,6 +752,10 @@ gen_code_r (struct ast *s)
 	  MAKE_BASE_LOC (s->loc, register_loc, xstrdup ("%rsp"));
 	  GIVE_REGISTER (s->loc);
 	}
+      break;
+
+    case cond_move_type:
+      gen_code_cond_move (s);
       break;
 
     default:

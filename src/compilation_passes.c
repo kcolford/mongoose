@@ -37,6 +37,7 @@ run_compilation_passes (struct ast **ss)
   ret = ret || semantic (*ss);
   ret = ret || dealias (ss);
   ret = ret || collect_vars (*ss);
+  ret = ret || transform (ss);
   ret = ret || optimizer (ss);
   ret = ret || gen_code (*ss);
   AST_FREE (*ss);

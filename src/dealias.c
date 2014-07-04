@@ -268,7 +268,7 @@ dealias_r (struct ast **ss)
       dealias_r (&s->ops[0]);
       s->loc = get_label (s->op.cond.name);
       assert (s->loc != NULL);
-      break;
+      break;	  
 
     default:
       ;

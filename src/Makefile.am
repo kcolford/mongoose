@@ -32,6 +32,7 @@ loc.h						\
 optimizer.c					\
 parse.y						\
 semantic.c					\
+transform.c					\
 unit.c						\
 vars.c
 

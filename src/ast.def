@@ -62,7 +62,7 @@ top_level = {
 
 top_level = {
   type = unsigned;
-  call = actlikejump;
+  call = noreturnint;
   size = 1;
   doc = "Whether this is a condtional that behaves as a jump instead of a branch.";
 };
@@ -214,6 +214,13 @@ types = {
   name = alloc;
   sub = amount;
   doc = "Allocate memory.";
+};
+
+types = {
+  name = cond_move;
+  sub = cond;
+  sub = val;
+  doc = "A conditional move.";
 };
 
 /*
