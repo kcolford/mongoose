@@ -126,6 +126,11 @@ static struct ast *make_ifelse (struct ast *, struct ast *, struct ast *);
 %union { struct ast *ast_val; }
 %type <ast_val> body callargs constrval def defargs expr file maybe_expr scoped_body statement sub_body
 
+%token MAX_TOKEN		/*
+This is maximum value of any token, this is why it is placed last in
+the list. */
+
+
 %%
 
 input:		file END { if (run_compilation_passes (&$1)) YYERROR; }

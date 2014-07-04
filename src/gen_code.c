@@ -38,7 +38,7 @@
  * 
  * @param S A string representation of a register.
  * 
- * @return true if S can be freed, false otherwise.
+ * @return true if @c S can be freed, false otherwise.
  */
 #define VALID_REGISTER_CHECK(S)						\
   ((S) != NULL								\
@@ -176,9 +176,9 @@ call_regis(int a)
  * and decrement the avail variable to check which register we should
  * use.
  * 
- * @param a 
+ * @param a The index of the general register to use.
  * 
- * @return 
+ * @return The index of all the registers to use.
  */
 static inline int
 general_regis(int a)
@@ -280,7 +280,10 @@ static int branch_labelno = 0;	/**< Current label number for branch
  * Designed for the addition and subtraction operations.  These
  * require one of the destination/source operands to be in a register
  * while the other can be memory or (if it's the source operand) an
- * immediate. 
+ * immediate.
+ *
+ * @param X @c s->loc
+ * @param Y @c from->loc
  */
 #define ENSURE_DESTINATION_REGISTER1(X, Y) do {	\
     if (!IS_REGISTER (X))			\
@@ -295,6 +298,9 @@ static int branch_labelno = 0;	/**< Current label number for branch
 /**
  * Designed to behave exactly as ENSURE_DESTINATION_REGISTER1, but is
  * guaranteed to keep the ordering of its arguments.
+ *
+ * @param X @c s->loc
+ * @param Y @c from->loc
  */
 #define ENSURE_DESTINATION_REGISTER2(X, Y) do {	\
     if (!IS_REGISTER (X))			\
@@ -313,7 +319,10 @@ static int branch_labelno = 0;	/**< Current label number for branch
 /**
  * Designed for use with the right and left shift operators.  These
  * require the right-hand argument to either be and immediate value or
- * placed in the %cl register. 
+ * placed in the %cl register.
+ *
+ * @param X @c s->loc
+ * @param Y @c from->loc
  */
 #define ENSURE_DESTINATION_REGISTER3(X, Y) do {		\
     if (!IS_LITERAL (Y))				\
@@ -330,12 +339,26 @@ static int branch_labelno = 0;	/**< Current label number for branch
 /**
  * Designed for when both X and Y must be registers but cannot have
  * their arguments swapped.
+ *
+ * @param X @c s->loc
+ * @param Y @c from->loc
  */
 #define ENSURE_DESTINATION_REGISTER4(X, Y) do {	\
     ENSURE_DESTINATION_REGISTER2 (X, Y);	\
     ENSURE_DESTINATION_REGISTER_UNI (Y);	\
   } while (0)
 
+/** 
+ * In a binary operation, call ENSURE_DESTINATION_REGISTER with @c N
+ * on the arguments @c X and @c Y.  Followed by emitting an
+ * instruction using the operator @c OP and the locations @c X and @c
+ * Y.
+ * 
+ * @param N Which ENSURE_DESTINATION_REGISTER to call.
+ * @param OP The assembly opcode.
+ * @param X @c s->loc
+ * @param Y @c from->loc
+ */
 #define BINARY_ENSURE_AND_PUT(N, OP, X, Y) do {			\
     ENSURE_DESTINATION_REGISTER (N, X, Y);			\
     PUT ("\t%s\t%s, %s\n", OP, print_loc (Y), print_loc (X));	\
@@ -395,7 +418,7 @@ gen_code_ret (struct ast *s)
  * Store the construction of the binary operators that work with the
  * branching routine. 
  */
-const char *binop_branch_suffix[512] = { NULL };
+const char *binop_branch_suffix[MAX_TOKEN] = { NULL };
 
 static void
 gen_code_cond (struct ast *s)
@@ -447,25 +470,20 @@ gen_code_binary (struct ast *s)
 	   print_loc (s->loc));
       break;
 
-    case '&':
-      BINARY_ENSURE_AND_PUT (1, "and", s->loc, from->loc);
-      break;
+#define AUTO_ENSURE_PUT(CASE, N, OP)				\
+      case CASE:						\
+	BINARY_ENSURE_AND_PUT (N, OP, s->loc, from->loc);	\
+	break
 
-    case '|':
-      BINARY_ENSURE_AND_PUT (1, "or", s->loc, from->loc);
-      break;
+      AUTO_ENSURE_PUT ('&', 1, "and");
+      AUTO_ENSURE_PUT ('|', 1, "or");
+      AUTO_ENSURE_PUT ('^', 1, "xor");
+      AUTO_ENSURE_PUT ('+', 1, "add");
+      AUTO_ENSURE_PUT ('-', 2, "sub");
+      AUTO_ENSURE_PUT (RS, 3, "shr");
+      AUTO_ENSURE_PUT (LS, 3, "shl");
 
-    case '^':
-      BINARY_ENSURE_AND_PUT (1, "xor", s->loc, from->loc);
-      break;
-
-    case '+':
-      BINARY_ENSURE_AND_PUT (1, "add", s->loc, from->loc);
-      break;
-
-    case '-':
-      BINARY_ENSURE_AND_PUT (2, "sub", s->loc, from->loc);
-      break;
+#undef AUTO_ENSURE_PUT
 
     case '*':
       MAKE_BASE_LOC (l, register_loc, "%rax");
@@ -501,14 +519,6 @@ gen_code_binary (struct ast *s)
       FREE_LOC (from->loc);
       s->loc->base = xstrdup ("%rdx");
       GIVE_REGISTER (s->loc);
-      break;
-
-    case RS:
-      BINARY_ENSURE_AND_PUT (3, "shr", s->loc, from->loc);
-      break;
-
-    case LS:
-      BINARY_ENSURE_AND_PUT (3, "shl", s->loc, from->loc);
       break;
 
     case NE:
