@@ -95,13 +95,13 @@
  * @param X Source operand.
  * @param Y Destionation operand.
  */
-#define MOVE_LOC_WITH(OP, X, Y) do {					\
-    if ((X) != NULL)							\
-      {									\
-	PUT ("\t%s\t%s, %s\n", (OP), print_loc (X), print_loc (Y));	\
-	FREE_LOC (X);							\
-      }									\
-    (X) = (Y);								\
+#define MOVE_LOC_WITH(OP, X, Y) do {			\
+    if ((X) != NULL)					\
+      {							\
+	EMIT2 (OP, print_loc (X), print_loc (Y));	\
+	FREE_LOC (X);					\
+      }							\
+    (X) = (Y);						\
   } while (0)
 
 /** 
@@ -123,6 +123,12 @@
     if (debug)					\
       fprintf (stderr, __VA_ARGS__);		\
   } while (0)
+
+#define EMIT_LABEL(L) PUT ("%s:\n", (L))
+#define EMIT0(OP) PUT ("\t%s\n", (OP))
+#define EMIT1(OP, A) PUT ("\t%s\t%s\n", (OP), (A))
+#define EMIT2(OP, A, B) PUT ("\t%s\t%s, %s\n", (OP), (A), (B))
+#define EMIT3(OP, A, B, C) PUT ("\t%s\t%s, %s, %s\n", (OP), (A), (B), (C))
 
 /** 
  * Get the string variant of a register index.
@@ -378,9 +384,9 @@ static int branch_labelno = 0;	/**< Current label number for branch
  * @param X @c s->loc
  * @param Y @c from->loc
  */
-#define BINARY_ENSURE_AND_PUT(N, OP, X, Y) do {			\
-    ENSURE_DESTINATION_REGISTER (N, X, Y);			\
-    PUT ("\t%s\t%s, %s\n", OP, print_loc (Y), print_loc (X));	\
+#define BINARY_ENSURE_AND_PUT(N, OP, X, Y) do {	\
+    ENSURE_DESTINATION_REGISTER (N, X, Y);	\
+    EMIT2 (OP, print_loc (Y), print_loc (X));	\
   } while (0)
 
 
@@ -391,12 +397,12 @@ static void
 gen_code_function (struct ast *s)
 {
   /* Enter the .text section and declare this symbol as global. */
-  PUT ("\t.global\t%s\n", s->op.function.name);
-  PUT ("%s:\n", s->op.function.name);
+  EMIT1 (".global", s->op.function.name);
+  EMIT_LABEL (s->op.function.name);
 
   /* Set up the stack frame. */
-  PUT ("\tpush\t%%rbp\n");
-  PUT ("\tmov\t%%rsp, %%rbp\n");
+  EMIT1 ("push", "%rbp");
+  EMIT2 ("mov", "%rsp", "%rbp");
 
   /* Walk over the list of arguments and push them into the
      stack. */
@@ -407,10 +413,11 @@ gen_code_function (struct ast *s)
     {
       if (i->type != variable_type)
 	continue;
-      PUT ("\tsub\t$%d, %%rsp\n", i->op.variable.alloc);
+      const char *alloc = my_printf ("$%d", i->op.variable.alloc);
+      EMIT2 ("sub", alloc, "%rsp");
+      FREE (alloc);
       assert (i->loc != NULL);
-      PUT ("\tmov\t%s, %s\n", regis(call_regis(argnum)),
-	   print_loc (i->loc));
+      EMIT2 ("mov", regis(call_regis(argnum)), print_loc (i->loc));
       argnum++;
     }
 
@@ -431,9 +438,9 @@ gen_code_ret (struct ast *s)
       MOVE_LOC (s->ops[0]->loc, ret);
     }
   /* Function footer. */
-  PUT ("\tmov\t%%rbp, %%rsp\n");
-  PUT ("\tpop\t%%rbp\n");
-  PUT ("\tret\n");
+  EMIT2 ("mov", "%rbp", "%rsp");
+  EMIT1 ("pop", "%rbp");
+  EMIT0 ("ret");
 }
 
 /** 
@@ -470,7 +477,7 @@ gen_code_cond (struct ast *s)
     {
       const char *instruct;
       GEN_BINOP_BRANCH_CODE (instruct, "j", s->ops[0]);
-      PUT ("\t%s\t%s\n", instruct, print_loc (s->loc));
+      EMIT1 (instruct, print_loc (s->loc));
       FREE (instruct);
     }
   else
@@ -478,8 +485,8 @@ gen_code_cond (struct ast *s)
       /* When in doubt, the C standard requires that if an
 	 expression evaluates to 0 then it is false, otherwise it
 	 is true. */
-      PUT ("\tcmpq\t%s, $0\n", print_loc (s->ops[0]->loc));
-      PUT ("\tjz\t%s\n", print_loc (s->loc));
+      EMIT2 ("cmpq", print_loc (s->ops[0]->loc), "$0");
+      EMIT1 ("jz", print_loc (s->loc));
     }
   
   /* Free the location of the conditional expression. */
@@ -539,20 +546,20 @@ gen_code_binary (struct ast *s)
 
 #undef AUTO_ENSURE_PUT
 
-#define AUTO_MULDIV_PUT(CASE, OP, REG)				\
-      case CASE:						\
-	do {							\
-	  struct loc *l = NULL;					\
-	  MAKE_BASE_LOC (l, register_loc, "%rax");		\
-	  MOVE_LOC (s->loc, l);					\
-	  PUT ("\tmov\t$0, %%rdx\n");				\
-	  if (IS_LITERAL (from->loc))				\
-	    GIVE_REGISTER (from->loc);				\
-	  PUT ("\t%s\t%s\n", (OP), print_loc (from->loc));	\
-	  FREE_LOC (from->loc);					\
-	  s->loc->base = xstrdup (REG);				\
-	  GIVE_REGISTER (s->loc);				\
-	} while (0);						\
+#define AUTO_MULDIV_PUT(CASE, OP, REG)			\
+      case CASE:					\
+	do {						\
+	  struct loc *l = NULL;				\
+	  MAKE_BASE_LOC (l, register_loc, "%rax");	\
+	  MOVE_LOC (s->loc, l);				\
+	  EMIT2 ("mov", "$0", "%rdx");			\
+	  if (IS_LITERAL (from->loc))			\
+	    GIVE_REGISTER (from->loc);			\
+	  EMIT1 ((OP), print_loc (from->loc));		\
+	  FREE_LOC (from->loc);				\
+	  s->loc->base = xstrdup (REG);			\
+	  GIVE_REGISTER (s->loc);			\
+	} while (0);					\
 	break
 
       AUTO_MULDIV_PUT ('*', "imulq", "%rax");
@@ -601,19 +608,19 @@ gen_code_unary (struct ast *s)
 
     case '-':
       ENSURE_DESTINATION_REGISTER_UNI (s->loc);
-      PUT ("\tnegq\t%s\n", print_loc (s->loc));
+      EMIT1 ("negq", print_loc (s->loc));
       break;
 
     case INC:
       if (!s->unary_prefix)
 	GIVE_REGISTER (s->loc);
-      PUT ("\tincq\t%s\n", print_loc (s->ops[0]->loc));
+      EMIT1 ("incq", print_loc (s->ops[0]->loc));
       break;
 
     case DEC:
       if (!s->unary_prefix)
 	GIVE_REGISTER (s->loc);
-      PUT ("\tdecq\t%s\n", print_loc (s->ops[0]->loc));
+      EMIT1 ("decq\t%s\n", print_loc (s->ops[0]->loc));
       break;
 
     default:
@@ -631,12 +638,11 @@ gen_code_unary (struct ast *s)
 static void
 gen_code_function_call (struct ast *s)
 {
-  /* Certain functions are considered builtin and thus require
-     special treatment. */
+  
   if (STREQ (s->ops[0]->loc->base, "__builtin_alloca"))
     {
       gen_code_r (s->ops[1]);
-      PUT ("\tsub\t%s, %%rsp\n", print_loc (s->ops[1]->loc));
+      EMIT2 ("sub", print_loc (s->ops[1]->loc), "%rsp");
       FREE_LOC (s->ops[1]->loc);
       MAKE_BASE_LOC (s->loc, register_loc, xstrdup ("%rsp"));
     }
@@ -658,8 +664,8 @@ gen_code_function_call (struct ast *s)
       /* We don't support function pointers yet. */
       assert (s->ops[0]->type == variable_type);
 
-      PUT ("\tmov\t$0, %%rax\n"); /* Needed for printf. */
-      PUT ("\tcall\t%s\n", s->ops[0]->loc->base);
+      EMIT2 ("mov", "$0", "%rax"); /* Needed for printf. */
+      EMIT1 ("call", s->ops[0]->loc->base);
       FREE_LOC (s->ops[0]->loc);
       MAKE_BASE_LOC (s->loc, register_loc, xstrdup ("%rax"));
     }
@@ -692,12 +698,12 @@ gen_code_r (struct ast *s)
 
     case label_type:
       assert (s->loc != NULL);
-      PUT ("%s:\n", print_loc (s->loc));
+      EMIT_LABEL (print_loc (s->loc));
       break;
 
     case jump_type:
       assert (s->loc != NULL);
-      PUT ("\tjmp\t%s\n", print_loc (s->loc));
+      EMIT1 ("jmp", print_loc (s->loc));
       break;
 
     case integer_type:
@@ -731,7 +737,7 @@ gen_code_r (struct ast *s)
       if (s->ops[0] != NULL)
 	{
 	  gen_code_r (s->ops[0]);
-	  PUT ("\tsub\t%s, %%rsp\n", print_loc (s->ops[0]->loc));
+	  EMIT2 ("sub", print_loc (s->ops[0]->loc), "%rsp");
 	  FREE_LOC (s->ops[0]->loc);
 	  MAKE_BASE_LOC (s->loc, register_loc, xstrdup ("%rsp"));
 	  GIVE_REGISTER (s->loc);
@@ -764,7 +770,7 @@ gen_code (struct ast *s)
 {
   avail = 0;
   str_labelno = 0;
-  data_section = NULL;
+  FREE (data_section);
   branch_labelno = 0;
 
   /* Set up branch codes. */

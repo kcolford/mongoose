@@ -40,6 +40,15 @@
 
 #include <stdio.h>
 
+/** 
+ * Create a string for a builtin name.
+ * 
+ * @param NAME The name to be transformed into a builtin.
+ * 
+ * @return The builtin version of @c NAME.
+ */
+#define BUILTIN(NAME) ("__builtin_" #NAME)
+
 extern FILE *yyin;		/**< The input stream for the
 				   lexer. */
 extern FILE *outfile;		/**< The output stream for the

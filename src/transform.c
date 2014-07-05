@@ -29,9 +29,15 @@
 
 #include "ast.h"
 #include "compiler.h"
+#include "lib.h"
 #include "parse.h"
 
 #include <assert.h>
+
+#define SWAP_AST(X, Y) do {			\
+    SWAP ((X)->next, (Y)->next);		\
+    SWAP (X, Y);				\
+  } while (0)
 
 static void
 transform_r (struct ast **ss)
@@ -57,7 +63,9 @@ transform_r (struct ast **ss)
 	  if (!s->noreturnint)
 	    {
 	      s->noreturnint = 1;
-	      s = make_cond_move (s, make_integer (!s->boolean_not));
+	      struct ast *t = make_cond_move (s,
+					      make_integer (!s->boolean_not));
+	      SWAP_AST (t, s);
 	      transform_r (ss);
 	    }
 	  break;
@@ -68,6 +76,18 @@ transform_r (struct ast **ss)
       s->ops[0]->noreturnint = 1;
       break;
 
+    case function_call_type:
+      /* Certain functions are considered builtin and thus require
+	 special treatment. */
+#define IS_BUILTIN(A, B)				\
+      STREQ ((A)->ops[0]->loc->base, BUILTIN (B))
+      if (IS_BUILTIN (s, alloca))
+	{
+	  struct ast *t = make_alloc (ast_dup (s->ops[1]));
+	  SWAP_AST (t, s);
+	  AST_FREE (t);
+	}
+    
     default:
       break;
     }
