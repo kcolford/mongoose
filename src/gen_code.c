@@ -512,7 +512,6 @@ gen_code_binary (struct ast *s)
   struct ast _from, *from;
   from = &_from;
   from->loc = loc_dup (s->ops[1]->loc);
-  struct loc *l;
   switch (s->op.binary.op)
     {
 #define AUTO_ENSURE_PUT(CASE, N, OP)				\
@@ -540,41 +539,27 @@ gen_code_binary (struct ast *s)
 
 #undef AUTO_ENSURE_PUT
 
-    case '*':
-      MAKE_BASE_LOC (l, register_loc, "%rax");
-      MOVE_LOC (s->loc, l);
-      PUT ("\tmov\t$0, %%rdx\n");
-      if (IS_LITERAL (from->loc))
-	GIVE_REGISTER (from->loc);
-      PUT ("\timulq\t%s\n", print_loc (from->loc));
-      FREE_LOC (from->loc);
-      s->loc->base = xstrdup ("%rax");
-      GIVE_REGISTER (s->loc);
-      break;
+#define AUTO_MULDIV_PUT(CASE, OP, REG)				\
+      case CASE:						\
+	do {							\
+	  struct loc *l = NULL;					\
+	  MAKE_BASE_LOC (l, register_loc, "%rax");		\
+	  MOVE_LOC (s->loc, l);					\
+	  PUT ("\tmov\t$0, %%rdx\n");				\
+	  if (IS_LITERAL (from->loc))				\
+	    GIVE_REGISTER (from->loc);				\
+	  PUT ("\t%s\t%s\n", (OP), print_loc (from->loc));	\
+	  FREE_LOC (from->loc);					\
+	  s->loc->base = xstrdup (REG);				\
+	  GIVE_REGISTER (s->loc);				\
+	} while (0);						\
+	break
 
-    case '/':
-      MAKE_BASE_LOC (l, register_loc, "%rax");
-      MOVE_LOC (s->loc, l);
-      PUT ("\tmov\t$0, %%rdx\n");
-      if (IS_LITERAL (from->loc))
-	GIVE_REGISTER (from->loc);
-      PUT ("\tidivq\t%s\n", print_loc (from->loc));
-      FREE_LOC (from->loc);
-      s->loc->base = xstrdup ("%rax");
-      GIVE_REGISTER (s->loc);
-      break;
+      AUTO_MULDIV_PUT ('*', "imulq", "%rax");
+      AUTO_MULDIV_PUT ('/', "idivq", "%rax");
+      AUTO_MULDIV_PUT ('%', "idivq", "%rdx");
 
-    case '%':
-      MAKE_BASE_LOC (l, register_loc, "%rax");
-      MOVE_LOC (s->loc, l);
-      PUT ("\tmov\t$0, %%rdx\n");
-      if (IS_LITERAL (from->loc))
-	GIVE_REGISTER (from->loc);
-      PUT ("\tidivq\t%s\n", print_loc (from->loc));
-      FREE_LOC (from->loc);
-      s->loc->base = xstrdup ("%rdx");
-      GIVE_REGISTER (s->loc);
-      break;
+#undef AUTO_MULDIV_PUT
 
     case '[':
       assert (!IS_LITERAL (s->loc));
