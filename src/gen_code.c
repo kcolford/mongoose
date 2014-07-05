@@ -620,7 +620,7 @@ gen_code_unary (struct ast *s)
     case DEC:
       if (!s->unary_prefix)
 	GIVE_REGISTER (s->loc);
-      EMIT1 ("decq\t%s\n", print_loc (s->ops[0]->loc));
+      EMIT1 ("decq", print_loc (s->ops[0]->loc));
       break;
 
     default:

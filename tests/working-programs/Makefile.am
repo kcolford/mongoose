@@ -22,6 +22,7 @@ prog-12.c					\
 prog-13.c					\
 prog-14.c					\
 prog-15.c					\
+prog-16.c					\
 prog-gcd.c					\
 prog-primes.c
 
