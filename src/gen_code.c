@@ -291,7 +291,7 @@ static int branch_labelno = 0;	/**< Current label number for branch
  */
 #define ENSURE_DESTINATION_REGISTER0(X, Y) do {	\
     assert (!IS_LITERAL (X));			\
-    if (IS_MEMORY (X) && IS_MEMORY (Y))		\
+    if (!IS_REGISTER (X) && !IS_REGISTER (Y))	\
       GIVE_REGISTER (Y);			\
   } while (0)
 
