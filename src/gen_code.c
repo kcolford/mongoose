@@ -356,8 +356,8 @@ static int branch_labelno = 0;	/**< Current label number for branch
   } while (0)
 
 /**
- * Designed for when both X and Y must be registers but cannot have
- * their arguments swapped.
+ * Designed for when both @c X and @c Y must be registers but cannot
+ * have their arguments swapped.
  *
  * @param X @c s->loc
  * @param Y @c from->loc
