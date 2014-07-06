@@ -611,6 +611,11 @@ gen_code_unary (struct ast *s)
       EMIT1 ("negq", print_loc (s->loc));
       break;
 
+    case '~':
+      ENSURE_DESTINATION_REGISTER_UNI (s->loc);
+      EMIT1 ("notq", print_loc (s->loc));
+      break;
+
     case INC:
       if (!s->unary_prefix)
 	GIVE_REGISTER (s->loc);

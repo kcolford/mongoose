@@ -110,6 +110,7 @@ static struct ast *make_ifelse (struct ast *, struct ast *, struct ast *);
 
 %left ','
 %right '=' MUT_ADD MUT_SUB MUT_MUL MUT_DIV MUT_MOD MUT_RS MUT_LS MUT_AND MUT_OR MUT_XOR
+%right '?' ':'
 %left OR
 %left AND
 %left '|'
@@ -226,6 +227,7 @@ expr:		STR                   { $$ = make_variable (NULL, $1); }
 	|	expr LS expr          { $$ = make_binary (LS, $1, $3); }
 	|	'&'expr %prec SIZEOF  { $$ = make_unary ('&', $2); }
 	|	'*'expr %prec SIZEOF  { $$ = make_unary ('*', $2); }
+	|	'~'expr               { $$ = make_unary ('~', $2); }
 	|	'!'expr %prec SIZEOF  { $$ = $2; $$->boolean_not ^= 1; }
 	|	expr INC              { $$ = make_unary (INC, $1); }
 	|	expr DEC              { $$ = make_unary (DEC, $1); }
