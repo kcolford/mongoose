@@ -1,4 +1,4 @@
-EXTRA_DIST = fdl.texi gpl-3.0.texi relocatable.texi
+EXTRA_DIST = fdl.texi gpl-3.0.texi
 
 pdf-am: doc
 	[ "$(GENERATE_LATEX)" = "YES" ] && $(MAKE) -C latex

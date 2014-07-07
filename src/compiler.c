@@ -32,7 +32,6 @@
 #include "gl_xlist.h"
 #include "lib.h"
 #include "progname.h"
-#include "relocatable.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -188,7 +187,7 @@ int main (int argc, char *argv[])
   setlocale (LC_ALL, "");
 
 #if ENABLE_NLS
-  bindtextdomain (PACKAGE, relocate (LOCALEDIR));
+  bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 #endif
 
