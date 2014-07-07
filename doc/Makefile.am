@@ -1,7 +1,9 @@
 EXTRA_DIST = fdl.texi gpl-3.0.texi
 
+if GENERATE_LATEX
 pdf-am: doc
-	[ "$(GENERATE_LATEX)" = "YES" ] && $(MAKE) -C latex
+	(MAKE) -C latex
+endif
 
 html-am: doc
 

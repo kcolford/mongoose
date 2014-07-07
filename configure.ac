@@ -81,7 +81,9 @@ AS_IF([test "$LATEX" = "false"], [
   AC_CHECK_PROGS([MAKEINDEX], [makeindex])
 ], [
   AC_SUBST([GENERATE_LATEX], [NO])
+  AC_SUBST([USE_PDFLATEX], [NO])
 ])
+AM_CONDITIONAL([GENERATE_LATEX], [test x"$GENERATE_LATEX" = x"YES"])
 
 # Check if we can use Help2Man to create a man page for the user.
 AS_IF([test $cross_compiling = no], [
