@@ -643,37 +643,27 @@ gen_code_unary (struct ast *s)
 static void
 gen_code_function_call (struct ast *s)
 {
-  
-  if (STREQ (s->ops[0]->loc->base, "__builtin_alloca"))
+  /** @todo Don't clobber other registers when making a
+      function call. */
+  int a = 0;
+  gen_code_r (s->ops[1]);
+  struct ast *i;
+  for (i = s->ops[1]; i != NULL; i = i->next)
     {
-      gen_code_r (s->ops[1]);
-      EMIT2 ("sub", print_loc (s->ops[1]->loc), "%rsp");
-      FREE_LOC (s->ops[1]->loc);
-      MAKE_BASE_LOC (s->loc, register_loc, xstrdup ("%rsp"));
+      if (i->loc == NULL)
+	continue;
+      struct loc *call;
+      MAKE_BASE_LOC (call, register_loc, xstrdup (regis(call_regis(a++))));
+      MOVE_LOC (i->loc, call);
     }
-  else
-    {
-      /** @todo Don't clobber other registers when making a
-	  function call. */
-      int a = 0;
-      gen_code_r (s->ops[1]);
-      struct ast *i;
-      for (i = s->ops[1]; i != NULL; i = i->next)
-	{
-	  assert (i->loc != NULL);
-	  struct loc *call;
-	  MAKE_BASE_LOC (call, register_loc,
-			 xstrdup (regis(call_regis(a++))));
-	  MOVE_LOC (i->loc, call);
-	}
-      /* We don't support function pointers yet. */
-      assert (s->ops[0]->type == variable_type);
+  /* We don't support function pointers yet. */
+  assert (s->ops[0]->type == variable_type);
 
-      EMIT2 ("mov", "$0", "%rax"); /* Needed for printf. */
-      EMIT1 ("call", s->ops[0]->loc->base);
-      FREE_LOC (s->ops[0]->loc);
-      MAKE_BASE_LOC (s->loc, register_loc, xstrdup ("%rax"));
-    }
+  EMIT2 ("mov", "$0", "%rax"); /* Needed for printf. */
+  EMIT1 ("call", s->ops[0]->loc->base);
+  FREE_LOC (s->ops[0]->loc);
+  MAKE_BASE_LOC (s->loc, register_loc, xstrdup ("%rax"));
+
   GIVE_REGISTER (s->loc);
 }
 

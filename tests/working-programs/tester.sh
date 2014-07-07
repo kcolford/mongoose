@@ -1,41 +1,33 @@
 #!/bin/sh
 
-ret=0
 srcfile=$1
 
 prog=`mktemp`
-
-if [ x"$COMPILER" = x ]; then
-    exit 77
-fi
-
-logname=$srcfile.log
-
-$COMPILER -o $prog $srcfile | tee $logname || ret=1
-if [ -s $logname ]; then
-    ret=1
-else
-    rm -f $logname
-fi
-
 myout=`mktemp`
-if [ -x $prog ]; then
-    $prog > $myout || ret=1
-else
-    ret=1
-fi
-
 nativeout=`mktemp`
-$CC -DGCC -o $prog $srcfile -lm 2> /dev/null || ret=1
-if [ -x $prog ]; then
-    $prog > $nativeout || ret=1
-else
-    ret=1
-    echo "The regular C compiler failed..." >&2
-fi
 
-cmp -s $myout $nativeout || ret=1
+run () {
+    msg=$1
+    shift
+    if "$@"; then
+	:
+    else
+	code=$?
+	echo "FAILED: $msg" >&2
+	rm -f $prog $myout $nativeout
+	exit $code
+    fi
+}
 
-rm $myout $nativeout $prog
+run "could not compile $srcfile" $COMPILER -o $prog $srcfile
 
-exit $ret
+run "the program is not runable" [ -x $prog ] && \
+    run "the program failed to run" $prog > $myout
+
+run "the regular C compiler failed" $CC -DGCC -o $prog $srcfile -lm
+
+run "the regular C compiler could not create an executable" [ -x $prog ] && \
+    run "the regular C compiler's executable failed" $prog > $nativeout
+
+run "the two compilers created programs with different output" \
+    cmp $myout $nativeout

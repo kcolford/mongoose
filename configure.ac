@@ -32,7 +32,8 @@ AS_IF([test "$target_os" != "linux-gnu"], [
 
 # Begin AutoMake intialization.
 AC_USE_SYSTEM_EXTENSIONS
-AM_INIT_AUTOMAKE([foreign silent-rules color-tests dist-xz])
+AM_INIT_AUTOMAKE([color-tests foreign parallel-tests])
+AM_SILENT_RULES([yes])
 LT_INIT
 
 # Checks for programs.
@@ -43,6 +44,9 @@ AC_PROG_CXX
 AC_PROG_YACC
 AM_PROG_LEX
 AC_PROG_RANLIB
+
+# Locate timeout for the testsuites.
+AC_CHECK_PROGS([TIMEOUT], [timeout])
 
 # Locate the AutoGen program for maintainer's use.
 AC_ARG_VAR([AUTOGEN], [*Maintainers Only*: The AutoGen program to use,
