@@ -69,11 +69,11 @@ AX_COMPARE_VERSION([1.8], [le], [$($DOXYGEN -v)], [
 
 # Locate LaTeX for converting Doxygen output to PDFs.
 AC_ARG_VAR([LATEX], [The instance of LaTeX to use when compiling .tex files.])
-AC_CHECK_PROGS([LATEX], [latex], [false])
-AS_IF([test "$LATEX" = "false"], [
+AC_CHECK_PROGS([LATEX], [latex])
+AS_IF([test "$LATEX"], [
   AC_SUBST([GENERATE_LATEX], [YES])
-  AC_CHECK_PROGS([PDFLATEX], [pdflatex], [false])
-  AS_IF([test "$PDFLATEX" = "false"], [
+  AC_CHECK_PROGS([PDFLATEX], [pdflatex])
+  AS_IF([test "$PDFLATEX"], [
     AC_SUBST([USE_PDFLATEX], [YES])
   ], [
     AC_SUBST([USE_PDFLATEX], [NO])
@@ -83,7 +83,7 @@ AS_IF([test "$LATEX" = "false"], [
   AC_SUBST([GENERATE_LATEX], [NO])
   AC_SUBST([USE_PDFLATEX], [NO])
 ])
-AM_CONDITIONAL([GENERATE_LATEX], [test x"$GENERATE_LATEX" = x"YES"])
+AM_CONDITIONAL([GENERATE_LATEX], [test "$GENERATE_LATEX" = "YES"])
 
 # Check if we can use Help2Man to create a man page for the user.
 AS_IF([test $cross_compiling = no], [
@@ -125,7 +125,7 @@ AC_CHECK_FILES([$archdir/crti.o $archdir/crt1.o $archdir/crtn.o], [
 # ----------------------------------------------------------------
 AC_DEFUN([BOOTSTRAP_PROG], [
   AC_CHECK_TARGET_TOOLS([_BOOTSTRAP_$1], [$2])
-  AS_IF([test -n "$_BOOTSTRAP_$1"], [
+  AS_IF([test "$_BOOTSTRAP_$1"], [
     AC_DEFINE_UNQUOTED([$1], ["$_BOOTSTRAP_$1"], [$3])
   ])
 ])
