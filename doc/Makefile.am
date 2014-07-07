@@ -1,11 +1,11 @@
 EXTRA_DIST = fdl.texi gpl-3.0.texi
 
 if GENERATE_LATEX
-pdf-am: doc
-	(MAKE) -C latex
+pdf-local: doc
+	$(MAKE) -C latex
 endif
 
-html-am: doc
+html-local: doc
 
 doc: doc.cfg
 	$(AM_V_GEN)$(DOXYGEN) $<
