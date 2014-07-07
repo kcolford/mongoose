@@ -66,6 +66,7 @@ AX_COMPARE_VERSION([1.8], [le], [$($DOXYGEN -v)], [
   AC_MSG_WARN([Without the proper version of Doxygen, you will be unable to 
                generate the documentation.])
 ])
+AM_CONDITIONAL([HAVE_DOXYGEN], [test "$DOXYGEN" != "false"])
 
 # Locate LaTeX for converting Doxygen output to PDFs.
 AC_ARG_VAR([LATEX], [The instance of LaTeX to use when compiling .tex files.])

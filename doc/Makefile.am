@@ -7,8 +7,12 @@ endif
 
 html-local: doc
 
+if HAVE_DOXYGEN
 doc: doc.cfg
 	$(AM_V_GEN)$(DOXYGEN) $<
+else
+doc:
+endif
 
 clean-local:
 	$(RM) -r html latex
