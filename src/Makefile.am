@@ -41,7 +41,9 @@ compiler_LDADD = $(top_builddir)/lib/lib$(PACKAGE).la $(LTLIBINTL) $(LIB_ACL)
 lib-recurse:
 	$(MAKE) -C $(top_builddir)/lib lib$(PACKAGE).la
 
-ast.c ast.h: ast.def ast.tpl
+ast.c: ast.def ast.tpl
 	$(AM_V_GEN)$(AUTOGEN) ast.def
+ast.h: ast.c
+	$(AM_V_at)test -f $@ || { rm -f ast.c; $(MAKE) ast.c; }
 
 .PHONY: lib-recurse
