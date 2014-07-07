@@ -2,7 +2,7 @@
  * @file   transform.c
  * @author Kieran Colford <colfordk@gmail.com>
  * 
- * @brief This is the routine that transforms different ASt structures
+ * @brief This is the routine that transforms different AST structures
  * into ones that make more sense for the low level passes.
  * 
  * Copyright (C) 2014 Kieran Colford
