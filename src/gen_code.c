@@ -650,10 +650,11 @@ gen_code_function_call (struct ast *s)
   struct ast *i;
   for (i = s->ops[1]; i != NULL; i = i->next)
     {
-      if (i->loc == NULL)
+      if (i->type == block_type)
 	continue;
       struct loc *call;
       MAKE_BASE_LOC (call, register_loc, xstrdup (regis(call_regis(a++))));
+      assert (i->loc != NULL);
       MOVE_LOC (i->loc, call);
     }
   /* We don't support function pointers yet. */

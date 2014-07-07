@@ -104,6 +104,13 @@ optimizer_r (struct ast **ss)
 	  s->next->ops[0]->op.integer.i += s->ops[0]->op.integer.i;
 	  AST_FREE (s->ops[0]);
 	}
+      if (s->ops[0] == NULL)
+	{
+	  struct ast *t = s;
+	  s = s->next;
+	  t->next = NULL;
+	  AST_FREE (t);
+	}
       break;
 
       /* Fold up predictable if-statements. */
