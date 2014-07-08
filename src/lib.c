@@ -32,6 +32,7 @@
 #include "gl_xlist.h"
 #include "gl_array_list.h"
 #include "lib.h"
+#include "tempname.h"
 #include "xalloc.h"
 
 #include <assert.h>
@@ -179,25 +180,16 @@ tmpfile_name (void)
       at_fatal_signal (free_tmpfiles);
     }
 
-  /* Add an entry to the end of the array, this will then be
-     replaced. */
-  gl_list_add_last (tmpfiles, NULL);
-  char *out = NULL;
+  /* Determine the name of the temporary file. */
+  char *out = xstrdup ("compilerXXXXXX");
+  int fd = gen_tempname (out, 0, 0, GT_FILE);
+  if (fd < 0)
+    error (1, errno, _("FATAL: failed to create temporary file"));
+  else if (close (fd))
+    error (1, errno, _("FATAL: failed to close the temporary file"));
 
-  do
-    {
-      FREE (out);
-      out = xstrdup (tmpnam (NULL));
-      gl_list_set_at (tmpfiles, gl_list_size (tmpfiles) - 1, out);
-      errno = 0;
-      /* Create the file so that it can't be opened by another process
-	 or if it is, it will cause us to go and select a new
-	 file name. */
-      int t = creat (out, S_IRWXU);
-      if (t >= 0)
-	close (t);
-    }
-  while (errno == EEXIST);
+  /* Add the entry to the list of temporary files. */
+  gl_list_add_last (tmpfiles, out);
 
   return out;
 }
