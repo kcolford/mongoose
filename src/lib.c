@@ -134,6 +134,8 @@ free_tmpfiles (void)
 {
   if (tmpfiles != NULL)
     {
+      /** @todo Change this loop so that it uses @c gl_list_iterator
+	  instead of array accesses. */
       unsigned i;
       for (i = 0; i < gl_list_size (tmpfiles); i++)
 	{
@@ -157,6 +159,18 @@ tmpfile_name (void)
      list and add the destructors to the cleanup functions. */
   if (tmpfiles == NULL)
     {
+      /** @todo @parblock Incorperate GL_LINKED_LIST's feature to
+	  make all actions on it signal safe.  This is turned on in
+	  configure.ac by invoking:
+
+	  @code
+	  AC_DEFINE([SIGNAL_SAFE_LIST], [1],
+	            [Define if lists must be signal-safe.])
+	  @endcode
+
+	  Thus this can be safely cleaned up while catching a fatal
+	  signal.  @endparblock 
+      */
       tmpfiles = gl_list_create_empty (GL_ARRAY_LIST, NULL, NULL, NULL, 1);
       /* Register the free_tmpfiles cleanup function so that it is
 	 called when the program exits and whenever the program
