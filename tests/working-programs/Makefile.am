@@ -7,7 +7,7 @@ ENVIRONMENT = COMPILER="$(COMPILER)" CC="$(CC)"	\
   $(TIMEOUT) --foreground --signal KILL 10s
 
 TEST_EXTENSIONS = .c
-C_LOG_COMPILER = $(ENVIRONMENT) $(SHELL) tester.sh
+C_LOG_COMPILER = $(ENVIRONMENT) $(SHELL) $(srcdir)/tester.sh
 
 TESTS =						\
 prog-1.c					\
