@@ -108,15 +108,17 @@ static const char *extra_libs[] =
 void
 run_unit (void)
 {
+  gl_list_iterator_t it;
   gl_list_t name = NULL;
   if (stop == 0)
     name = gl_list_create_empty (GL_LINKED_LIST, NULL, NULL, NULL, 1);
 
-  unsigned i;
+  it = gl_list_iterator (infile_name);
   const char *out;
-  for (i = 0; i < gl_list_size (infile_name); i++)
+  const char *in;
+  while (gl_list_iterator_next (&it, (const void **) &in, NULL))
     {
-      const char *in = gl_list_get_at (infile_name, i), *_in = in;
+      const char *_in = in;
       switch (in[strlen (in) - 1])
 	{
 	case 'c':
@@ -176,6 +178,7 @@ run_unit (void)
 	  copy_file_preserving (in, out);
 	}
     }
+  gl_list_iterator_free (&it);
 
   /* If an output file name wasn't specified, then we need to
      determine one from the name of the source file.  If that can't be
@@ -201,10 +204,11 @@ run_unit (void)
 	 gl_list_iterator API to make it obvious what our intentions
 	 are.  This way if we change the implemention of the list, it
 	 will use the most minimal impact solution. */
-      gl_list_iterator_t it = gl_list_iterator (name);
+      it = gl_list_iterator (name);
       const void *tmp = NULL;
       while (gl_list_iterator_next (&it, &tmp, NULL))
 	*ldargsptr++ = tmp;
+      gl_list_iterator_free (&it);
 
       /* Copy the closing of the link command into the array. */
       memcpy (ldargsptr, extra_libs, sizeof extra_libs);

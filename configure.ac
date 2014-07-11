@@ -162,6 +162,10 @@ AC_TYPE_UINT8_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 
+# Make gl_list_t signal-safe for use in cleanup routines.
+AC_DEFINE([SIGNAL_SAFE_LIST], [1],
+          [Define to 1 if lists must be signal-safe.])
+
 # Checks for library functions.
 AC_CHECK_FUNCS([atexit memset setlocale strtol])
 AC_FUNC_ALLOCA
