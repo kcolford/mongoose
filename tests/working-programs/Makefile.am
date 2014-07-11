@@ -1,7 +1,7 @@
 EXTRA_DIST = $(TESTS) tester.sh
 MOSTLYCLEANFILES = core *.log
 
-COMPILER = $(VALGRIND) $(top_builddir)/src/compiler $(COMPILER_OPTS)
+COMPILER = $(VALGRIND) $(top_builddir)/src/compiler
 
 ENVIRONMENT = COMPILER="$(COMPILER)" CC="$(CC)"	\
   $(TIMEOUT) --foreground --signal KILL 10s
