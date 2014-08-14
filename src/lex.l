@@ -114,11 +114,21 @@
  /* Extract the current line number and file name from the directives
     left by the C preprocessor. */
 "# "[0-9]+.*           {
+#if defined (HAVE_C_VARARRAYS)
+  char t[yyleng + 1];
+#elif defined (HAVE_ALLOCA)
   char *t = alloca (yyleng + 1);
+#else
+  char *t = xmalloc (yyleng + 1);
+#endif
   strcpy (t, yytext);
   yylineno = strtol (strtok (t, "# \""), NULL, 10);
   FREE (file_name);
   file_name = xstrdup (strtok (NULL, "# \""));
+
+#if !defined (HAVE_C_VARARRAYS) && !defined(HAVE_ALLOCA)
+  FREE (t);
+#endif
 }
 
  /* Ignore any pragmas found in the source. */
