@@ -45,8 +45,10 @@ AC_PROG_YACC
 AM_PROG_LEX
 AC_PROG_RANLIB
 
-# Locate timeout for the testsuites.
-AC_CHECK_PROGS([TIMEOUT], [timeout])
+# Locate env and timeout for the testsuites.
+AC_CHECK_PROGS([ENV], [env])
+AC_CHECK_PROG([TIMEOUT], [timeout],
+              [[timeout --foreground --signal KILL 10s]])
 
 # Locate the AutoGen program for maintainer's use.
 AC_ARG_VAR([AUTOGEN], [*Maintainers Only*: The AutoGen program to use,
@@ -138,6 +140,7 @@ BOOTSTRAP_PROG([LD], [ld gold], [The linker to bootstrap off of.])
 
 # Set up warnings for the compilation routines.
 gl_MANYWARN_ALL_GCC([warnings])
+warnings="$warnings -Wno-missing-field-initializers"
 nw=
 nw="$nw -Wsystem-headers"	# Ridiculous warning.
 nw="$nw -Wvla"			# Breaks gnulib gettext.h.

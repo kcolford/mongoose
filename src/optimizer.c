@@ -61,11 +61,13 @@
 	long long l = s->ops[0]->op.integer.i;	\
 	long long r = s->ops[1]->op.integer.i;	\
 	AST_FREE (s);				\
-	s = make_integer (l OP r);		\
+	long long res = l OP r;			\
+	if (0 && s->boolean_not)		\
+	  res = !res;				\
+	s = make_integer (res);			\
       }						\
   } while (0)
 
-/*  */
 /** 
  * Convience macro for declaring how to fold up each binary operator.
  * 
@@ -119,14 +121,7 @@ optimizer_r (struct ast **ss)
       if (s->ops[0]->type == integer_type)
 	{
 	  struct ast *t = NULL;
-	  if (s->ops[0]->op.integer.i)
-	    {
-	      t = make_jump (xstrdup (s->op.cond.name));
-	      t->next = s->next;
-	      SWAP (t, s);
-	      t->next = NULL;
-	    }
-	  else
+	  if (!s->ops[0]->op.integer.i)
 	    {
 	      t = s;
 	      s = s->next;

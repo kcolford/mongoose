@@ -1,4 +1,4 @@
-SUBDIRS = lib src man tests po doc
+SUBDIRS = lib src man po doc tests
 ACLOCAL_AMFLAGS = -I m4
 EXTRA_DIST = m4/gnulib-cache.m4 .version COPYING README.md texi2md/texi2md.pl
 BUILT_SOURCES = .version
