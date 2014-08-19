@@ -142,7 +142,9 @@ struct loc
  * 
  * @return The string representation of @c l.
  */
-extern const char *print_loc (struct loc *l);
+extern const char *print_loc (struct loc *l)
+ATTRIBUTE_NONNULL (1)
+  ;
 
 /** 
  * Make a copy of location @c l.
@@ -151,6 +153,9 @@ extern const char *print_loc (struct loc *l);
  * 
  * @return The copy of @c l.
  */
-extern struct loc *loc_dup (const struct loc *l);
+extern struct loc *loc_dup (const struct loc *l)
+  ATTRIBUTE_NONNULL (1)
+  ATTRIBUTE_MALLOC
+  ;
 
 #endif

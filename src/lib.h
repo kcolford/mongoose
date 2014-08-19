@@ -34,6 +34,17 @@
 #include <errno.h>
 #include <error.h>
 
+#if defined __GNUC__ && 2 < __GNUC__
+#define ATTRIBUTE(ALIST) __attribute__ (ALIST)
+#else
+#define ATTRIBUTE(ALIST)	/* empty */
+#endif
+
+#define ATTRIBUTE_PURE ATTRIBUTE ((__pure__))
+#define ATTRIBUTE_CONST ATTRIBUTE ((__const__))
+#define ATTRIBUTE_MALLOC ATTRIBUTE ((__malloc__))
+#define ATTRIBUTE_NONNULL(...) ATTRIBUTE ((__nonnull__ (__VA_ARGS__)))
+
 /**
  * Test if the strings @c X and @c Y are equal.
  *
@@ -162,9 +173,7 @@ extern int safe_system (const char *args[]);
  * @return The resultant string.
  */
 extern char *my_printf (const char *fmt, ...)
-#if defined __GNUC__ && __GNUC__ > 2
-  __attribute__ ((format (gnu_printf, 1, 2), leaf, malloc))
-#endif
+  ATTRIBUTE ((__format__ (printf, 1, 2), malloc))
   ;
 
 /** 
@@ -178,9 +187,7 @@ extern char *my_printf (const char *fmt, ...)
  * @return The temporary file name.
  */
 extern const char *tmpfile_name (void)
-#if defined __GNUC__ && __GNUC__ > 2
-  __attribute__ ((leaf, malloc));
-#endif
+  ATTRIBUTE_MALLOC
 ;
 
 #endif

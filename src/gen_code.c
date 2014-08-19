@@ -267,11 +267,8 @@ static int branch_labelno = 0;	/**< Current label number for branch
  * @param X First location.
  * @param Y Section location.
  */
-#define ENSURE_DESTINATION_REGISTER(N, X, Y) do {	\
-    ENSURE_DESTINATION_REGISTER##N (X, Y);		\
-    assert ((X) != NULL);				\
-    assert ((Y) != NULL);				\
-  } while (0)
+#define ENSURE_DESTINATION_REGISTER(N, X, Y)	\
+  ENSURE_DESTINATION_REGISTER##N (X, Y)
 
 /**
  * Ensure that that @c X is in a register. 
@@ -416,7 +413,6 @@ gen_code_function (struct ast *s)
       const char *alloc = my_printf ("$%d", i->op.variable.alloc);
       EMIT2 ("sub", alloc, "%rsp");
       FREE (alloc);
-      assert (i->loc != NULL);
       EMIT2 ("mov", regis(call_regis(argnum)), print_loc (i->loc));
       argnum++;
     }
@@ -432,7 +428,6 @@ gen_code_ret (struct ast *s)
   if (s->ops[0] != NULL)
     {
       gen_code_r (s->ops[0]);
-      assert (s->ops[0]->loc != NULL);
       struct loc *ret;
       MAKE_BASE_LOC (ret, register_loc, xstrdup ("%rax"));
       MOVE_LOC (s->ops[0]->loc, ret);
@@ -519,9 +514,7 @@ static void
 gen_code_binary (struct ast *s)
 {
   gen_code_r (s->ops[0]);
-  assert (s->ops[0]->loc != NULL);
   gen_code_r (s->ops[1]);
-  assert (s->ops[1]->loc != NULL);
   s->loc = loc_dup (s->ops[0]->loc);
   struct ast _from, *from;
   from = &_from;
@@ -661,7 +654,6 @@ gen_code_function_call (struct ast *s)
 	continue;
       struct loc *call;
       MAKE_BASE_LOC (call, register_loc, xstrdup (regis(call_regis(a++))));
-      assert (i->loc != NULL);
       MOVE_LOC (i->loc, call);
     }
   /* We don't support function pointers yet. */
@@ -700,12 +692,10 @@ gen_code_r (struct ast *s)
       break;
 
     case label_type:
-      assert (s->loc != NULL);
       EMIT_LABEL (print_loc (s->loc));
       break;
 
     case jump_type:
-      assert (s->loc != NULL);
       EMIT1 ("jmp", print_loc (s->loc));
       break;
 

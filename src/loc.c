@@ -31,13 +31,14 @@
 #include "loc.h"
 #include "xalloc.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 const char *
 print_loc (struct loc *l)
 {
-  if (l == NULL)
-    return NULL;
+  assert (l != NULL);
+
   FREE (l->string);
   switch (l->kind)
     {
@@ -59,6 +60,7 @@ print_loc (struct loc *l)
       l->string = my_printf ("%s", l->base);
       break;
     default:
+      assert (! "this should not have been reached");
       abort ();
     }
   return l->string;
@@ -67,6 +69,8 @@ print_loc (struct loc *l)
 struct loc *
 loc_dup (const struct loc *l)
 {
+  assert (l != NULL);
+
   struct loc *out = xmemdup (l, sizeof *l);
   out->base = xstrdup (out->base);
   if (out->index != NULL)

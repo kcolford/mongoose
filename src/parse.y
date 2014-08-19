@@ -246,7 +246,7 @@ callargs:	expr                  { $$ = $1; }
 
 %%
 
-void
+void ATTRIBUTE_CONST
 no_op (void)
 {
   ;
