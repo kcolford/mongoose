@@ -1,9 +1,7 @@
 Compiler
 ========
 
-[![Build Status]
-(https://travis-ci.org/kcolford/compiler.svg?branch=master)]
-(https://travis-ci.org/kcolford/compiler)
+![Build Status][1]
 
 An experimental C compiler.
 
@@ -107,3 +105,6 @@ Compiler and can be found in a git repository at
 TeXinfo markup (translating it to markdown).  Thus it satisfies all
 requirements of verbatim copying as described by the GNU Free
 Documentation License.
+
+[1]: https://travis-ci.org/kcolford/compiler.svg?branch=master "Build Status"
+[2]: https://travis-ci.org/kcolford/compiler "Build Bot"
