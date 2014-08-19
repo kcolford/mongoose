@@ -127,6 +127,12 @@ optimizer_r (struct ast **ss)
 	      s = s->next;
 	      t->next = NULL;
 	    }
+	  else
+	    {
+	      t = make_jump (xstrdup (s->op.cond.name));
+	      t->loc = loc_dup (s->loc);
+	      SWAP_AST (t, s);
+	    }
 	  AST_FREE (t);
 	}
       break;

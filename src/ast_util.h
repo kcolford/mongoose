@@ -28,6 +28,19 @@
 #define AST_UTIL_H
 
 #include "ast.h"
+#include "lib.h"
+
+/** 
+ * This swaps to ASTs in seperate AST chains.
+ * 
+ * @param X 
+ * @param Y 
+ * 
+ */
+#define SWAP_AST(X, Y) do {			\
+    SWAP ((X)->next, (Y)->next);		\
+    SWAP (X, Y);				\
+  } while (0)
 
 /** 
  * This concatenates two lists of ASTs.

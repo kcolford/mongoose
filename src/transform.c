@@ -28,6 +28,7 @@
 #include "config.h"
 
 #include "ast.h"
+#include "ast_util.h"
 #include "compiler.h"
 #include "lib.h"
 #include "parse.h"
@@ -37,11 +38,6 @@
 #define IS_BUILTIN(A, B)					\
   ((A)->ops[0]->type == variable_type				\
    && STREQ ((A)->ops[0]->op.variable.name, BUILTIN (B)))
-
-#define SWAP_AST(X, Y) do {			\
-    SWAP ((X)->next, (Y)->next);		\
-    SWAP (X, Y);				\
-  } while (0)
 
 extern struct ast *make_ternary (struct ast *, struct ast *, struct ast *);
 

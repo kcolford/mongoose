@@ -164,7 +164,7 @@ extern int safe_system (const char *args[]);
  * @return The resultant string.
  */
 extern char *my_printf (const char *fmt, ...)
-#if __GNUC__ > 2
+#if defined __GNUC__ && __GNUC__ > 2
   __attribute__ ((__format__ (gnu_printf, 1, 2)))
 #endif
   ;
