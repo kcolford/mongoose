@@ -48,7 +48,7 @@ AC_PROG_RANLIB
 # Locate env and timeout for the testsuites.
 AC_CHECK_PROGS([ENV], [env])
 AC_CHECK_PROG([TIMEOUT], [timeout],
-              [[timeout --foreground --signal KILL 10s]])
+              [[timeout 15s]])
 
 # Locate the AutoGen program for maintainer's use.
 AC_ARG_VAR([AUTOGEN], [*Maintainers Only*: The AutoGen program to use,

@@ -163,7 +163,7 @@ extern int safe_system (const char *args[]);
  */
 extern char *my_printf (const char *fmt, ...)
 #if defined __GNUC__ && __GNUC__ > 2
-  __attribute__ ((__format__ (gnu_printf, 1, 2)))
+  __attribute__ ((format (gnu_printf, 1, 2), leaf, malloc))
 #endif
   ;
 
@@ -177,6 +177,10 @@ extern char *my_printf (const char *fmt, ...)
  * 
  * @return The temporary file name.
  */
-extern const char *tmpfile_name (void);
+extern const char *tmpfile_name (void)
+#if defined __GNUC__ && __GNUC__ > 2
+  __attribute__ ((leaf, malloc));
+#endif
+;
 
 #endif
