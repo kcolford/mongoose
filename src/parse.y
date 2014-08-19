@@ -51,7 +51,6 @@ struct ast *make_whileloop (struct ast *, struct ast *);
 struct ast *make_array (char *, char *, struct ast *);
 struct ast *make_forloop (struct ast *, struct ast *, struct ast *, struct ast *);
 struct ast *make_ifelse (struct ast *, struct ast *, struct ast *);
-struct ast *make_ternary (struct ast *, struct ast *, struct ast *);
 
 #ifndef YYDEBUG
 #define YYDEBUG 1
@@ -314,18 +313,4 @@ make_ifelse (struct ast *cond, struct ast *body, struct ast *elsebody)
   struct ast *out = ast_cat (elsebody, make_label (tt));
   out = ast_cat (make_ifstatement (cond, body), out);
   return out;
-}
-
-struct ast *
-make_ternary (struct ast *cond, struct ast *t, struct ast *f)
-{
-#if 1
-  return make_cond_move (cond, t, f);
-#else
-  char *varname = place_holder ();
-  struct ast *var = make_variable (xstrdup (BUILTIN (i64_temp)), varname);
-  t = make_binary ('=', make_variable (NULL, xstrdup (varname)), t);
-  f = make_binary ('=', make_variable (NULL, xstrdup (varname)), f);
-  return ast_cat (var, make_block (make_ifelse (cond, t, f)));
-#endif
 }

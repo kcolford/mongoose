@@ -217,7 +217,7 @@ types = {
 };
 
 types = {
-  name = cond_move;
+  name = ternary;
   sub = cond;
   sub = val;
   sub = base;

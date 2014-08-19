@@ -39,8 +39,6 @@
   ((A)->ops[0]->type == variable_type				\
    && STREQ ((A)->ops[0]->op.variable.name, BUILTIN (B)))
 
-extern struct ast *make_ternary (struct ast *, struct ast *, struct ast *);
-
 static void
 transform_r (struct ast **ss)
 {

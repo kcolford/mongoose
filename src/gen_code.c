@@ -499,7 +499,7 @@ gen_code_cond (struct ast *s)
 }
 
 static void
-gen_code_cond_move (struct ast *s)
+gen_code_ternary (struct ast *s)
 {
   gen_code_r (s->ops[2]);
   s->loc = loc_dup (s->ops[2]->loc);
@@ -747,8 +747,8 @@ gen_code_r (struct ast *s)
 	}
       break;
 
-    case cond_move_type:
-      gen_code_cond_move (s);
+    case ternary_type:
+      gen_code_ternary (s);
       break;
 
     default:
