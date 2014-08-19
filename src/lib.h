@@ -28,10 +28,8 @@
 #define LIB_H
 
 #include "gettext.h"
-#include "xalloc.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <error.h>
@@ -128,11 +126,11 @@
  * @param N The index we want to try.
  */
 #define CHECK_BOUNDS(ARRAY, N) do {					\
-    if (a < 0)								\
-      error (1, 0, _("index out of bounds, %d less than zero"), a);	\
-    if (a >= SLEN (ARRAY))						\
+    if ((N) < 0)							\
+      error (1, 0, _("index out of bounds, %d less than zero"), (N));	\
+    if ((N) >= SLEN (ARRAY))						\
       error (1, 0, _("index out of bounds, %d greater than or equal "	\
-		     "to the maximum %ld"), a, SLEN (ARRAY));		\
+		     "to the maximum %ld"), (N), SLEN (ARRAY));		\
   } while (0)
 
 /** 
