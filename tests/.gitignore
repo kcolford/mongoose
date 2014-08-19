@@ -1,3 +1,10 @@
+# Linux core dump files.
 core
+core.*
+
+# Valgrind core dump files.
+vgcore.*
+
+# Files emmited by the test framework.
 *.log
 *.trs

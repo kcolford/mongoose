@@ -220,6 +220,7 @@ types = {
   name = cond_move;
   sub = cond;
   sub = val;
+  sub = base;
   doc = "A conditional move.";
 };
 

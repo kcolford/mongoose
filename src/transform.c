@@ -34,10 +34,16 @@
 
 #include <assert.h>
 
+#define IS_BUILTIN(A, B)					\
+  ((A)->ops[0]->type == variable_type				\
+   && STREQ ((A)->ops[0]->op.variable.name, BUILTIN (B)))
+
 #define SWAP_AST(X, Y) do {			\
     SWAP ((X)->next, (Y)->next);		\
     SWAP (X, Y);				\
   } while (0)
+
+extern struct ast *make_ternary (struct ast *, struct ast *, struct ast *);
 
 static void
 transform_r (struct ast **ss)
@@ -63,8 +69,8 @@ transform_r (struct ast **ss)
 	  if (!s->noreturnint)
 	    {
 	      s->noreturnint = 1;
-	      struct ast *t = make_cond_move (s,
-					      make_integer (!s->boolean_not));
+	      struct ast *t = make_ternary (s, make_integer (1),
+					    make_integer (0));
 	      SWAP_AST (t, s);
 	      transform_r (ss);
 	    }
@@ -79,8 +85,7 @@ transform_r (struct ast **ss)
     case function_call_type:
       /* Certain functions are considered builtin and thus require
 	 special treatment. */
-#define IS_BUILTIN(A, B)				\
-      STREQ ((A)->ops[0]->loc->base, BUILTIN (B))
+
       if (IS_BUILTIN (s, alloca))
 	{
 	  struct ast *t = make_alloc (ast_dup (s->ops[1]));

@@ -1,5 +1,5 @@
 EXTRA_DIST = $(TESTS) tester.sh
-MOSTLYCLEANFILES = core
+MOSTLYCLEANFILES = core core.* vgcore.*
 
 COMPILER = $(VALGRIND) $(top_builddir)/src/compiler
 

@@ -467,33 +467,33 @@ const char *binop_branch_suffix[MAX_TOKEN] = { NULL };
 		     binop_branch_suffix[(S)->op.binary.op]);		\
   } while (0)
 
+#define EMIT_BRANCH_CODE(OP, S, C, ...) do {				\
+    const char *instruct;						\
+    if ((S)->type == binary_type					\
+	&& binop_branch_suffix[(S)->op.binary.op] != NULL)		\
+      {									\
+	instruct = my_printf ("%s%s%s", (OP),				\
+			      ((S)->boolean_not ? "n" : ""),		\
+			      binop_branch_suffix[(S)->op.binary.op]);	\
+      }									\
+    else								\
+      {									\
+	if (!IS_REGISTER ((S)->loc))					\
+	  GIVE_REGISTER ((S)->loc);					\
+	EMIT2 ("cmpq", "$0", print_loc ((S)->loc));			\
+	FREE_LOC ((S)->loc);						\
+	instruct = my_printf ("%s%sz", (OP),				\
+			      (!(S)->boolean_not ? "n" : ""));		\
+      }									\
+    EMIT ## C (instruct, __VA_ARGS__);					\
+    FREE (instruct);							\
+  } while (0)
+
 static void
 gen_code_cond (struct ast *s)
 {
   gen_code_r (s->ops[0]);
-
-  if (s->ops[0]->type == binary_type
-      && binop_branch_suffix[s->ops[0]->op.binary.op] != NULL)
-    {
-      const char *instruct;
-      GEN_BINOP_BRANCH_CODE (instruct, "j", s->ops[0]);
-      EMIT1 (instruct, print_loc (s->loc));
-      FREE (instruct);
-    }
-  else if (s->ops[0]->type == integer_type)
-    {
-      if (s->ops[0]->op.integer.i ^ s->ops[0]->boolean_not)
-	EMIT1 ("jmp", print_loc (s->loc));
-    }
-  else
-    {
-      /* When in doubt, the C standard requires that if an
-	 expression evaluates to 0 then it is false, otherwise it
-	 is true. */
-      EMIT2 ("cmpq", print_loc (s->ops[0]->loc), "$0");
-      EMIT1 ("jz", print_loc (s->loc));
-    }
-  
+  EMIT_BRANCH_CODE ("j", s->ops[0], 1, print_loc (s->loc));  
   /* Free the location of the conditional expression. */
   FREE_LOC (s->ops[0]->loc);
 }
@@ -501,30 +501,15 @@ gen_code_cond (struct ast *s)
 static void
 gen_code_cond_move (struct ast *s)
 {
-  FREE_LOC (s->loc);
-  ALLOC_REGISTER (s->loc);
+  gen_code_r (s->ops[2]);
+  s->loc = loc_dup (s->ops[2]->loc);
+
   gen_code_r (s->ops[1]);
   gen_code_r (s->ops[0]);
-  if (s->ops[0]->type == binary_type)
-    {
-      const char *instruct;
-      GEN_BINOP_BRANCH_CODE (instruct, "cmov", s->ops[0]);
-      BINARY_ENSURE_AND_PUT (4, instruct, s->loc, s->ops[1]->loc);
-      FREE (instruct);
-    }
-  else if (s->ops[0]->type == integer_type)
-    {
-      if (s->ops[0]->op.integer.i)
-	BINARY_ENSURE_AND_PUT (4, "mov", s->loc, s->ops[1]->loc);
-    }
-  else
-    {
-      /* When in doubt, the C standard requires that if an
-	 expression evaluates to 0 then it is false, otherwise it
-	 is true. */
-      EMIT2 ("cmpq", print_loc (s->ops[0]->loc), "$0");
-      EMIT1 ("cmovz", print_loc (s->loc));
-    }
+  
+  ENSURE_DESTINATION_REGISTER (4, s->loc, s->ops[1]->loc);
+  EMIT_BRANCH_CODE ("cmov", s->ops[0], 2, print_loc (s->ops[1]->loc),
+		    print_loc (s->loc));
   
   FREE_LOC (s->ops[0]->loc);
   FREE_LOC (s->ops[1]->loc);
