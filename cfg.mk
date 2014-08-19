@@ -10,9 +10,17 @@ VC_LIST_ALWAYS_EXCLUDE_REGEX = 'tests/.*\.c$$'
 man: $(srcdir)/.version
 	$(MAKE) -C man
 	man -l $(top_srcdir)/man/compiler.1
+.PHONY: man
 
 count:
 	@echo 'Line Counts'
 	@wc -l $(WRITTEN_FILES) cfg.mk
+.PHONY: count
 
-.PHONY: count man
+suite:
+	@for i in $(top_builddir)/tests/*; do	\
+	  if [ -f $$i/test-suite.log ]; then	\
+	    cat $$i/test-suite.log;		\
+	  fi;					\
+	done 
+.PHONY: suite
