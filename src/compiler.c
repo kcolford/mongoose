@@ -40,8 +40,6 @@
 #include <argp.h>
 #include <unistd.h>
 
-#include <assert.h>
-
 #include "configmake.h"
 
 /** Bug reporting address displayed by the argp parser. */
