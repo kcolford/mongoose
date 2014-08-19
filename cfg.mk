@@ -1,6 +1,6 @@
 FILES_IN_VC = $(shell ./build-aux/vc-list-files)
 GENERATED_FILES_IN_VC = bootstrap COPYING doc.cfg.in fix-cleanup.patch
-WRITTEN_FILES = $(filter-out $(GENERATED_FILES_IN_VC) cfg.mk, $(FILES_IN_VC))
+WRITTEN_FILES = $(filter-out $(GENERATED_FILES_IN_VC), $(FILES_IN_VC))
 
 config_h_header = "config\.h"
 update-copyright-env = UPDATE_COPYRIGHT_HOLDER="Kieran Colford"
@@ -14,7 +14,7 @@ man: $(srcdir)/.version
 
 count:
 	@echo 'Line Counts'
-	@wc -l $(WRITTEN_FILES) cfg.mk
+	@wc -l $(WRITTEN_FILES)
 .PHONY: count
 
 suite:
