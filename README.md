@@ -1,6 +1,10 @@
 Compiler
 ========
 
+[![Build Status]
+(https://travis-ci.org/kcolford/compiler.svg?branch=master)]
+(https://travis-ci.org/kcolford/compiler)
+
 An experimental C compiler.
 
 This is a project that attempts to become a fully fledged C compiler.
