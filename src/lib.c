@@ -57,7 +57,7 @@ my_printf (const char *fmt, ...)
   char *out = NULL;
   int i = vasprintf (&out, fmt, args);
   if (SYSTEM_EMIT_DEBUGING)
-    error (0, 0, "vasprintf allocated a chunk that is %d bytes", i);
+    error (0, 0, _("vasprintf allocated a chunk that is %d bytes"), i);
   if (out == NULL)
     xalloc_die ();
   return out;
