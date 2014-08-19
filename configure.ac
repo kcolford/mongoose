@@ -73,20 +73,24 @@ AM_CONDITIONAL([HAVE_DOXYGEN], [test "$DOXYGEN" != "false"])
 # Locate LaTeX for converting Doxygen output to PDFs.
 AC_ARG_VAR([LATEX], [The instance of LaTeX to use when compiling .tex files.])
 AC_CHECK_PROGS([LATEX], [latex])
+AC_SUBST([GENERATE_LATEX], [NO])
+AC_SUBST([USE_PDFLATEX], [NO])
 AS_IF([test "$LATEX"], [
   AC_SUBST([GENERATE_LATEX], [YES])
   AC_CHECK_PROGS([PDFLATEX], [pdflatex])
   AS_IF([test "$PDFLATEX"], [
     AC_SUBST([USE_PDFLATEX], [YES])
-  ], [
-    AC_SUBST([USE_PDFLATEX], [NO])
   ])
   AC_CHECK_PROGS([MAKEINDEX], [makeindex])
-], [
-  AC_SUBST([GENERATE_LATEX], [NO])
-  AC_SUBST([USE_PDFLATEX], [NO])
 ])
 AM_CONDITIONAL([GENERATE_LATEX], [test "$GENERATE_LATEX" = "YES"])
+
+# Locate Dot for Doxygen's graph generation.
+AC_PATH_PROGS([DOT], [dot])
+AC_SUBST([HAVE_DOT], [NO])
+AS_IF([test "$DOT"], [
+  AC_SUBST([HAVE_DOT], [YES])
+])
 
 # Check if we can use Help2Man to create a man page for the user.
 AS_IF([test $cross_compiling = no], [
@@ -96,11 +100,10 @@ AS_IF([test $cross_compiling = no], [
 # Locate the Dynamic Linker by searching through the shell script
 # ldd(1) that's distributed with glibc.
 AC_PATH_PROG([LDD], [ldd])
+RTLDLIST=''
 AS_IF([test "$LDD"], [
   AC_PROG_GREP
   eval `$GREP '^RTLDLIST=".*"$' $LDD`
-], [
-  RTLDLIST=''
 ])
 dynamiclinker=''
 for d in $RTLDLIST
