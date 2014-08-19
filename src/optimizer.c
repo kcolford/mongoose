@@ -60,11 +60,12 @@
       {						\
 	long long l = s->ops[0]->op.integer.i;	\
 	long long r = s->ops[1]->op.integer.i;	\
-	AST_FREE (s);				\
 	long long res = l OP r;			\
-	if (0 && s->boolean_not)		\
+	if (s->boolean_not)			\
 	  res = !res;				\
-	s = make_integer (res);			\
+	struct ast *t = make_integer (res);	\
+	SWAP_AST (s, t);			\
+	AST_FREE (t);				\
       }						\
   } while (0)
 
