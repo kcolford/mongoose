@@ -142,36 +142,7 @@ struct loc
  * 
  * @return The string representation of @c l.
  */
-static inline const char *
-print_loc (struct loc *l)
-{
-  if (l == NULL)
-    return NULL;
-  FREE (l->string);
-  switch (l->kind)
-    {
-    case literal_loc:
-      l->string = my_printf ("$%s", l->base);
-      break;
-    case memory_loc:
-      if (l->offset != 0)
-	EXTENDF (l->string, "%d", l->offset);
-      EXTENDF (l->string, "(%s", l->base);
-      if (l->index != NULL)
-	EXTENDF (l->string, ",%s,%d", l->index, l->scale);
-      EXTENDF (l->string, "%s", ")");
-      break;
-    case register_loc:
-      l->string = my_printf ("%s", l->base);
-      break;
-    case symbol_loc:
-      l->string = my_printf ("%s", l->base);
-      break;
-    default:
-      abort ();
-    }
-  return l->string;
-}
+extern const char *print_loc (struct loc *l);
 
 /** 
  * Make a copy of location @c l.
@@ -180,15 +151,6 @@ print_loc (struct loc *l)
  * 
  * @return The copy of @c l.
  */
-static inline struct loc *
-loc_dup (const struct loc *l)
-{
-  struct loc *out = xmemdup (l, sizeof *l);
-  out->base = xstrdup (out->base);
-  if (out->index != NULL)
-    out->index = xstrdup (out->index);
-  out->string = NULL;
-  return out;
-}
+extern struct loc *loc_dup (const struct loc *l);
 
 #endif

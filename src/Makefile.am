@@ -28,6 +28,7 @@ gen_code.c					\
 lex.l						\
 lib.c						\
 lib.h						\
+loc.c						\
 loc.h						\
 optimizer.c					\
 parse.y						\

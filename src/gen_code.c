@@ -137,7 +137,7 @@
  * 
  * @return String version of register.
  */
-static inline const char *
+static const char *
 regis (int a)
 {
   const char *storage[] =
@@ -161,7 +161,7 @@ regis (int a)
  * 
  * @return The ath function call register index.
  */
-static inline int
+static int
 call_regis(int a)
 {
   const int storage[] =
@@ -186,7 +186,7 @@ call_regis(int a)
  * 
  * @return The index of all the registers to use.
  */
-static inline int
+static int
 general_regis(int a)
 {
   const int storage[] =
