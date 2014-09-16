@@ -33,6 +33,7 @@ lib.h						\
 loc.c						\
 loc.h						\
 my_printf.c					\
+my_printf.h					\
 optimizer.c					\
 parse.y						\
 place_holder.c					\
