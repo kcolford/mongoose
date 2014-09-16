@@ -27,7 +27,8 @@
 
 #include "config.h"
 
-#include "lib.h"
+#include "extendf.h"
+#include "free.h"
 #include "loc.h"
 #include "my_printf.h"
 #include "xalloc.h"

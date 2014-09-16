@@ -27,8 +27,11 @@
 #ifndef LOC_H
 #define LOC_H
 
-#include "lib.h"
+#include "attributes.h"
+#include "free.h"
 #include "xalloc.h"
+
+#include <stdlib.h>
 
 /**
  * The type of location.

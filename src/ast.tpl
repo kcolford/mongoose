@@ -129,7 +129,7 @@ extern struct ast *ast_free (struct ast *s);
 
 #include "ast.h"
 #include "ast_util.h"
-#include "lib.h"
+#include "free.h"
 #include "xalloc.h"
 
 #include <stdlib.h>

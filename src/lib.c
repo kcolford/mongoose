@@ -29,10 +29,12 @@
 
 #include "ast.h"
 #include "fatal-signal.h"
+#include "free.h"
 #include "gl_linked_list.h"
 #include "gl_xlist.h"
 #include "lib.h"
 #include "my_printf.h"
+#include "safe_system.h"
 #include "tempname.h"
 #include "xalloc.h"
 
@@ -43,8 +45,6 @@
 #include <string.h>
 
 #include <fcntl.h>
-#include <unistd.h>
-#include <sys/wait.h>
 
 #ifndef SYSTEM_EMIT_DEBUGING
 #define SYSTEM_EMIT_DEBUGING 0
@@ -55,38 +55,6 @@ place_holder (void)
 {
   static int var = 1;
   return my_printf ("place$holder%d", var++);
-}
-
-int
-safe_system (const char *args[])
-{
-  assert (args[0] != NULL);
-
-  /* Emit debuging info about external programs run. */
-  if (SYSTEM_EMIT_DEBUGING)
-    {
-      const char **i;
-      fprintf (stderr, "%s: ", _("Running Program"));
-      for (i = args; i[1] != NULL; i++)
-	fprintf (stderr, "%s ", *i);
-      fprintf (stderr, "%s\n", *i);
-    }
-
-  pid_t p = fork ();
-  if (p < 0)
-    error (1, errno, _("could not fork the process to run %s"), args[0]);
-  else if (p == 0)
-    {
-      if (execvp (args[0], (char * const *) args))
-	error (1, errno, _("could not exec to program %s"), args[0]);
-    }
-  else
-    {
-      int r = 0;
-      waitpid (p, &r, 0);
-      return r;
-    }
-  return -1;
 }
 
 /** 

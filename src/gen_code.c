@@ -67,6 +67,8 @@
 
 #include "ast.h"
 #include "compiler.h"
+#include "extendf.h"
+#include "free.h"
 #include "lib.h"
 #include "my_printf.h"
 #include "parse.h"

@@ -32,6 +32,7 @@
 
 #include "ast.h"
 #include "compiler.h"
+#include "free.h"
 #include "parse.h"
 #include "xalloc.h"
 

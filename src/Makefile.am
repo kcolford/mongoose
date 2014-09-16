@@ -24,6 +24,8 @@ compilation_passes.c				\
 compiler.c					\
 compiler.h					\
 dealias.c					\
+extendf.h					\
+free.h						\
 gen_code.c					\
 lex.l						\
 lib.c						\
@@ -33,7 +35,11 @@ loc.h						\
 my_printf.c					\
 optimizer.c					\
 parse.y						\
+place_holder.h					\
+safe_system.c					\
+safe_system.h					\
 semantic.c					\
+tmpfile_name.h					\
 transform.c					\
 unit.c						\
 vars.c

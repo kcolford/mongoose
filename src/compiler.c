@@ -29,6 +29,8 @@
 #include "argp-version-etc.h"
 #include "compiler.h"
 #include "copy-file.h"
+#include "extendf.h"
+#include "free.h"
 #include "gl_xlist.h"
 #include "lib.h"
 #include "progname.h"

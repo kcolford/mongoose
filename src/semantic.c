@@ -28,6 +28,7 @@
 
 #include "ast.h"
 #include "compiler.h"
+#include "lib.h"
 #include "parse.h"
 
 /** 

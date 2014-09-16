@@ -38,6 +38,7 @@
 #include "ast.h"
 #include "ast_util.h"
 #include "compiler.h"
+#include "free.h"
 #include "gl_rbtree_list.h"
 #include "gl_xlist.h"
 #include "lib.h"
