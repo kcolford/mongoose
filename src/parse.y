@@ -36,6 +36,7 @@
 #include "ast_util.h"
 #include "compiler.h"
 #include "lib.h"
+#include "my_printf.h"
 #include "xalloc.h"
 
 #include <stdlib.h>

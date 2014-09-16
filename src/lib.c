@@ -32,6 +32,7 @@
 #include "gl_linked_list.h"
 #include "gl_xlist.h"
 #include "lib.h"
+#include "my_printf.h"
 #include "tempname.h"
 #include "xalloc.h"
 

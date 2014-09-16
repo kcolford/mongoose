@@ -27,23 +27,14 @@
 #ifndef LIB_H
 #define LIB_H
 
+#include "attributes.h"
 #include "gettext.h"
+#include "my_printf.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <error.h>
-
-#if defined __GNUC__ && 2 < __GNUC__
-#define ATTRIBUTE(ALIST) __attribute__ (ALIST)
-#else
-#define ATTRIBUTE(ALIST)	/* empty */
-#endif
-
-#define ATTRIBUTE_PURE ATTRIBUTE ((__pure__))
-#define ATTRIBUTE_CONST ATTRIBUTE ((__const__))
-#define ATTRIBUTE_MALLOC ATTRIBUTE ((__malloc__))
-#define ATTRIBUTE_NONNULL(...) ATTRIBUTE ((__nonnull__ (__VA_ARGS__)))
 
 /**
  * Test if the strings @c X and @c Y are equal.
@@ -163,18 +154,6 @@ extern char *place_holder (void);
  * @return The return of the program.
  */
 extern int safe_system (const char *args[]);
-
-/** 
- * This is function that dynamically allocates and returns a string
- * according to a printf-format specifier.
- * 
- * @param fmt The printf-format string.
- * 
- * @return The resultant string.
- */
-extern char *my_printf (const char *fmt, ...)
-  ATTRIBUTE ((__format__ (printf, 1, 2), malloc))
-  ;
 
 /** 
  * This creates an appropriate file name that can be used as a

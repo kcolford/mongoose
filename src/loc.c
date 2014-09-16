@@ -29,6 +29,7 @@
 
 #include "lib.h"
 #include "loc.h"
+#include "my_printf.h"
 #include "xalloc.h"
 
 #include <assert.h>

@@ -41,6 +41,7 @@
 #include "gl_rbtree_list.h"
 #include "gl_xlist.h"
 #include "lib.h"
+#include "my_printf.h"
 #include "parse.h"
 #include "xalloc.h"
 

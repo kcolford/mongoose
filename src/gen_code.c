@@ -68,6 +68,7 @@
 #include "ast.h"
 #include "compiler.h"
 #include "lib.h"
+#include "my_printf.h"
 #include "parse.h"
 #include "xalloc.h"
 
