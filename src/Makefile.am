@@ -45,7 +45,8 @@ tmpfile_name.c					\
 tmpfile_name.h					\
 transform.c					\
 unit.c						\
-vars.c
+vars.c						\
+xalloc_die.c
 
 compiler_LDADD = $(top_builddir)/lib/lib$(PACKAGE).la $(LTLIBINTL) $(LIB_ACL)
 
