@@ -30,6 +30,7 @@ lib.c						\
 lib.h						\
 loc.c						\
 loc.h						\
+my_printf.c					\
 optimizer.c					\
 parse.y						\
 semantic.c					\
