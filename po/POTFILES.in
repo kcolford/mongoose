@@ -1,10 +1,13 @@
 # package source files
 src/compiler.c
 src/gen_code.c
-src/lib.c
 src/lib.h
+src/my_printf.c
+src/safe_system.c
 src/semantic.c
+src/tmpfile_name.c
 src/unit.c
+src/xalloc_die.c
 
 # Gnulib source files
 lib/argp.h
