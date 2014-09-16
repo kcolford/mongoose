@@ -1,9 +1,8 @@
 /**
- * @file   lib.c
+ * @file   tmpfile_name.c
  * @author Kieran Colford <colfordk@gmail.com>
  * 
- * @brief This is a utility library that holds generic functions/APIs
- * that aren't offered by the C library.
+ * @brief  This is the implementation of the tmpfile_name function.
  * 
  * Copyright (C) 2014 Kieran Colford
  *
@@ -27,51 +26,18 @@
 
 #include "config.h"
 
-#include "ast.h"
 #include "fatal-signal.h"
 #include "free.h"
 #include "gl_linked_list.h"
 #include "gl_xlist.h"
 #include "lib.h"
-#include "my_printf.h"
-#include "safe_system.h"
 #include "tempname.h"
+#include "tmpfile_name.h"
 #include "xalloc.h"
 
-#include <assert.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-
 #include <fcntl.h>
+#include <stdlib.h>
 #include <unistd.h>
-
-#ifndef SYSTEM_EMIT_DEBUGING
-#define SYSTEM_EMIT_DEBUGING 0
-#endif
-
-char *
-place_holder (void)
-{
-  static int var = 1;
-  return my_printf ("place$holder%d", var++);
-}
-
-/** 
- * The function that is called when any of the x*alloc functions fail
- * to allocate memory.  The suggested method of handling this is by
- * just calling abort but there are cleanups and error messages that
- * need to be delt with.  So a call to @c error is made so that it
- * exits instead.
- * 
- */
-void
-xalloc_die (void)
-{
-  error (1, ENOMEM, _("out of memory"));
-  abort ();
-}
 
 static gl_list_t tmpfiles = NULL; /**< A list of temporary files. */
 
