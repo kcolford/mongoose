@@ -45,6 +45,7 @@
 #include <string.h>
 
 #include <fcntl.h>
+#include <unistd.h>
 
 #ifndef SYSTEM_EMIT_DEBUGING
 #define SYSTEM_EMIT_DEBUGING 0
