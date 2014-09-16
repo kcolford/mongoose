@@ -2,7 +2,7 @@
  * @file   attributes.h
  * @author Kieran Colford <colfordk@gmail.com>
  * 
- * @brief  This is the header file for generic routines.
+ * @brief  This is the header file for attribute declarations.
  * 
  * Copyright (C) 2014 Kieran Colford
  *
