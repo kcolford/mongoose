@@ -19,6 +19,7 @@ compiler_SOURCES =				\
 ast.c						\
 ast.h						\
 ast_util.h					\
+attributes.h					\
 collect_vars.c					\
 compilation_passes.c				\
 compiler.c					\
