@@ -4,7 +4,7 @@ WRITTEN_FILES = $(filter-out $(GENERATED_FILES_IN_VC), $(FILES_IN_VC))
 
 config_h_header = "config\.h"
 update-copyright-env = UPDATE_COPYRIGHT_HOLDER="Kieran Colford"
-local-checks-to-skip = sc_trailing_blank
+local-checks-to-skip = sc_trailing_blank sc_vulnerable_makefile_CVE-2012-3386
 VC_LIST_ALWAYS_EXCLUDE_REGEX = 'tests/.*\.c$$'
 
 man: $(srcdir)/.version
