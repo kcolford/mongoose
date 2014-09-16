@@ -30,7 +30,7 @@
 #include "attributes.h"
 
 /** 
- * This is function that dynamically allocates and returns a string
+ * This is a function that dynamically allocates and returns a string
  * according to a printf-format specifier.
  * 
  * @param fmt The printf-format string.
