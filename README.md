@@ -17,7 +17,7 @@ declare a variable but that type is ignored.
 
 You can clone the git repository with the following command:
 
-    git clone https://github.com/kcolford/compiler.git
+    git clone https://github.com/kcolford/mongoose.git
 
 Access to a distribution tar ball is currently only available through
 someone who has already downloaded a clone of the repository.
@@ -106,5 +106,5 @@ TeXinfo markup (translating it to markdown).  Thus it satisfies all
 requirements of verbatim copying as described by the GNU Free
 Documentation License.
 
-[1]: https://travis-ci.org/kcolford/compiler.svg?branch=master "Build Status"
-[2]: https://travis-ci.org/kcolford/compiler "Build Bot"
+[1]: https://travis-ci.org/kcolford/mongoose.svg?branch=master "Build Status"
+[2]: https://travis-ci.org/kcolford/mongoose "Build Bot"
