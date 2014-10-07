@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.68])
-AC_INIT([Compiler],
+AC_INIT([Mongoose],
         [m4_esyscmd([build-aux/git-version-gen .tarball-version])],
 	[colfordk@gmail.com],
 	[],

@@ -1,4 +1,4 @@
-Compiler
+Mongoose
 ========
 
 ![Build Status][1]
@@ -64,7 +64,7 @@ programs,
 How to Set Up
 -------------
 
-The first step to working on or using Compiler is if you retrieved the
+The first step to working on or using Mongoose is if you retrieved the
 sources from a checkout repository you have to run the bootstrap
 script like this,
 
@@ -80,7 +80,7 @@ package.
 What To Do
 ----------
 
-If you don't know how Compiler works, read through the documentation.
+If you don't know how Mongoose works, read through the documentation.
 It has all been generated with Doxygen and thus should be easy to
 generate read through.  To generate the documentation, just run:
 
@@ -89,7 +89,7 @@ generate read through.  To generate the documentation, just run:
 If you can't think of something to work on, see the Doxygen generated
 Todo List.
 
-Alternatively, you can work on Compiler's general documentation in the
+Alternatively, you can work on Mongoose's general documentation in the
 README.md.
 
 A Note on Extra Documentation
@@ -100,7 +100,7 @@ This is temporarily translated into markdown by the Perl script
 texi2md.pl and then fed into Doxygen's native markdown processor.
 
 The texi2md.pl script is distributed along with the source code for
-Compiler and can be found in a git repository at
+Mongoose and can be found in a git repository at
 <https://github.com/kcolford/texi2md>.  It also only alters the
 TeXinfo markup (translating it to markdown).  Thus it satisfies all
 requirements of verbatim copying as described by the GNU Free
