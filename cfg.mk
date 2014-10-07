@@ -9,7 +9,7 @@ VC_LIST_ALWAYS_EXCLUDE_REGEX = 'tests/.*\.c$$'
 
 man: $(srcdir)/.version
 	$(MAKE) -C man
-	man -l $(top_srcdir)/man/compiler.1
+	man -l $(top_srcdir)/man/mongoose.1
 .PHONY: man
 
 count:
