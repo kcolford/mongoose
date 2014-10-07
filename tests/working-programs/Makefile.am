@@ -1,6 +1,6 @@
 EXTRA_DIST = $(TESTS) tester.sh
 
-COMPILER = $(VALGRIND) $(top_builddir)/src/compiler
+COMPILER = $(VALGRIND) $(top_builddir)/src/mongoose
 
 TEST_EXTENSIONS = .c
 

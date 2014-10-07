@@ -1,6 +1,6 @@
 /.deps
 
-/compiler
+/mongoose
 
 /ast.c
 /ast.h
