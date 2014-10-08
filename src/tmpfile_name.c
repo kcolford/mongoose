@@ -103,7 +103,7 @@ tmpfile_name (void)
     }
 
   /* Determine the name of the temporary file. */
-  char *out = xstrdup ("compilerXXXXXX");
+  char *out = xstrdup (PACKAGE "XXXXXX");
   int fd = gen_tempname (out, 0, 0, GT_FILE);
   if (fd < 0)
     error (1, errno, _("FATAL: failed to create temporary file"));
