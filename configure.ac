@@ -6,7 +6,7 @@ AC_INIT([Mongoose],
         [m4_esyscmd([build-aux/git-version-gen .tarball-version])],
 	[colfordk@gmail.com],
 	[],
-	[https://github.com/kcolford/compiler])
+	[https://github.com/kcolford/mongoose])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/compiler.h])
 AC_CONFIG_HEADERS([config.h])
