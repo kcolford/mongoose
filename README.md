@@ -41,7 +41,6 @@ In order to use this project you need the following list of installed
 programs,
 
 - Autoconf*
-- Autoconf Archive*
 - AutoGen*
 - Automake*
 - Bash
@@ -54,7 +53,7 @@ programs,
 - Make
 - Perl+
 - Tar
-- Valgrind (Optional)
+- Valgrind (Optional, only for running test suites)
 
 *: Only required if you're a developer or acquired the source from a
  source repository.
