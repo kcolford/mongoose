@@ -46,9 +46,9 @@ programs,
 - Automake*
 - Bash
 - Bison*
-- Doxygen+
+- Doxygen+ (at least version 1.8)
 - Flex*
-- GCC
+- GCC (preferred, although any C99 compiler should work)
 - GIT*
 - Help2man*+
 - Make
