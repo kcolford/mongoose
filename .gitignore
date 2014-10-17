@@ -2,7 +2,10 @@
 /autom4te.cache
 /build-aux
 /lib
-/m4
+
+m4/.gitignore
+m4/gnulib-cache.m4
+m4/*~
 
 /GNUmakefile
 Makefile
