@@ -127,14 +127,6 @@ AC_CHECK_FILES([$archdir/crti.o $archdir/crt1.o $archdir/crtn.o], [
             [Define to 1 if we are linking on our own.])
 ])
 
-# BOOTSTRAP_PROG(VARIABLE, PROGS-TO-CHECK-FOR, [VARIABLE-COMMENT])
-# ----------------------------------------------------------------
-AC_DEFUN([BOOTSTRAP_PROG], [
-  AC_CHECK_TARGET_TOOLS([_BOOTSTRAP_$1], [$2])
-  AS_IF([test "$_BOOTSTRAP_$1"], [
-    AC_DEFINE_UNQUOTED([$1], ["$_BOOTSTRAP_$1"], [$3])
-  ])
-])
 # Check for programs that we can boostrap off of.
 BOOTSTRAP_PROG([CC], [$CC], [The C compiler to bootstrap off of.])
 BOOTSTRAP_PROG([CPP], [cpp], [The C preprocessor to boostrap off of.])
@@ -155,6 +147,8 @@ for w in $warnings; do
 done
 
 # Checks for libraries.
+
+# We don't need any external libraries.
 
 # Checks for header files.
 AC_CHECK_HEADERS([fcntl.h libintl.h locale.h stddef.h])
