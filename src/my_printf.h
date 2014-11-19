@@ -38,7 +38,8 @@
  * @return The resultant string.
  */
 extern char *my_printf (const char *fmt, ...)
-  ATTRIBUTE ((__format__ (gnu_printf, 1, 2), malloc))
+  ATTRIBUTE ((__format__ (gnu_printf, 1, 2)))
+  ATTRIBUTE_MALLOC
   ;
 
 #endif

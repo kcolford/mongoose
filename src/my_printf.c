@@ -27,6 +27,7 @@
 #include "config.h"
 
 #include "lib.h"
+#include "my_printf.h"
 #include "xalloc.h"
 
 #include <stdarg.h>
