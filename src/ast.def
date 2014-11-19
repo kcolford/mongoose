@@ -69,6 +69,13 @@ top_level = {
 
 top_level = {
   type = unsigned;
+  call = static_decl;
+  size = 1;
+  doc = "Whether this is a declaration made with the static keyword.";
+};
+
+top_level = {
+  type = unsigned;
   call = refs;
   size = 32;
   doc = "The reference count of this structure.";

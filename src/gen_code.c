@@ -396,8 +396,11 @@ static void gen_code_r (struct ast *);
 static void
 gen_code_function (struct ast *s)
 {
-  /* Enter the .text section and declare this symbol as global. */
-  EMIT1 (".global", s->op.function.name);
+  /* Enter the .text section and declare this symbol as global if it
+     should be. */
+  EMIT0 (".text");
+  if (!s->static_decl)
+    EMIT1 (".global", s->op.function.name);
   EMIT_LABEL (s->op.function.name);
 
   /* Set up the stack frame. */

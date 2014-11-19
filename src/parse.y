@@ -127,7 +127,7 @@ struct ast *make_ifelse (struct ast *, struct ast *, struct ast *);
 %nonassoc '(' ')' '[' ']' '.'
 
 %union { struct ast *ast_val; }
-%type <ast_val> body callargs constrval def defargs expr file maybe_expr scoped_body statement sub_body
+%type <ast_val> body callargs constrval def defargs expr file maybe_expr qualdef scoped_body statement sub_body
 
 %token MAX_TOKEN		/*
 This is maximum value of any token, this is why it is placed last in
@@ -140,12 +140,17 @@ input:		file END { if (run_compilation_passes (&$1)) YYERROR; }
 	;
 
 file:		/* empty */   { $$ = NULL; }
-	|	def file      { $$ = ast_cat ($1, $2); }
+	|	qualdef file  { $$ = ast_cat ($1, $2); }
 	;
 
 /* Function definitions. */
 def:		STR STR '(' defargs ')' scoped_body { $$ = make_function ($1, $2, $4, $6); }
 	|	STR STR '('         ')' scoped_body { $$ = make_function ($1, $2, NULL, $5); }
+	;
+
+qualdef:	STATIC def { $$ = $2; $$->static_decl = 1; }
+	|	INLINE def { $$ = $2; $$->static_decl = 1; }
+	|	def        { $$ = $1; }
 	;
 
 defargs:	STR STR             { $$ = make_variable ($1, $2); }
