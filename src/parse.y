@@ -150,6 +150,8 @@ def:		STR STR '(' defargs ')' scoped_body { $$ = make_function ($1, $2, $4, $6);
 
 qualdef:	STATIC def { $$ = $2; $$->static_decl = 1; }
 	|	INLINE def { $$ = $2; $$->static_decl = 1; }
+	|	EXTERN INLINE def { $$ = $3; }
+	|	EXTERN def { $$ = $2; }
 	|	def        { $$ = $1; }
 	;
 
