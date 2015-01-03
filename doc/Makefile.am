@@ -12,7 +12,7 @@ pdf-local: pdf/refman.tex
 
 pdf/refman.tex: html/index.html
 	$(AM_V_at)test -f $@ || { rm -f html/index.html; \
-	                          $(MAKE) html/index.html; }
+	  $(MAKE) html/index.html; }
 endif
 
 endif
