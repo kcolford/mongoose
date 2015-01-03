@@ -10,7 +10,7 @@ c
  * @brief This file contains definitions/declarations for the entire
  * AST framework.
  * 
- * Copyright (C) 2014 Kieran Colford
+ * Copyright (C) 2014, 2015 Kieran Colford
  *
  * This file is part of Mongoose.
  *

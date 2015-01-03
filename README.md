@@ -25,7 +25,7 @@ someone who has already downloaded a clone of the repository.
 License
 -------
 
-Copyright (C) 2014 Kieran Colford
+Copyright (C) 2014, 2015 Kieran Colford
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or

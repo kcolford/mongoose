@@ -5,7 +5,7 @@
  * @brief This is compiler pass that collects all the variable
  * declarations at the top of the function.
  * 
- * Copyright (C) 2014 Kieran Colford
+ * Copyright (C) 2014, 2015 Kieran Colford
  *
  * This file is part of Mongoose.
  *

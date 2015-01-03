@@ -4,7 +4,7 @@
  * 
  * @brief  A series of utility functions for use with the AST.
  * 
- * Copyright (C) 2014 Kieran Colford
+ * Copyright (C) 2014, 2015 Kieran Colford
  *
  * This file is part of Mongoose.
  *

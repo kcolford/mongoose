@@ -5,7 +5,7 @@
  * @brief This is the routine that transforms different AST structures
  * into ones that make more sense for the low level passes.
  * 
- * Copyright (C) 2014 Kieran Colford
+ * Copyright (C) 2014, 2015 Kieran Colford
  *
  * This file is part of Mongoose.
  *

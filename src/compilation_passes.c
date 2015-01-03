@@ -5,7 +5,7 @@
  * @brief This is the routine that runs all the different passes in
  * the correct order.
  * 
- * Copyright (C) 2014 Kieran Colford
+ * Copyright (C) 2014, 2015 Kieran Colford
  *
  * This file is part of Mongoose.
  *

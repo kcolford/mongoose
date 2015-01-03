@@ -5,7 +5,7 @@
  * @brief This object file stores all the global variables used
  * throughout the program that require external linkage.
  * 
- * Copyright (C) 2014 Kieran Colford
+ * Copyright (C) 2014, 2015 Kieran Colford
  *
  * This file is part of Mongoose.
  *

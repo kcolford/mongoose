@@ -4,7 +4,7 @@
  * 
  * @brief  This is the implementation of the xalloc_die function.
  * 
- * Copyright (C) 2014 Kieran Colford
+ * Copyright (C) 2014, 2015 Kieran Colford
  *
  * This file is part of Mongoose.
  *

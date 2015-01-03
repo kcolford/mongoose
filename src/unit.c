@@ -5,7 +5,7 @@
  * @brief These are the routines that select which phase of the
  * compiler to run.
  * 
- * Copyright (C) 2014 Kieran Colford
+ * Copyright (C) 2014, 2015 Kieran Colford
  *
  * This file is part of Mongoose.
  *

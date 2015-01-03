@@ -4,7 +4,7 @@
  * 
  * @brief  This is the header file for the safe_system function.
  * 
- * Copyright (C) 2014 Kieran Colford
+ * Copyright (C) 2014, 2015 Kieran Colford
  *
  * This file is part of Mongoose.
  *
