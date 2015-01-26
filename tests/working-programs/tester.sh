@@ -2,9 +2,18 @@
 
 srcfile=$1
 
-prog=`mktemp`
-myout=`mktemp`
-nativeout=`mktemp`
+tmpdir=`mktemp --directory mongoose-tester.XXXXXXXX`
+
+prog=$tmpdir/prog; touch $prog
+myout=$tmpdir/myout; touch $myout
+nativeout=$tmpdir/nativeout; touch $nativeout
+
+die () {
+    [ "$1" = 0 ] || echo "FAILED: $2" >&2
+    rm -f $prog $myout $nativeout
+    rmdir $tmpdir
+    exit $1
+}
 
 run () {
     msg=$1
@@ -12,10 +21,7 @@ run () {
     if "$@"; then
 	:
     else
-	code=$?
-	echo "FAILED: $msg" >&2
-	rm -f $prog $myout $nativeout
-	exit $code
+	die $? $msg
     fi
 }
 
@@ -37,3 +43,4 @@ mycompile () {
 
 mycompile
 mycompile -O
+die 0
